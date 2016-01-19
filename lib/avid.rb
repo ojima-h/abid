@@ -1,5 +1,8 @@
+require "rake"
+
 require "avid/version"
+require "avid/application"
 
 module Avid
-  # Your code goes here...
+
 end
