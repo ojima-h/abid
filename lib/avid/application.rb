@@ -63,12 +63,5 @@ module Avid
        end
       ]
     end
-
-    def dry_run
-      ['--dry-run', '-n',
-       'Do a dry run without executing actions',
-       -> (_value) { @dry_run = true }
-      ]
-    end
   end
 end
