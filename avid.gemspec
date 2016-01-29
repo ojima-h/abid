@@ -31,4 +31,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest"
 
   spec.add_dependency "rake", "~> 10.0"
+  spec.add_dependency "concurrent-ruby-ext"
 end

@@ -3,6 +3,14 @@ module Avid
     attr_reader :play_class
     attr_accessor :play
 
+    def ==(other)
+      if !play.nil? && other.is_a?(Avid::Task)
+        play.hash == other.play.hash
+      else
+        super(other)
+      end
+    end
+
     def initialize_copy(_obj)
       @already_invoked = false
       @lock            = Monitor.new
