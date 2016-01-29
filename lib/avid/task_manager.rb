@@ -1,12 +1,35 @@
 module Avid
   module TaskManager
+    def initialize
+      super
+      @plays = {}
+    end
+
+    def define_play(task_class, play_name, extends: nil, &block)
+      task = define_task(task_class, play_name)
+
+      klass = lookup_play_class(extends)
+      task.play_class = Class.new(klass, &block).tap { |c| c.task = task }
+
+      task
+    end
+
     def [](task_name, scopes = nil, **params)
       task = super(task_name, scopes)
 
       if task.is_a?(Avid::Task)
-        task.bind(**params)
+        intern_play(task, **params)
       else
         task
+      end
+    end
+
+    def intern_play(task, **params)
+      play = task.play_class.new(**params)
+
+      @plays[play] ||= task.dup.tap do |t|
+        play.setup
+        t.play = play
       end
     end
 

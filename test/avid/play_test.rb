@@ -3,8 +3,6 @@ require 'test_helper'
 module Avid
   class PlayTest < Minitest::Test
     class SamplePlay < Avid::Play
-      play_name :sample_play
-
       worker :dummy_worker
 
       param :date, type: :date
@@ -19,8 +17,15 @@ module Avid
       end
     end
 
+    def setup
+      @app = Avid::Application.new
+      @task = Avid::Task.new('sample', @app)
+      SamplePlay.task = @task
+    end
+
     def test_definition
       play = SamplePlay.new(date: '2000-01-01', dummy: 'foo')
+      play.setup
       ret = play.run
 
       assert_empty Avid::Play.params_spec
@@ -33,13 +38,13 @@ module Avid
       assert_equal Date.new(2000, 1, 2), parent_params[:date]
     end
 
-    def test_hash
+    def test_equality
       play1 = SamplePlay.new(date: '2000-01-01', dummy: 'foo')
       play2 = SamplePlay.new(date: '2000-01-02', dummy: 'foo')
       play3 = SamplePlay.new(date: '2000-01-01', dummy: 'bar')
 
-      assert play1.hash != play2.hash
-      assert_equal play1.hash, play3.hash
+      assert !play1.eql?(play2)
+      assert play1.eql?(play3)
     end
   end
 end

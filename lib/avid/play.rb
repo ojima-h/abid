@@ -1,13 +1,21 @@
+require 'forwardable'
+
 module Avid
   class Play
+    extend Forwardable
+    def_delegators :task, :application, :name, :scope
+
     attr_reader :prerequisites
     attr_reader :params
 
     def initialize(params)
       @prerequisites = []
       @params = ParamsParser.parse(params, params_spec)
+      @params.freeze
+    end
 
-      setup
+    def task
+      self.class.task
     end
 
     def setup
@@ -22,21 +30,25 @@ module Avid
       prerequisites << [task_name, params]
     end
 
-    def invoke
-      run
+    def significant_params
+      [
+        name,
+        params.select { |p, _| params_spec[p][:significant] }
+      ]
     end
 
     def hash
-      @hash ||= [play_name, significant_params].hash
+      significant_params.hash
     end
 
-    def significant_params
-      params.select do |name, _|
-        params_spec[name][:significant]
-      end
+    def eql?(other)
+      other.is_a?(Avid::Play) && \
+        significant_params.eql?(other.significant_params)
     end
 
     class << self
+      attr_accessor :task
+
       def param(name, **param_spec)
         params_spec[name] = { significant: true }.merge(param_spec)
 
@@ -62,9 +74,6 @@ module Avid
       end
     end
 
-    define_attribute :application
-    define_attribute :play_name
-    define_attribute :scope
     define_attribute :worker
     define_attribute(:params_spec) { Hash.new }
   end

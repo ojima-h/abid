@@ -26,7 +26,7 @@ module Avid
     def test_lookup
       task = @app[:test, date: '2016-01-01']
 
-      assert_kind_of Task, task
+      assert_kind_of Avid::Task, task
       assert_equal Date.new(2016, 1, 1), task.play.date
     end
   end
