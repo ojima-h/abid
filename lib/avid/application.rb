@@ -1,5 +1,7 @@
 module Avid
   class Application < Rake::Application
+    include Avid::TaskManager
+
     def initialize
       super
       @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb) << avidfile

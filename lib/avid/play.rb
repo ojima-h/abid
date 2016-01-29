@@ -6,6 +6,8 @@ module Avid
     def initialize(params)
       @prerequisites = []
       @params = ParamsParser.parse(params, params_spec)
+
+      setup
     end
 
     def setup
@@ -35,21 +37,20 @@ module Avid
     end
 
     class << self
-      def new(args)
-        super(args).tap(&:setup)
-      end
-
       def param(name, **param_spec)
         params_spec[name] = { significant: true }.merge(param_spec)
 
         define_method(name) { params[name] }
       end
 
-      def define_attribute(name, default = nil)
-        attributes = (@attributes ||= {})
-        attributes[name] = default
+      def attributes
+        @attributes ||= {}
+      end
 
+      def define_attribute(name, &default)
         define_singleton_method(name) do |value = nil|
+          attributes[name] ||= default.call if block_given?
+
           if value.nil?
             attributes[name]
           else
@@ -57,7 +58,7 @@ module Avid
           end
         end
 
-        define_method(name) { attributes[name] }
+        define_method(name) { self.class.attributes[name] }
       end
     end
 
@@ -65,6 +66,6 @@ module Avid
     define_attribute :play_name
     define_attribute :scope
     define_attribute :worker
-    define_attribute :params_spec, {}
+    define_attribute(:params_spec) { Hash.new }
   end
 end

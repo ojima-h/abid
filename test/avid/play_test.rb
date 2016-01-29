@@ -2,7 +2,7 @@ require 'test_helper'
 
 module Avid
   class PlayTest < Minitest::Test
-    class SamplePlay < Play
+    class SamplePlay < Avid::Play
       play_name :sample_play
 
       worker :dummy_worker
@@ -23,6 +23,7 @@ module Avid
       play = SamplePlay.new(date: '2000-01-01', dummy: 'foo')
       ret = play.run
 
+      assert_empty Avid::Play.params_spec
       assert_equal :dummy_worker, ret[0]
       assert_equal Date.new(2000, 1, 1), ret[1]
       assert_equal 'foo', ret[2]
