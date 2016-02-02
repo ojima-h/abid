@@ -3,8 +3,10 @@ module Avid
     class <<self
       def parse(params, specs)
         specs.map do |name, spec|
-          if params.key?(name)
+          if params.include?(name)
             value = type_cast(params[name], spec[:type])
+          elsif ENV.include?(name.to_s)
+            value = type_cast(ENV[name.to_s], spec[:type])
           elsif spec.key?(:default)
             value = spec[:default]
           else

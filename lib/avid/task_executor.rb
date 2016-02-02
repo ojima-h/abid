@@ -31,6 +31,13 @@ module Avid
       workers[name]
     end
 
+    def shutdown
+      workers.each do |_, worker|
+        worker.shutdown
+        worker.wait_for_termination
+      end
+    end
+
     def invoke(task, *args)
       task_args = Rake::TaskArguments.new(task.arg_names, args)
       invoke_with_call_chain(task, task_args, Rake::InvocationChain::EMPTY).value!

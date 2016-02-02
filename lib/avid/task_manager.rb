@@ -53,5 +53,11 @@ module Avid
         end
       end
     end
+
+    class << self
+      def record_task_metadata # :nodoc:
+        Rake::TaskManager.record_task_metadata
+      end
+    end
   end
 end

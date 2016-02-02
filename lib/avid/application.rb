@@ -23,8 +23,16 @@ module Avid
       super
     end
 
-    def sort_options(options)
-      super.push(version, dry_run)
+    def run_with_threads
+      yield
+    ensure
+      executor.shutdown
+    end
+
+    def invoke_task(task_string) # :nodoc:
+      name, args = parse_task_string(task_string)
+      t = self[name]
+      executor.invoke(t, *args)
     end
 
     def handle_options
