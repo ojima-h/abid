@@ -35,6 +35,10 @@ module Avid
       executor.invoke(t, *args)
     end
 
+    def sort_options(options)
+      super.push(version)
+    end
+
     def handle_options
       options.rakelib = ['rakelib']
       options.trace_output = $stderr
