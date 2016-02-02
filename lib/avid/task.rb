@@ -5,8 +5,16 @@ module Avid
 
     def initialize(task_name, app)
       super(task_name, app)
-      @actions << proc { play.run }
+      @actions << proc { |t| t.play.run }
       @actions.freeze
+    end
+
+    def prerequisite_tasks
+      fail 'no play is bound yet' if @play.nil?
+
+      play.prerequisites.map do |pre, params|
+        application[pre, @scope, **params]
+      end
     end
 
     class <<self

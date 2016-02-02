@@ -2,9 +2,12 @@ module Avid
   class Application < Rake::Application
     include Avid::TaskManager
 
+    attr_reader :executor
+
     def initialize
       super
       @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb) << avidfile
+      @executor = TaskExecutor.new(self)
     end
 
     def name

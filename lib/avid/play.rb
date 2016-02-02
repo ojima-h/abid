@@ -27,7 +27,7 @@ module Avid
     end
 
     def needs(task_name, **params)
-      prerequisites << [task_name, params]
+      @prerequisites |= [[task_name, params]]
     end
 
     def significant_params
@@ -70,7 +70,7 @@ module Avid
           end
         end
 
-        define_method(name) { self.class.attributes[name] }
+        define_method(name) { self.class.send(name) }
       end
     end
 

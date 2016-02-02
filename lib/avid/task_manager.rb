@@ -10,7 +10,6 @@ module Avid
 
       klass = lookup_play_class(extends)
       task.play_class = Class.new(klass, &block).tap { |c| c.task = task }
-
       task
     end
 
@@ -27,10 +26,10 @@ module Avid
     def intern_play(task, **params)
       play = task.play_class.new(**params)
 
-      @plays[play] ||= task.dup.tap do |t|
-        play.setup
-        t.play = play
-      end
+      return @plays[play] if @plays.include?(play)
+
+      play.setup
+      @plays[play] = task.dup.tap { |t| t.play = play }
     end
 
     def default_play_class(&block)
