@@ -1,7 +1,12 @@
 module Avid
   class Task < Rake::Task
+    extend Forwardable
+
     attr_accessor :play_class
     attr_accessor :play
+
+    def_delegators :play_class, :worker, :volatile?
+    def_delegators :play, :params, :hash
 
     def initialize(task_name, app)
       super(task_name, app)

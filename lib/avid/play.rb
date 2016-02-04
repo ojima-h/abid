@@ -10,7 +10,9 @@ module Avid
 
     def initialize(params)
       @prerequisites = []
+
       @params = ParamsParser.parse(params, params_spec)
+      @params = @params.sort.to_h # avoid ambiguity of keys order
       @params.freeze
     end
 
@@ -71,6 +73,14 @@ module Avid
         end
 
         define_method(name) { self.class.send(name) }
+      end
+
+      def volatile(v = true)
+        @volatile = v
+      end
+
+      def volatile?
+        @volatile
       end
     end
 

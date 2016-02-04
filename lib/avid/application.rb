@@ -3,24 +3,29 @@ module Avid
     include Avid::TaskManager
 
     attr_reader :executor
+    attr_reader :config
+    attr_reader :state_manager
 
     def initialize
       super
-      @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb) << avidfile
-      @executor = TaskExecutor.new(self)
-    end
-
-    def name
-      'avid'
-    end
-
-    def dry_run?
-      @dry_run
+      @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb)
     end
 
     def run
       Rake.application = self
       super
+    end
+
+    def init(app_name = 'avid')
+      super(app_name)
+
+      standard_exception_handling do
+        load_builtin_tasks
+        @config = IniFile.new(content: default_config)
+        @config.merge!(IniFile.load('config/avid.cfg'))
+
+        @executor = TaskExecutor.new(self)
+      end
     end
 
     def run_with_threads
@@ -33,6 +38,14 @@ module Avid
       name, args = parse_task_string(task_string)
       t = self[name]
       executor.invoke(t, *args)
+    end
+
+    def default_config
+      {
+        'avid' => {
+          'database_url' => 'sqlite://' + File.join(Dir.pwd, 'avid.db')
+        }
+      }
     end
 
     def sort_options(options)
@@ -66,11 +79,6 @@ module Avid
 
     private
 
-    # allows the `avid install` task to load without a avidfile
-    def avidfile
-      File.expand_path(File.join(File.dirname(__FILE__), '..', 'Avidfile'))
-    end
-
     def version
       ['--version', '-V',
        'Display the program version.',
@@ -79,6 +87,10 @@ module Avid
          exit
        end
       ]
+    end
+
+    def load_builtin_tasks
+      Rake.load_rakefile(File.expand_path('../../Avidfile.rb', __FILE__))
     end
   end
 end

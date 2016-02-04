@@ -25,10 +25,14 @@ module Avid
       )
     end
 
-    def worker(name = nil)
-      name = (name || :default).to_sym
-      fail "worker #{name} is not defined" unless workers.include?(name)
-      workers[name]
+    def worker_for(task)
+      if task.is_a? Avid::Task
+        name = (task.worker || :default).to_sym
+        fail "worker #{name} is not defined" unless workers.include?(name)
+        workers[name]
+      else
+        workers[:default]
+      end
     end
 
     def shutdown
@@ -52,11 +56,14 @@ module Avid
 
         return @futures[task.object_id] if @futures.include?(task.object_id)
 
-        if task.is_a? Avid::Task
-          executor = worker(task.play.worker)
-        else
-          executor = worker
+        state = State.find(task)
+        if state.successed?
+          application.trace "** Skip #{task.name}" if application.options.trace
+          @futures[task.object_id] = Concurrent::Future.execute { false }
+          return @futures[task.object_id]
         end
+
+        executor = worker_for(task)
 
         preq_futures = invoke_prerequisites(task, task_args, new_chain)
 
@@ -64,7 +71,9 @@ module Avid
           executor,
           *preq_futures
         ) do
-          execute(task, task_args) if task.needed?
+          state.lock do
+            execute(task, task_args) if task.needed?
+          end
         end
       end
     end
