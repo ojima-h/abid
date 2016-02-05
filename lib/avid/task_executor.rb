@@ -71,7 +71,7 @@ module Avid
           executor,
           *preq_futures
         ) do
-          state.lock do
+          state.session do
             execute(task, task_args) if task.needed?
           end
         end

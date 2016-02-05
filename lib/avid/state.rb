@@ -58,7 +58,7 @@ module Avid
       state == FAILED
     end
 
-    def lock
+    def session
       if !volatile?
         begin
           start_session

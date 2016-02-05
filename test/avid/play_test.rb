@@ -1,7 +1,7 @@
 require 'test_helper'
 
 module Avid
-  class PlayTest < Minitest::Test
+  class PlayTest < AvidTest
     class SamplePlay < Avid::Play
       worker :dummy_worker
 

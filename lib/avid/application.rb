@@ -77,6 +77,10 @@ module Avid
       end.parse!
     end
 
+    def database
+      @database ||= Sequel.connect(config['avid']['database_url'])
+    end
+
     private
 
     def version

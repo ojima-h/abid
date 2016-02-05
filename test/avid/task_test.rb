@@ -1,7 +1,7 @@
 require 'test_helper'
 
 module Avid
-  class TaskTest < Minitest::Test
+  class TaskTest < AvidTest
     include Avid::DSL
 
     def setup

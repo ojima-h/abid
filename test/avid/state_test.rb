@@ -1,6 +1,8 @@
 require 'test_helper'
 
 module Avid
-  class StateTest < Minitest::Test
+  class StateTest < AvidTest
+    def test_lock
+    end
   end
 end
