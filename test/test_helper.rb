@@ -14,7 +14,6 @@ class AvidTest < Minitest::Test
   def run(*args, &block)
     Rake.stub(:application, app) do
       app.database[:states].delete
-
       super
     end
   end

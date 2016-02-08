@@ -6,16 +6,6 @@ module Avid
     SUCCESSED = 2
     FAILED = 3
 
-    def self.database
-      @database ||= Sequel.connect(Rake.application.config['avid']['database_url'])
-    end
-
-    def self.dataset
-      @dataset ||= database[:states]
-    end
-
-    def_delegators 'self.class', :database, :dataset
-
     def self.find(task)
       new(task)
     end
@@ -23,6 +13,14 @@ module Avid
     def initialize(task)
       @task = task
       reload
+    end
+
+    def database
+      Rake.application.database
+    end
+
+    def dataset
+      database[:states]
     end
 
     def volatile?

@@ -18,8 +18,7 @@ module Avid
     end
 
     def setup
-      @app = Avid::Application.new
-      @task = Avid::Task.new('sample', @app)
+      @task = Avid::Task.new('sample', app)
       SamplePlay.task = @task
     end
 
