@@ -40,6 +40,10 @@ module Avid
       end
     end
 
+    def id
+      @record[:id] if @record
+    end
+
     def state
       @record[:state] if @record
     end
@@ -90,10 +94,10 @@ module Avid
           id = dataset.insert(
             digest: digest,
             name: @task.name,
-            params: serailize(@task.params),
+            params: serialize(@task.params),
             **new_state
           )
-          @record = { id: id }
+          @record = { id: id, **new_state }
         end
       end
     end
@@ -102,13 +106,14 @@ module Avid
       return unless @record
       state = error ? FAILED : SUCCESSED
       dataset.where(id: @record[:id]).update(state: state, end_time: Time.now)
+      reload
     end
 
     def digest
-      Digest::MD5.hexdigest(@task.name + "\n" + serailize(@task.params))
+      Digest::MD5.hexdigest(@task.name + "\n" + serialize(@task.params))
     end
 
-    def serailize(params)
+    def serialize(params)
       YAML.dump(params)
     end
 
