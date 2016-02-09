@@ -11,6 +11,10 @@ module Avid
     def default_play_class(&block)
       Rake.application.default_play_class(&block)
     end
+
+    def helpers(*extensions, &block)
+      Avid::Play.helpers(*extensions, &block)
+    end
   end
 end
 

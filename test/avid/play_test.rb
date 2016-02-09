@@ -19,6 +19,11 @@ module Avid
 
     def setup
       @task = Avid::Task.new('sample', app)
+      SamplePlay.helpers do
+        def sample_helper
+          :sample
+        end
+      end
       SamplePlay.task = @task
     end
 
@@ -44,6 +49,11 @@ module Avid
 
       assert !play1.eql?(play2)
       assert play1.eql?(play3)
+    end
+
+    def test_helper
+      play = SamplePlay.new(date: '2000-01-01', dummy: 'foo')
+      assert_equal :sample, play.sample_helper
     end
   end
 end
