@@ -82,6 +82,11 @@ module Avid
       def volatile?
         @volatile
       end
+
+      def helpers(*extensions, &block)
+        class_eval(&block) if block_given?
+        include(*extensions) if extensions.any?
+      end
     end
 
     define_attribute :worker
