@@ -1,11 +1,11 @@
 task default: :sample
 
-desc "sample task"
+desc 'sample task'
 play :sample do
   param :date, type: :date
 
   def setup
-    needs "parents:sample", date: date - 1
+    needs 'parents:sample', date: date - 1
   end
 
   def run
@@ -14,7 +14,7 @@ play :sample do
 end
 
 namespace :parents do
-  desc "sample parent task"
+  desc 'sample parent task'
   play :sample do
     param :date, type: :date
 
@@ -23,3 +23,11 @@ namespace :parents do
     end
   end
 end
+
+desc 'broken task'
+play :failure do
+  def run
+    fail
+  end
+end
+
