@@ -1,7 +1,5 @@
 require 'bundler/gem_tasks'
 require 'rake/testtask'
-require 'sqlite3'
-require 'sequel'
 
 Rake::TestTask.new(:test) do |t|
   t.libs << 'test'
@@ -14,6 +12,9 @@ task :default => :test
 namespace :db do
   desc 'Run migrations'
   task :migrate, [:version] do |_t, args|
+    require 'sqlite3'
+    require 'sequel'
+
     database_url = 'sqlite://' + File.expand_path('../tmp/avid.db', __FILE__)
     migrations_path = File.expand_path('../migrations', __FILE__)
 
