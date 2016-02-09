@@ -4,7 +4,6 @@ module Avid
 
     attr_reader :executor
     attr_reader :config
-    attr_reader :state_manager
 
     def initialize
       super
@@ -20,7 +19,6 @@ module Avid
       super(app_name)
 
       standard_exception_handling do
-        load_builtin_tasks
         @config = IniFile.new(content: default_config)
         @config.merge!(IniFile.load('config/avid.cfg'))
 
@@ -93,8 +91,11 @@ module Avid
       ]
     end
 
-    def load_builtin_tasks
-      Rake.load_rakefile(File.expand_path('../../Avidfile.rb', __FILE__))
+    def load_rakefile
+      super
+      standard_exception_handling do
+        Rake.load_rakefile(File.expand_path('../../Avidfile.rb', __FILE__))
+      end
     end
   end
 end

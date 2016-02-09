@@ -85,5 +85,33 @@ module Avid
         state.session {} # no exception
       end
     end
+
+    def test_list
+      task = Rake.application['test', nil, date: '2000-01-01']
+      state = State.find(task)
+      state.session {}
+
+      states = State.list(started_after: Time.now - 60)
+      assert 1, states.length
+      assert({ date: Date.new(2000, 1, 1) }, states.first[:params])
+      assert_equal :SUCCESSED, states.first[:state]
+    end
+
+    def test_revoke
+      task_1 = Rake.application['test', nil, date: '2000-01-01']
+      state_1 = State.find(task_1)
+      state_1.session {}
+
+      task_2 = Rake.application['test', nil, date: '2000-01-02']
+      state_2 = State.find(task_2)
+      state_2.session {}
+
+      assert_equal 2, State.list.length
+
+      state_1.revoke
+
+      assert_equal 1, State.list.length
+      assert_equal Date.new(2000, 1, 2), State.list.first[:params][:date]
+    end
   end
 end
