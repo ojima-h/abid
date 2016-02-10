@@ -110,8 +110,7 @@ module Avid
 
       state_1.revoke
 
-      assert_equal 1, State.list.length
-      assert_equal Date.new(2000, 1, 2), State.list.first[:params][:date]
+      assert_equal State::REVOKED, State.find(task_1).state
     end
   end
 end

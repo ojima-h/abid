@@ -5,6 +5,7 @@ module Avid
     RUNNING = 1
     SUCCESSED = 2
     FAILED = 3
+    REVOKED = 4
 
     STATES = constants.map { |c| [const_get(c), c] }.to_h
 
@@ -94,8 +95,12 @@ module Avid
       state == FAILED
     end
 
+    def revoked?
+      state == REVOKED
+    end
+
     def session
-      if !volatile?
+      if !volatile? && !Rake.application.options.preview
         begin
           start_session
           yield
@@ -108,13 +113,14 @@ module Avid
     end
 
     def revoke
-      return if volatile?
+      return if Rake.application.options.preview
+      fail 'cannot revoke volatile task' if volatile?
 
       database.transaction do
         reload
         fail 'task is not executed yet' if id.nil?
         fail 'task is now running' if running?
-        dataset.where(id: id).delete
+        dataset.where(id: id).update(state: REVOKED)
       end
 
       @record = nil
