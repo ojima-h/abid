@@ -56,6 +56,12 @@ module Avid
         when '--execute-print'
           # disable short option
           opt.delete_at(1)
+        when '--dry-run'
+          h = opt.last
+          opt[-1] = lambda do |value|
+            h.call(value)
+            options.disable_state = true
+          end
         when '--version'
           opt[-1] = lambda do |_value|
             puts "Avid Version: #{Avid::VERSION} (Rake Version: #{RAKEVERSION})"
@@ -74,7 +80,10 @@ module Avid
           ],
           ['--preview', '-p',
            'Run tasks in preview mode.',
-           proc { options.preview = true }
+           proc {
+             options.disable_state = true
+             options.preview = true
+           }
           ]
         ]
       )

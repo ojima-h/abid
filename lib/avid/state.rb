@@ -100,7 +100,7 @@ module Avid
     end
 
     def session
-      if !volatile? && !Rake.application.options.preview
+      if !volatile? && !Rake.application.options.disable_state
         begin
           start_session
           yield
@@ -113,7 +113,7 @@ module Avid
     end
 
     def revoke
-      return if Rake.application.options.preview
+      return if Rake.application.options.disable_state
       fail 'cannot revoke volatile task' if volatile?
 
       database.transaction do
