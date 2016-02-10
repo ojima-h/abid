@@ -5,10 +5,45 @@ module Avid
     RUNNING = 1
     SUCCESSED = 2
     FAILED = 3
+    REVOKED = 4
 
-    def self.find(task)
-      new(task)
+    STATES = constants.map { |c| [const_get(c), c] }.to_h
+
+    class <<self
+      def find(task)
+        new(task)
+      end
+
+      def list(pattern: nil, started_before: nil, started_after: nil)
+        dataset = Rake.application.database[:states]
+
+        dataset = dataset.where { start_time < started_before } if started_before
+        dataset = dataset.where { start_time > started_after } if started_after
+        dataset = dataset.order(:start_time)
+
+        dataset.map do |record|
+          next if pattern && record[:name] !~ pattern
+          {
+            id: record[:id],
+            name: record[:name],
+            params: deserialize(record[:params]),
+            state: STATES[record[:state]],
+            start_time: record[:start_time],
+            end_time: record[:end_time]
+          }
+        end.compact
+      end
+
+      def serialize(params)
+        YAML.dump(params)
+      end
+
+      def deserialize(bytes)
+        YAML.load(bytes)
+      end
     end
+
+    def_delegators 'self.class', :serialize, :deserialize
 
     def initialize(task)
       @task = task
@@ -60,8 +95,12 @@ module Avid
       state == FAILED
     end
 
+    def revoked?
+      state == REVOKED
+    end
+
     def session
-      if !volatile?
+      if !volatile? && !Rake.application.options.disable_state
         begin
           start_session
           yield
@@ -71,6 +110,20 @@ module Avid
       else
         yield
       end
+    end
+
+    def revoke
+      return if Rake.application.options.disable_state
+      fail 'cannot revoke volatile task' if volatile?
+
+      database.transaction do
+        reload
+        fail 'task is not executed yet' if id.nil?
+        fail 'task is now running' if running?
+        dataset.where(id: id).update(state: REVOKED)
+      end
+
+      @record = nil
     end
 
     private
@@ -111,14 +164,6 @@ module Avid
 
     def digest
       Digest::MD5.hexdigest(@task.name + "\n" + serialize(@task.params))
-    end
-
-    def serialize(params)
-      YAML.dump(params)
-    end
-
-    def deserialize(bytes)
-      YAML.load(bytes)
     end
   end
 end

@@ -48,6 +48,10 @@ module Avid
         significant_params.eql?(other.significant_params)
     end
 
+    def preview?
+      application.options.preview
+    end
+
     class << self
       attr_accessor :task
 

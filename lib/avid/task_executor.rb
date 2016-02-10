@@ -52,28 +52,36 @@ module Avid
     def invoke_with_call_chain(task, task_args, invocation_chain) # :nodoc:
       new_chain = Rake::InvocationChain.append(task, invocation_chain)
       @lock.synchronize do
-        application.trace "** Invoke #{task.name}" if application.options.trace
-
         return @futures[task.object_id] if @futures.include?(task.object_id)
 
+        executor = worker_for(task)
         state = State.find(task)
-        if state.successed?
+
+        if !application.options.check_prerequisites && state.successed?
           application.trace "** Skip #{task.name}" if application.options.trace
           @futures[task.object_id] = Concurrent::Future.execute { false }
           return @futures[task.object_id]
         end
 
-        executor = worker_for(task)
+        application.trace "** Invoke #{task.name}" if application.options.trace
 
         preq_futures = invoke_prerequisites(task, task_args, new_chain)
 
         @futures[task.object_id] = Concurrent.dataflow_with!(
           executor,
           *preq_futures
-        ) do
+        ) do |*rets|
+          if application.options.check_prerequisites && \
+             !state.revoked? && \
+             !rets.any? # if all the prerequesites are skipped
+            application.trace "** Skip #{task.name}" if application.options.trace
+            next false
+          end
+
           state.session do
             execute(task, task_args) if task.needed?
           end
+          true
         end
       end
     end

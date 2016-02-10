@@ -7,7 +7,11 @@ class AvidTest < Minitest::Test
   def app
     @app ||= Avid::Application.new.tap do |app|
       app.init
-      app.config['avid']['database_url'] = 'sqlite://' + File.expand_path('../../tmp/avid.db', __FILE__)
+      app.config['avid database'] = {
+        'adapter' => 'sqlite',
+        'database' => File.expand_path('../../tmp/avid.db', __FILE__),
+        'max_connections' => 1
+      }
     end
   end
 

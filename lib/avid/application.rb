@@ -4,7 +4,6 @@ module Avid
 
     attr_reader :executor
     attr_reader :config
-    attr_reader :state_manager
 
     def initialize
       super
@@ -20,7 +19,6 @@ module Avid
       super(app_name)
 
       standard_exception_handling do
-        load_builtin_tasks
         @config = IniFile.new(content: default_config)
         @config.merge!(IniFile.load('config/avid.cfg'))
 
@@ -41,15 +39,54 @@ module Avid
     end
 
     def default_config
+      {}
+    end
+
+    def default_database_config
       {
-        'avid' => {
-          'database_url' => 'sqlite://' + File.join(Dir.pwd, 'avid.db')
-        }
+        adapter: 'sqlite',
+        database: File.join(Dir.pwd, 'avid.db'),
+        max_connections: 1
       }
     end
 
-    def sort_options(options)
-      super.push(version)
+    def standard_rake_options
+      super.each do |opt|
+        case opt.first
+        when '--execute-print'
+          # disable short option
+          opt.delete_at(1)
+        when '--dry-run'
+          h = opt.last
+          opt[-1] = lambda do |value|
+            h.call(value)
+            options.disable_state = true
+          end
+        when '--version'
+          opt[-1] = lambda do |_value|
+            puts "Avid Version: #{Avid::VERSION} (Rake Version: #{RAKEVERSION})"
+            exit
+          end
+        end
+      end
+    end
+
+    def avid_options # :nodoc:
+      sort_options(
+        [
+          ['--check-parents', '-c',
+           'Run the task if the parents was updated.',
+           proc { options.check_prerequisites = true }
+          ],
+          ['--preview', '-p',
+           'Run tasks in preview mode.',
+           proc {
+             options.disable_state = true
+             options.preview = true
+           }
+          ]
+        ]
+      )
     end
 
     def handle_options
@@ -63,38 +100,40 @@ module Avid
         opts.separator '    bundle exec avid -T'
         opts.separator ''
         opts.separator 'Invoke (or simulate invoking) a task:'
-        opts.separator '    bundle exec avid [--dry-run] TASK'
+        opts.separator '    bundle exec avid [--dry-run | --preview] TASK'
+        opts.separator ''
+        opts.separator 'Avid options:'
+        avid_options.each { |args| opts.on(*args) }
         opts.separator ''
         opts.separator 'Advanced options:'
+        standard_rake_options.each { |args| opts.on(*args) }
 
         opts.on_tail('-h', '--help', '-H', 'Display this help message.') do
           puts opts
           exit
         end
 
-        standard_rake_options.each { |args| opts.on(*args) }
         opts.environment('RAKEOPT')
       end.parse!
     end
 
     def database
-      @database ||= Sequel.connect(config['avid']['database_url'])
+      return @database if @database
+      if config.sections.include?('avid database')
+        cfg = config['avid database'].map { |k, v| [k.to_sym, v] }.to_h
+      else
+        cfg = default_database_config
+      end
+      @database = Sequel.connect(**cfg)
     end
 
     private
 
-    def version
-      ['--version', '-V',
-       'Display the program version.',
-       lambda do |_value|
-         puts "Avid Version: #{Avid::VERSION} (Rake Version: #{RAKEVERSION})"
-         exit
-       end
-      ]
-    end
-
-    def load_builtin_tasks
-      Rake.load_rakefile(File.expand_path('../../Avidfile.rb', __FILE__))
+    def load_rakefile
+      super
+      standard_exception_handling do
+        Rake.load_rakefile(File.expand_path('../../Avidfile.rb', __FILE__))
+      end
     end
   end
 end
