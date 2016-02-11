@@ -5,7 +5,7 @@ module Avid
     end
 
     def define_worker(name, thread_count)
-      Rake.application.executor.define_worker(name, thread_count)
+      Rake.application.worker.define(name, thread_count)
     end
 
     def default_play_class(&block)

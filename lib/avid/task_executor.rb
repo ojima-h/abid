@@ -1,43 +1,11 @@
 module Avid
   class TaskExecutor
     attr_reader :application
-    attr_reader :workers
 
     def initialize(application)
       @application = application
       @lock = Monitor.new
       @futures = {}
-      @workers = {}
-
-      define_worker(:default,
-                    application.options.thread_pool_size || Rake.suggested_thread_count - 1)
-      define_worker(:serial, 1)
-    end
-
-    def define_worker(name, thread_count)
-      name = name.to_sym
-      fail "worker #{name} already defined" if workers.include?(name)
-      workers[name] = Concurrent::FixedThreadPool.new(
-        thread_count,
-        idletime: FIXNUM_MAX
-      )
-    end
-
-    def worker_for(task)
-      if task.is_a? Avid::Task
-        name = (task.worker || :default).to_sym
-        fail "worker #{name} is not defined" unless workers.include?(name)
-        workers[name]
-      else
-        workers[:default]
-      end
-    end
-
-    def shutdown
-      workers.each do |_, worker|
-        worker.shutdown
-        worker.wait_for_termination
-      end
     end
 
     def invoke(task, *args)
@@ -52,7 +20,7 @@ module Avid
       @lock.synchronize do
         return @futures[task.object_id] if @futures.include?(task.object_id)
 
-        executor = worker_for(task)
+        executor = application.worker[(task.is_a?(Avid::Task) && task.worker ? task.worker : :default)]
         state = State.find(task)
 
         # check if running

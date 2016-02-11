@@ -3,12 +3,15 @@ module Avid
     include Avid::TaskManager
 
     attr_reader :executor
+    attr_reader :worker
     attr_reader :config
 
     def initialize
       super
       @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb)
+      @executor = TaskExecutor.new(self)
       @waiter = Waiter.new
+      @worker = Worker.new(self)
     end
 
     def run
@@ -22,8 +25,6 @@ module Avid
       standard_exception_handling do
         @config = IniFile.new(content: default_config)
         @config.merge!(IniFile.load('config/avid.cfg'))
-
-        @executor = TaskExecutor.new(self)
       end
     end
 

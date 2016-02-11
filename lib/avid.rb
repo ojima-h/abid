@@ -13,6 +13,7 @@ require 'sequel'
 
 require 'avid/version'
 require 'avid/waiter'
+require 'avid/worker'
 require 'avid/params_parser'
 require 'avid/play'
 require 'avid/state'
