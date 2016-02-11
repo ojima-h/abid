@@ -1,7 +1,5 @@
 module Avid
   class TaskExecutor
-    FIXNUM_MAX = (2**(0.size * 8 - 2) - 1) # :nodoc:
-
     attr_reader :application
     attr_reader :workers
 
