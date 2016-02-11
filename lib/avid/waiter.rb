@@ -65,10 +65,11 @@ module Avid
       now = Time.now.to_f
       elapsed = now - entry.start_time
 
-      if entry.ivar.complete?
-        return # canceled
-      elsif entry.block.call(elapsed)
-        entry.ivar.set(nil)
+      return if entry.ivar.complete? # canceled
+
+      ret = entry.block.call(elapsed)
+      if ret
+        entry.ivar.set(ret)
       elsif entry.timeout > 0 && entry.timeout < elapsed
         fail 'timeout exceeded'
       else
