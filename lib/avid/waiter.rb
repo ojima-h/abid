@@ -60,8 +60,9 @@ module Avid
 
     def proc_entry(entry)
       now = Time.now.to_f
-
       sleep(entry.next_time - now) if now < entry.next_time
+
+      now = Time.now.to_f
       elapsed = now - entry.start_time
 
       if entry.ivar.complete?
