@@ -7,10 +7,12 @@ require 'time'
 require 'yaml'
 require 'concurrent'
 require 'inifile'
+require 'rbtree'
 require 'sqlite3'
 require 'sequel'
 
 require 'avid/version'
+require 'avid/waiter'
 require 'avid/params_parser'
 require 'avid/play'
 require 'avid/state'
@@ -21,4 +23,5 @@ require 'avid/dsl_definition'
 require 'avid/application'
 
 module Avid
+  FIXNUM_MAX = (2**(0.size * 8 - 2) - 1) # :nodoc:
 end

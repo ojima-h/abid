@@ -8,6 +8,7 @@ module Avid
     def initialize
       super
       @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb)
+      @waiter = Waiter.new
     end
 
     def run
@@ -80,10 +81,16 @@ module Avid
           ],
           ['--preview', '-p',
            'Run tasks in preview mode.',
-           proc {
+           proc do
              options.disable_state = true
              options.preview = true
-           }
+           end
+          ],
+          ['--wait-external-task',
+           'Wait a task finished if it is running in externl process',
+           proc do
+             options.wait_external_task_interval = true
+           end
           ]
         ]
       )
@@ -125,6 +132,10 @@ module Avid
         cfg = default_database_config
       end
       @database = Sequel.connect(**cfg)
+    end
+
+    def wait(**kwargs, &block)
+      @waiter.wait(**kwargs, &block)
     end
 
     private
