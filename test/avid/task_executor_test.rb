@@ -92,5 +92,27 @@ module Avid
     ensure
       app.options.check_prerequisites = false
     end
+
+    def test_external_task_waiting
+      app.options.wait_external_task = true
+      app.options.wait_external_task_interval = 0.1
+
+      task = app['test', nil, date: '2016-02-01']
+      state = State.find(task)
+      state.instance_eval { start_session }
+
+      task_args = Rake::TaskArguments.new([], [])
+      future = app.executor.invoke_with_call_chain(task, task_args,
+                                                   Rake::InvocationChain::EMPTY)
+
+      sleep 0.1
+      assert future.incomplete?
+
+      state.dataset.where(id: state.id).update(state: State::SUCCESSED)
+      sleep 0.1
+      assert future.complete?
+    ensure
+      app.options.wait_external_task = false
+    end
   end
 end

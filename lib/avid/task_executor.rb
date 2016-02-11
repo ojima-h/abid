@@ -55,6 +55,23 @@ module Avid
         executor = worker_for(task)
         state = State.find(task)
 
+        # check if running
+        if application.options.wait_external_task && state.running?
+          application.trace "** Wait #{task.name}" if application.options.trace
+          interval = application.options.wait_external_task_interval || 10
+          timeout = application.options.wait_external_task_timeout || 3600
+          @futures[task.object_id] = application.wait(
+            interval: interval,
+            timeout: timeout
+          ) do
+            state.reload
+            fail 'external task failed' if state.failed?
+            state.successed?
+          end
+          return @futures[task.object_id]
+        end
+
+        # check if successed
         if !application.options.check_prerequisites && state.successed?
           application.trace "** Skip #{task.name}" if application.options.trace
           @futures[task.object_id] = Concurrent::Future.execute { false }
