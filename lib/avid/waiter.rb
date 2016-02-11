@@ -64,7 +64,9 @@ module Avid
       sleep(entry.next_time - now) if now < entry.next_time
       elapsed = now - entry.start_time
 
-      if entry.block.call(elapsed)
+      if entry.ivar.complete?
+        return # canceled
+      elsif entry.block.call(elapsed)
         entry.ivar.set(nil)
       elsif entry.timeout > 0 && entry.timeout < elapsed
         fail 'timeout exceeded'
@@ -73,7 +75,11 @@ module Avid
         push(entry)
       end
     rescue Exception => err
-      entry.ivar.fail(err)
+      begin
+        entry.ivar.fail(err)
+      rescue Concurrent::MultipleAssignmentError
+        nil
+      end
     end
 
     def run_thread
