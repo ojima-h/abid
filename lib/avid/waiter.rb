@@ -58,15 +58,28 @@ module Avid
       e
     end
 
-    def proc_entry(entry)
-      now = Time.now.to_f
-      sleep(entry.next_time - now) if now < entry.next_time
+    def sleep_until_next_time(entry)
+      sleep_time = entry.next_time - Time.now.to_f
+      return true if sleep_time <= 0
 
-      now = Time.now.to_f
-      elapsed = now - entry.start_time
+      @mutex.synchronize do
+        @cv.wait(@mutex, sleep_time)
+
+        entry.next_time <= Time.now.to_f
+      end
+    end
+
+    def proc_entry(entry)
+      unless sleep_until_next_time(entry)
+        # failed to wait. retry.
+        push(entry)
+        return
+      end
 
       return if entry.ivar.complete? # canceled
 
+      now = Time.now.to_f
+      elapsed = now - entry.start_time
       ret = entry.block.call(elapsed)
       if ret
         entry.ivar.set(ret)

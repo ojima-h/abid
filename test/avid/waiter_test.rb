@@ -25,5 +25,17 @@ module Avid
       assert @waiter.empty?
       assert @waiter.alive?
     end
+
+    def test_retry
+      spy = []
+      ivar1 = @waiter.wait(interval: 0.5) { |e| spy << 1 if e > 0.5 }
+      sleep 0.1
+      ivar2 = @waiter.wait(interval: 0.1) { |e| spy << 2 if e > 0.2 }
+
+      ivar1.wait!
+      ivar2.wait!
+
+      assert_equal [2, 1], spy
+    end
   end
 end
