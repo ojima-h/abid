@@ -62,11 +62,9 @@ module Avid
       sleep_time = entry.next_time - Time.now.to_f
       return true if sleep_time <= 0
 
-      @mutex.synchronize do
-        @cv.wait(@mutex, sleep_time)
+      @mutex.synchronize { @cv.wait(@mutex, sleep_time) }
 
-        entry.next_time <= Time.now.to_f
-      end
+      entry.next_time <= Time.now.to_f
     end
 
     def proc_entry(entry)
@@ -82,7 +80,7 @@ module Avid
       elapsed = now - entry.start_time
       ret = entry.block.call(elapsed)
       if ret
-        entry.ivar.set(ret)
+        entry.ivar.try_set(ret)
       elsif entry.timeout > 0 && entry.timeout < elapsed
         fail 'timeout exceeded'
       else
