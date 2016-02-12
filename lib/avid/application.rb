@@ -10,7 +10,6 @@ module Avid
       super
       @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb)
       @futures = {}
-      @waiter = Waiter.new
       @worker = Worker.new(self)
     end
 
@@ -132,10 +131,6 @@ module Avid
         cfg = default_database_config
       end
       @database = Sequel.connect(**cfg)
-    end
-
-    def wait(**kwargs, &block)
-      @waiter.wait(**kwargs, &block)
     end
 
     private
