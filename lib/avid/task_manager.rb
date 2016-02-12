@@ -46,10 +46,12 @@ module Avid
       else
         task_name = task_name.to_s
         t = lookup(task_name, scope)
-        if task.respond_to? :play_class
+        if t.respond_to? :play_class
           t.play_class
+        elsif t.nil?
+          fail "play #{task_name} not found"
         else
-          fail 'task has no play class'
+          fail "task #{task_name} has no play class"
         end
       end
     end

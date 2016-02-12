@@ -105,7 +105,7 @@ module Avid
 
       state_1.revoke
 
-      assert_equal State::REVOKED, State.find(task_1).state
+      assert_nil State.find(task_1).id
     end
   end
 end

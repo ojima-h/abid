@@ -5,7 +5,6 @@ module Avid
     RUNNING = 1
     SUCCESSED = 2
     FAILED = 3
-    REVOKED = 4
 
     STATES = constants.map { |c| [const_get(c), c] }.to_h
 
@@ -95,10 +94,6 @@ module Avid
       state == FAILED
     end
 
-    def revoked?
-      state == REVOKED
-    end
-
     def revoke
       fail 'cannot revoke volatile task' if disabled?
 
@@ -106,7 +101,7 @@ module Avid
         reload
         fail 'task is not executed yet' if id.nil?
         fail 'task is now running' if running?
-        dataset.where(id: id).update(state: REVOKED)
+        dataset.where(id: id).delete
       end
 
       @record = nil
