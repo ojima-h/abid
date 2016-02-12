@@ -6,7 +6,12 @@ module Avid
 
       default_thread_num = @application.options.thread_pool_size || \
                            Rake.suggested_thread_count - 1
-      define(:default, default_thread_num)
+      @pools[:default] = Concurrent::FixedThreadPool.new(
+        default_thread_num,
+        idletime: FIXNUM_MAX
+      )
+
+      @pools[:waiter] = Concurrent::SimpleExecutorService.new
     end
 
     def define(name, thread_count)

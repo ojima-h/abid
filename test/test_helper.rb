@@ -17,6 +17,10 @@ class AvidTest < Minitest::Test
 
   def run(*args, &block)
     Rake.stub(:application, app) do
+      # app.options.trace = true
+      # app.options.backtrace = true
+      # Rake.verbose(true)
+
       app.database[:states].delete
       super
     end
