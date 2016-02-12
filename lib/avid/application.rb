@@ -10,7 +10,6 @@ module Avid
       super
       @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb)
       @futures = {}
-      @waiter = Waiter.new
       @worker = Worker.new(self)
     end
 
@@ -20,12 +19,23 @@ module Avid
     end
 
     def init(app_name = 'avid')
-      super(app_name)
-
       standard_exception_handling do
         @config = IniFile.new(content: default_config)
         @config.merge!(IniFile.load('config/avid.cfg'))
       end
+
+      super(app_name)
+    end
+
+    def load_rakefile
+      standard_exception_handling do
+        core_rakefile = File.expand_path('../../Avidfile.rb', __FILE__)
+        Rake.load_rakefile(core_rakefile)
+        glob(File.expand_path('../tasks/*.rake', __FILE__)) do |name|
+          Rake.load_rakefile name
+        end
+      end
+      super
     end
 
     def run_with_threads
@@ -132,19 +142,6 @@ module Avid
         cfg = default_database_config
       end
       @database = Sequel.connect(**cfg)
-    end
-
-    def wait(**kwargs, &block)
-      @waiter.wait(**kwargs, &block)
-    end
-
-    private
-
-    def load_rakefile
-      super
-      standard_exception_handling do
-        Rake.load_rakefile(File.expand_path('../../Avidfile.rb', __FILE__))
-      end
     end
   end
 end

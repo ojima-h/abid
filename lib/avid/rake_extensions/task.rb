@@ -30,7 +30,7 @@ module Avid
 
           preq_futures = async_invoke_prerequisites(task_args, new_chain)
 
-          future = async_invoke_after_prerequisites(preq_futures)
+          future = async_invoke_after_prerequisites(task_args, preq_futures)
 
           application.futures[object_id] = future
         end
@@ -54,9 +54,9 @@ module Avid
         end
       end
 
-      def async_invoke_after_prerequisites(preq_futures)
+      def async_invoke_after_prerequisites(task_args, preq_futures)
         if preq_futures.empty?
-          async_execute_with_session(false)
+          async_execute_with_session(task_args, false)
         else
           result = Concurrent::IVar.new
           counter = Concurrent::DependencyCounter.new(preq_futures.size) do
@@ -66,7 +66,7 @@ module Avid
 
               preq_updated = preq_futures.map(&:value!).any?
 
-              future = async_execute_with_session(preq_updated)
+              future = async_execute_with_session(task_args, preq_updated)
 
               future.add_observer do |_time, value, reason|
                 reason.nil? ? result.set(value) : result.fail(reason)
@@ -80,7 +80,7 @@ module Avid
         end
       end
 
-      def async_execute_with_session(prerequisites_updated = false)
+      def async_execute_with_session(task_args, prerequisites_updated = false)
         if (state.successed? && !prerequisites_updated) || !needed?
           application.trace "** Skip #{name}" if application.options.trace
           return Concurrent::IVar.new(false)
@@ -93,7 +93,7 @@ module Avid
         pool = application.worker[worker]
         future = Concurrent::Future.execute(executor: pool) do
           begin
-            execute
+            execute(task_args)
             true
           ensure
             state.close_session($ERROR_INFO)
