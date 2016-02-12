@@ -16,7 +16,7 @@ module Avid
     def [](task_name, scopes = nil, **params)
       task = super(task_name, scopes)
 
-      if task.is_a?(Avid::Task)
+      if task.respond_to? :play_class
         intern_play(task, **params)
       else
         task
@@ -46,10 +46,10 @@ module Avid
       else
         task_name = task_name.to_s
         t = lookup(task_name, scope)
-        if t.is_a? Avid::Task
+        if task.respond_to? :play_class
           t.play_class
         else
-          fail 'task must be an Avid::Task'
+          fail 'task has no play class'
         end
       end
     end
