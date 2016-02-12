@@ -58,12 +58,12 @@ module Avid
       database[:states]
     end
 
-    def volatile?
-      !@task.is_a?(Avid::Task) || @task.volatile?
+    def disabled?
+      @task.volatile? || Rake.application.options.disable_state
     end
 
     def reload
-      return if volatile?
+      return if disabled?
 
       if @record
         id = @record[:id]
@@ -99,22 +99,8 @@ module Avid
       state == REVOKED
     end
 
-    def session
-      if !volatile? && !Rake.application.options.disable_state
-        begin
-          start_session
-          yield
-        ensure
-          close_session($ERROR_INFO)
-        end
-      else
-        yield
-      end
-    end
-
     def revoke
-      return if Rake.application.options.disable_state
-      fail 'cannot revoke volatile task' if volatile?
+      fail 'cannot revoke volatile task' if disabled?
 
       database.transaction do
         reload
@@ -126,13 +112,13 @@ module Avid
       @record = nil
     end
 
-    private
-
     def start_session
+      return true if disabled?
+
       database.transaction do
         reload
 
-        fail 'task is now running' if running?
+        return false if running?
 
         new_state = {
           state: RUNNING,
@@ -152,10 +138,13 @@ module Avid
           )
           @record = { id: id, **new_state }
         end
+
+        true
       end
     end
 
     def close_session(error = nil)
+      return if disabled?
       return unless @record
       state = error ? FAILED : SUCCESSED
       dataset.where(id: @record[:id]).update(state: state, end_time: Time.now)

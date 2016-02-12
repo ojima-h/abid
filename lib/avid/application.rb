@@ -2,13 +2,16 @@ module Avid
   class Application < Rake::Application
     include Avid::TaskManager
 
-    attr_reader :executor
+    attr_reader :worker
     attr_reader :config
+    attr_reader :futures
 
     def initialize
       super
       @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb)
+      @futures = {}
       @waiter = Waiter.new
+      @worker = Worker.new(self)
     end
 
     def run
@@ -22,21 +25,18 @@ module Avid
       standard_exception_handling do
         @config = IniFile.new(content: default_config)
         @config.merge!(IniFile.load('config/avid.cfg'))
-
-        @executor = TaskExecutor.new(self)
       end
     end
 
     def run_with_threads
       yield
     ensure
-      executor.shutdown
+      worker.shutdown
     end
 
     def invoke_task(task_string) # :nodoc:
       name, args = parse_task_string(task_string)
-      t = self[name]
-      executor.invoke(t, *args)
+      self[name].async_invoke(*args).value!
     end
 
     def default_config
