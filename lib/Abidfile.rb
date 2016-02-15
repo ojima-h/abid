@@ -9,7 +9,7 @@ namespace :state do
     param :started_before, type: :time, default: nil
 
     def run
-      states = Avid::State.list(
+      states = Abid::State.list(
         started_after: started_after,
         started_before: started_before
       )
@@ -56,14 +56,14 @@ namespace :state do
   desc 'Delete play history'
   task :revoke, [:task] do |_t, args|
     task = Rake.application[args[:task]]
-    state = Avid::State.find(task)
+    state = Abid::State.find(task)
     state.revoke
   end
 end
 
 desc 'Run migrations'
 task :migrate, [:version] do |_t, args|
-  database_url = Rake.application.config['avid']['database_url']
+  database_url = Rake.application.config['abid']['database_url']
   migrations_path = File.expand_path('../../migrations', __FILE__)
 
   require 'sequel'

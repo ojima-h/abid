@@ -1,4 +1,4 @@
-module Avid
+module Abid
   # non-block waiter
   class Waiter
     Entry = Struct.new(:ivar, :start_time, :next_time,

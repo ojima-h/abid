@@ -1,4 +1,4 @@
-module Avid
+module Abid
   class State
     extend Forwardable
 

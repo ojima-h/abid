@@ -1,7 +1,7 @@
-module Avid
+module Abid
   module DSL
     def play(*args, &block)
-      Avid::Task.define_play(*args, &block)
+      Abid::Task.define_play(*args, &block)
     end
 
     def define_worker(name, thread_count)
@@ -13,9 +13,9 @@ module Avid
     end
 
     def helpers(*extensions, &block)
-      Avid::Play.helpers(*extensions, &block)
+      Abid::Play.helpers(*extensions, &block)
     end
   end
 end
 
-extend Avid::DSL
+extend Abid::DSL

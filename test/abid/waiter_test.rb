@@ -1,7 +1,7 @@
 require 'test_helper'
 
-module Avid
-  class WaiterTest < AvidTest
+module Abid
+  class WaiterTest < AbidTest
     def setup
       @waiter = Waiter.new
     end

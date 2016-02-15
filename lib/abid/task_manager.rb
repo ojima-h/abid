@@ -1,4 +1,4 @@
-module Avid
+module Abid
   module TaskManager
     def initialize
       super
@@ -34,9 +34,9 @@ module Avid
 
     def default_play_class(&block)
       if block_given?
-        @default_play_class = Class.new(Avid::Play, &block)
+        @default_play_class = Class.new(Abid::Play, &block)
       else
-        @default_play_class ||= Avid::Play
+        @default_play_class ||= Abid::Play
       end
     end
 

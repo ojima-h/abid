@@ -1,17 +1,17 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'avid/version'
+require 'abid/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "avid"
-  spec.version       = Avid::VERSION
+  spec.name          = "abid"
+  spec.version       = Abid::VERSION
   spec.authors       = ["Hikaru Ojima"]
   spec.email         = ["amijo4rihaku@gmail.com"]
 
-  spec.summary       = "Avid is a dataflow execution engine for ruby"
-  spec.description   = "Avid is a dataflow execution engine for ruby"
-  spec.homepage      = "https://github.com/ojima-h/avid"
+  spec.summary       = "Abid is a dataflow execution engine for ruby"
+  spec.description   = "Abid is a dataflow execution engine for ruby"
+  spec.homepage      = "https://github.com/ojima-h/abid"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or

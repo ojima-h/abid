@@ -1,10 +1,10 @@
 require 'test_helper'
 
-module Avid
+module Abid
   module RakeExtensions
-    class TaskTest < AvidTest
+    class TaskTest < AbidTest
       include Rake::DSL
-      include Avid::DSL
+      include Abid::DSL
 
       def setup
         @spy = spy_ = []

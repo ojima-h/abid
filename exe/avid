@@ -1,4 +1,0 @@
-#!/usr/bin/env ruby
-require 'avid'
-
-Avid::Application.new.run

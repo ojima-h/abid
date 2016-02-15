@@ -1,15 +1,15 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
-require 'avid'
+require 'abid'
 
 require 'minitest/autorun'
 
-class AvidTest < Minitest::Test
+class AbidTest < Minitest::Test
   def app
-    @app ||= Avid::Application.new.tap do |app|
+    @app ||= Abid::Application.new.tap do |app|
       app.init
-      app.config['avid database'] = {
+      app.config['abid database'] = {
         'adapter' => 'sqlite',
-        'database' => File.expand_path('../../tmp/avid.db', __FILE__),
+        'database' => File.expand_path('../../tmp/abid.db', __FILE__),
         'max_connections' => 1
       }
     end

@@ -1,8 +1,8 @@
 require 'test_helper'
 
-module Avid
-  class PlayTest < AvidTest
-    class SamplePlay < Avid::Play
+module Abid
+  class PlayTest < AbidTest
+    class SamplePlay < Abid::Play
       worker :dummy_worker
 
       param :date, type: :date
@@ -18,7 +18,7 @@ module Avid
     end
 
     def setup
-      @task = Avid::Task.new('sample', app)
+      @task = Abid::Task.new('sample', app)
       SamplePlay.helpers do
         def sample_helper
           :sample
@@ -32,7 +32,7 @@ module Avid
       play.setup
       ret = play.run
 
-      assert_empty Avid::Play.params_spec
+      assert_empty Abid::Play.params_spec
       assert_equal :dummy_worker, ret[0]
       assert_equal Date.new(2000, 1, 1), ret[1]
       assert_equal 'foo', ret[2]

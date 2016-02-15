@@ -1,6 +1,6 @@
-module Avid
+module Abid
   class Application < Rake::Application
-    include Avid::TaskManager
+    include Abid::TaskManager
 
     attr_reader :worker
     attr_reader :config
@@ -8,7 +8,7 @@ module Avid
 
     def initialize
       super
-      @rakefiles = %w(avidfile Avidfile avidfile.rb Avidfile.rb)
+      @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb)
       @futures = {}
       @worker = Worker.new(self)
     end
@@ -18,10 +18,10 @@ module Avid
       super
     end
 
-    def init(app_name = 'avid')
+    def init(app_name = 'abid')
       standard_exception_handling do
         @config = IniFile.new(content: default_config)
-        @config.merge!(IniFile.load('config/avid.cfg'))
+        @config.merge!(IniFile.load('config/abid.cfg'))
       end
 
       super(app_name)
@@ -29,7 +29,7 @@ module Avid
 
     def load_rakefile
       standard_exception_handling do
-        core_rakefile = File.expand_path('../../Avidfile.rb', __FILE__)
+        core_rakefile = File.expand_path('../../Abidfile.rb', __FILE__)
         Rake.load_rakefile(core_rakefile)
         glob(File.expand_path('../tasks/*.rake', __FILE__)) do |name|
           Rake.load_rakefile name
@@ -56,7 +56,7 @@ module Avid
     def default_database_config
       {
         adapter: 'sqlite',
-        database: File.join(Dir.pwd, 'avid.db'),
+        database: File.join(Dir.pwd, 'abid.db'),
         max_connections: 1
       }
     end
@@ -75,14 +75,14 @@ module Avid
           end
         when '--version'
           opt[-1] = lambda do |_value|
-            puts "Avid Version: #{Avid::VERSION} (Rake Version: #{RAKEVERSION})"
+            puts "Abid Version: #{Abid::VERSION} (Rake Version: #{RAKEVERSION})"
             exit
           end
         end
       end
     end
 
-    def avid_options # :nodoc:
+    def abid_options # :nodoc:
       sort_options(
         [
           ['--check-parents', '-c',
@@ -111,16 +111,16 @@ module Avid
       options.trace_output = $stderr
 
       OptionParser.new do |opts|
-        opts.banner = 'See full documentation at https://github.com/ojima-h/avid.'
+        opts.banner = 'See full documentation at https://github.com/ojima-h/abid.'
         opts.separator ''
         opts.separator 'Show available tasks:'
-        opts.separator '    bundle exec avid -T'
+        opts.separator '    bundle exec abid -T'
         opts.separator ''
         opts.separator 'Invoke (or simulate invoking) a task:'
-        opts.separator '    bundle exec avid [--dry-run | --preview] TASK'
+        opts.separator '    bundle exec abid [--dry-run | --preview] TASK'
         opts.separator ''
-        opts.separator 'Avid options:'
-        avid_options.each { |args| opts.on(*args) }
+        opts.separator 'Abid options:'
+        abid_options.each { |args| opts.on(*args) }
         opts.separator ''
         opts.separator 'Advanced options:'
         standard_rake_options.each { |args| opts.on(*args) }
@@ -136,8 +136,8 @@ module Avid
 
     def database
       return @database if @database
-      if config.sections.include?('avid database')
-        cfg = config['avid database'].map { |k, v| [k.to_sym, v] }.to_h
+      if config.sections.include?('abid database')
+        cfg = config['abid database'].map { |k, v| [k.to_sym, v] }.to_h
       else
         cfg = default_database_config
       end
