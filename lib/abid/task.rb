@@ -1,4 +1,4 @@
-module Avid
+module Abid
   class Task < Rake::Task
     extend Forwardable
 

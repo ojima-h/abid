@@ -11,18 +11,18 @@ require 'rbtree'
 require 'sqlite3'
 require 'sequel'
 
-require 'avid/rake_extensions'
-require 'avid/version'
-require 'avid/waiter'
-require 'avid/worker'
-require 'avid/params_parser'
-require 'avid/play'
-require 'avid/state'
-require 'avid/task'
-require 'avid/task_manager'
-require 'avid/dsl_definition'
-require 'avid/application'
+require 'abid/rake_extensions'
+require 'abid/version'
+require 'abid/waiter'
+require 'abid/worker'
+require 'abid/params_parser'
+require 'abid/play'
+require 'abid/state'
+require 'abid/task'
+require 'abid/task_manager'
+require 'abid/dsl_definition'
+require 'abid/application'
 
-module Avid
+module Abid
   FIXNUM_MAX = (2**(0.size * 8 - 2) - 1) # :nodoc:
 end

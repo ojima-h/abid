@@ -1,3 +1,3 @@
-module Avid
+module Abid
   VERSION = "0.2.0"
 end

@@ -1,4 +1,4 @@
-module Avid
+module Abid
   module ParamsParser
     class <<self
       def parse(params, specs)

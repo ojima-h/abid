@@ -1,4 +1,4 @@
-module Avid
+module Abid
   class Worker
     def initialize(application)
       @application = application

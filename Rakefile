@@ -15,7 +15,7 @@ namespace :db do
     require 'sqlite3'
     require 'sequel'
 
-    database_url = 'sqlite://' + File.expand_path('../tmp/avid.db', __FILE__)
+    database_url = 'sqlite://' + File.expand_path('../tmp/abid.db', __FILE__)
     migrations_path = File.expand_path('../migrations', __FILE__)
 
     require 'sequel'

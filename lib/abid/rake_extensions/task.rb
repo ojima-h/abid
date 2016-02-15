@@ -1,4 +1,4 @@
-module Avid
+module Abid
   module RakeExtensions
     module Task
       def volatile?

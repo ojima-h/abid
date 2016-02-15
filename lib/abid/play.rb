@@ -1,6 +1,6 @@
 require 'forwardable'
 
-module Avid
+module Abid
   class Play
     extend Forwardable
     def_delegators :task, :application, :name, :scope
@@ -44,7 +44,7 @@ module Avid
     end
 
     def eql?(other)
-      other.is_a?(Avid::Play) && \
+      other.is_a?(Abid::Play) && \
         significant_params.eql?(other.significant_params)
     end
 

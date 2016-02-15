@@ -1,6 +1,6 @@
-module Avid
+module Abid
   module RakeExtensions
-    require 'avid/rake_extensions/task'
+    require 'abid/rake_extensions/task'
     Rake::Task.include Task
   end
 end

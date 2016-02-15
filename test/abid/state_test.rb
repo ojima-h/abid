@@ -1,8 +1,8 @@
 require 'test_helper'
 
-module Avid
-  class StateTest < AvidTest
-    include Avid::DSL
+module Abid
+  class StateTest < AbidTest
+    include Abid::DSL
 
     def setup
       play(:test) do
