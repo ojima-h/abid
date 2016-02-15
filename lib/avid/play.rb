@@ -55,6 +55,11 @@ module Avid
     class << self
       attr_accessor :task
 
+      def inherited(child)
+        attributes.each { |k, v| child.attributes[k] = v.dup }
+        params_spec.each { |k, v| child.params_spec[k] = v.dup }
+      end
+
       def param(name, **param_spec)
         params_spec[name] = { significant: true }.merge(param_spec)
 
