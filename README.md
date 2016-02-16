@@ -1,28 +1,77 @@
 # Abid
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/abid`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Abid is a simple Workflow Engine based on Rake.
 
 ## Installation
 
-Add this line to your application's Gemfile:
+1. Install abid gem.
 
-```ruby
-gem 'abid'
-```
+    Add this line to your application's Gemfile:
 
-And then execute:
+    ```ruby
+    gem 'abid'
+    ```
 
-    $ bundle
+    And then execute:
 
-Or install it yourself as:
+        $ bundle
 
-    $ gem install abid
+    Or install it yourself as:
+
+        $ gem install abid
+
+    After installed execute:
+
+2. Setup a database.
+
+        $ bundle exec abid db:migrate
 
 ## Usage
 
-TODO: Write usage instructions here
+Abid is an extention of rake, so you can use any rake syntax.
+
+First, you must write a “Abidfile” file which contains the tasks:
+
+```ruby
+require 'open-uri'
+
+task default: 'count'
+
+play :fetch_source do
+  param :date, type: :date
+
+  def run
+    mkdir 'out'
+    open('http://example.com') do |f|
+      File.write("out/#{date.strftime('%Y-%m-%d')}/example.com", f.read)
+    end
+  end
+end
+
+play :count do
+  param :date, type: :date
+
+  def setup
+    needs 'fetch_source', date: date
+  end
+
+  def run
+    puts File.read("out/#{date.strftime('%Y-%m-%d')}/example.com").lines.length
+  end
+end
+```
+
+Then you can invoke the task:
+
+```
+$ bundle exec abid count date=2016-01-01
+```
+
+This Abidfile has two tasks: `fetch_source` and `count`. They can be treated as a normal rake task, but they have some additional features:
+
+* A play can take parameters. They are declared with `param` keyword, and passed via environment variables.
+* All play results are saved to the external database. If a play is invoked twice with same parameters, it will be ignored.
+* Depending tasks can be declared in `setup` method. If a depending task is a play task, parameters can be passed.
 
 ## Development
 
@@ -32,10 +81,9 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/abid. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/ojima-h/abid. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](contributor-covenant.org) code of conduct.
 
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-

@@ -52,7 +52,9 @@ namespace :state do
       end
     end
   end
+end
 
+namespace :db do
   desc 'Delete play history'
   task :revoke, [:task] do |_t, args|
     task = Rake.application[args[:task]]
