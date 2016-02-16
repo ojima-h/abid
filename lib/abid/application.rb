@@ -27,9 +27,19 @@ module Abid
       super(app_name)
     end
 
-    # allows the `abid db:migrate` task to load without a abidfile
+    # allows the built-in tasks to load without a abidfile
     def abidfile
       File.expand_path(File.join(File.dirname(__FILE__), '..', 'Abidfile.rb'))
+    end
+
+    # load built-in tasks
+    def load_rakefile
+      standard_exception_handling do
+        glob(File.expand_path('../tasks/*.rake', __FILE__)) do |name|
+          Rake.load_rakefile name
+        end
+      end
+      super
     end
 
     def run_with_threads
