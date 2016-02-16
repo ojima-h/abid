@@ -14,7 +14,7 @@ module Abid
       end
 
       play(:volatile) do
-        volatile
+        set :volatile, true
       end
     end
 

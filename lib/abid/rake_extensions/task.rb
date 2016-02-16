@@ -5,12 +5,12 @@ module Abid
         true
       end
 
-      def state
-        @state ||= State.find(self)
-      end
-
       def worker
         :default
+      end
+
+      def state
+        @state ||= State.find(self)
       end
 
       def async_invoke(*args)

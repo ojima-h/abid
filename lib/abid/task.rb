@@ -5,12 +5,11 @@ module Abid
     attr_accessor :play_class
     attr_accessor :play
 
-    def_delegators :play_class, :worker, :volatile?
-    def_delegators :play, :params, :hash
+    def_delegators :play, :params, :worker, :volatile?
 
     def initialize(task_name, app)
       super(task_name, app)
-      @actions << proc { |t| t.play.run }
+      @actions << proc { |t| t.play.invoke }
       @actions.freeze
     end
 

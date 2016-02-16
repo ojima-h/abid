@@ -3,7 +3,7 @@ namespace :state do
 
   desc 'Show play histories'
   play :list do
-    volatile
+    set :volatile, true
 
     param :started_after, type: :time, default: nil
     param :started_before, type: :time, default: nil
@@ -31,7 +31,7 @@ namespace :state do
       header = %w(id state name params start_time end_time)
 
       tab_width = header.each_with_index.map do |c, i|
-        [c.length, table.map { |row| row[i].length }.max].max
+        [c.length, table.map { |row| row[i].length }.max || 0].max
       end
 
       header.each_with_index do |c, i|
@@ -59,21 +59,20 @@ namespace :state do
     state = Abid::State.find(task)
     state.revoke
   end
-end
 
-desc 'Run migrations'
-task :migrate, [:version] do |_t, args|
-  database_url = Rake.application.config['abid']['database_url']
-  migrations_path = File.expand_path('../../migrations', __FILE__)
+  desc 'Run migrations'
+  task :migrate, [:version] do |_t, args|
+    migrations_path = File.expand_path('../../migrations', __FILE__)
 
-  require 'sequel'
-  Sequel.extension :migration
-  db = Sequel.connect(database_url)
-  if args[:version]
-    puts "Migrating to version #{args[:version]}"
-    Sequel::Migrator.run(db, migrations_path, target: args[:version].to_i)
-  else
-    puts 'Migrating to latest'
-    Sequel::Migrator.run(db, migrations_path)
+    require 'sequel'
+    Sequel.extension :migration
+    db = Rake.application.database
+    if args[:version]
+      puts "Migrating to version #{args[:version]}"
+      Sequel::Migrator.run(db, migrations_path, target: args[:version].to_i)
+    else
+      puts 'Migrating to latest'
+      Sequel::Migrator.run(db, migrations_path)
+    end
   end
 end
