@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Hikaru Ojima"]
   spec.email         = ["amijo4rihaku@gmail.com"]
 
-  spec.summary       = "Abid is a dataflow execution engine for ruby"
-  spec.description   = "Abid is a dataflow execution engine for ruby"
+  spec.summary       = "Abid is a simple Workflow Engine based on Rake."
+  spec.description   = "Abid is a simple Workflow Engine based on Rake."
   spec.homepage      = "https://github.com/ojima-h/abid"
   spec.license       = "MIT"
 
