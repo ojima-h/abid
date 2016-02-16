@@ -101,7 +101,7 @@ module Abid
     end
 
     def handle_options
-      options.rakelib = ['rakelib']
+      options.rakelib = %w(rakelib tasks)
       options.trace_output = $stderr
 
       OptionParser.new do |opts|
