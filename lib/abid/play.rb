@@ -2,8 +2,70 @@ require 'forwardable'
 
 module Abid
   class Play
+    class << self
+      attr_accessor :task
+
+      def inherited(child)
+        params_spec.each { |k, v| child.params_spec[k] = v.dup }
+        hooks.each { |k, v| child.hooks[k] = v.dup }
+      end
+
+      def params_spec
+        @params_spec ||= {}
+      end
+
+      def param(name, **param_spec)
+        params_spec[name] = { significant: true }.merge(param_spec)
+
+        define_method(name) { params[name] }
+      end
+
+      def hooks
+        @hooks ||= {
+          before: [],
+          after: [],
+          around: []
+        }
+      end
+
+      def set(name, value = nil, &block)
+        var = :"@#{name}"
+        define_method(name) do
+          unless instance_variable_defined?(var)
+            if !value.nil?
+              instance_variable_set(var, value)
+            elsif block_given?
+              instance_variable_set(var, instance_eval(&block))
+            end
+          end
+          instance_variable_get(var)
+        end
+      end
+
+      def helpers(*extensions, &block)
+        class_eval(&block) if block_given?
+        include(*extensions) if extensions.any?
+      end
+
+      def before(&block)
+        (hooks[:before] ||= []) << block
+      end
+
+      def after(&block)
+        (hooks[:after] ||= []) << block
+      end
+
+      def around(&block)
+        (hooks[:around] ||= []) << block
+      end
+    end
+
+    set :worker, :default
+    set :volatile, false
+
     extend Forwardable
     def_delegators :task, :application, :name, :scope
+    def_delegators 'self.class', :params_spec
 
     attr_reader :prerequisites
     attr_reader :params
@@ -48,57 +110,30 @@ module Abid
         significant_params.eql?(other.significant_params)
     end
 
+    def volatile?
+      volatile
+    end
+
     def preview?
       application.options.preview
     end
 
-    class << self
-      attr_accessor :task
+    def invoke
+      self.class.hooks[:before].each { |blk| instance_eval(&blk) }
 
-      def inherited(child)
-        attributes.each { |k, v| child.attributes[k] = v.dup }
-        params_spec.each { |k, v| child.params_spec[k] = v.dup }
-      end
+      call_around_hooks(self.class.hooks[:around]) { run }
 
-      def param(name, **param_spec)
-        params_spec[name] = { significant: true }.merge(param_spec)
-
-        define_method(name) { params[name] }
-      end
-
-      def attributes
-        @attributes ||= {}
-      end
-
-      def define_attribute(name, &default)
-        define_singleton_method(name) do |value = nil|
-          attributes[name] ||= default.call if block_given?
-
-          if value.nil?
-            attributes[name]
-          else
-            attributes[name] = value
-          end
-        end
-
-        define_method(name) { self.class.send(name) }
-      end
-
-      def volatile(v = true)
-        @volatile = v
-      end
-
-      def volatile?
-        @volatile
-      end
-
-      def helpers(*extensions, &block)
-        class_eval(&block) if block_given?
-        include(*extensions) if extensions.any?
-      end
+      self.class.hooks[:after].each { |blk| instance_eval(&blk) }
     end
 
-    define_attribute :worker
-    define_attribute(:params_spec) { Hash.new }
+    def call_around_hooks(hooks, &body)
+      if hooks.empty?
+        body.call
+      else
+        h, *rest = hooks
+        instance_exec(-> { call_around_hooks(rest, &body) }, &h)
+      end
+    end
+    private :call_around_hooks
   end
 end

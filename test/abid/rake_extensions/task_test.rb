@@ -10,7 +10,7 @@ module Abid
         @spy = spy_ = []
 
         default_play_class do
-          define_attribute(:spy) { spy_ }
+          set(:spy, spy_)
         end
 
         define_worker :test_worker, 2
@@ -25,7 +25,7 @@ module Abid
           end
 
           play :parent do
-            worker :test_worker
+            set :worker, :test_worker
 
             param :date, type: :date
 

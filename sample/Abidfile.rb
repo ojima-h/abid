@@ -1,5 +1,15 @@
 task default: :sample
 
+default_play_class do
+  around do |blk|
+    begin
+      blk.call
+    ensure
+      puts "#{name} finished"
+    end
+  end
+end
+
 desc 'sample task'
 play :sample do
   param :date, type: :date
