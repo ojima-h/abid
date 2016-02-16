@@ -8,7 +8,7 @@ module Abid
 
     def initialize
       super
-      @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb)
+      @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb) << abidfile
       @futures = {}
       @worker = Worker.new(self)
     end
@@ -27,15 +27,9 @@ module Abid
       super(app_name)
     end
 
-    def load_rakefile
-      standard_exception_handling do
-        core_rakefile = File.expand_path('../../Abidfile.rb', __FILE__)
-        Rake.load_rakefile(core_rakefile)
-        glob(File.expand_path('../tasks/*.rake', __FILE__)) do |name|
-          Rake.load_rakefile name
-        end
-      end
-      super
+    # allows the `abid db:migrate` task to load without a abidfile
+    def abidfile
+      File.expand_path(File.join(File.dirname(__FILE__), '..', 'Abidfile.rb'))
     end
 
     def run_with_threads
