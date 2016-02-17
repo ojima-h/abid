@@ -31,6 +31,30 @@ module Abid
       end
     end
 
+    # Name of task with argument list description.
+    def name_with_args # :nodoc:
+      if params_description
+        "#{super}#{params_description}"
+      else
+        super
+      end
+    end
+
+    def params_description
+      sig_params = play_class.params_spec.select do |_, spec|
+        spec[:significant]
+      end
+      return if sig_params.empty?
+
+      if play.nil? # unbound
+        p = sig_params.map { |name, spec| "#{name}:#{spec[:type]}" }
+      else
+        p = sig_params.map { |name, _| "#{name}:#{play.params[name]}" }
+      end
+
+      "(#{p.join(' ')})"
+    end
+
     class <<self
       def define_play(*args, &block) # :nodoc:
         Rake.application.define_play(self, *args, &block)
