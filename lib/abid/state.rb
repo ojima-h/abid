@@ -61,6 +61,10 @@ module Abid
       @task.volatile? || Rake.application.options.disable_state
     end
 
+    def preview?
+      Rake.application.options.dryrun || Rake.application.options.preview
+    end
+
     def reload
       return if disabled?
 
@@ -108,7 +112,7 @@ module Abid
     end
 
     def start_session
-      return true if disabled?
+      return true if disabled? || preview?
 
       database.transaction do
         reload
@@ -139,7 +143,7 @@ module Abid
     end
 
     def close_session(error = nil)
-      return if disabled?
+      return if disabled? || preview?
       return unless @record
       state = error ? FAILED : SUCCESSED
       dataset.where(id: @record[:id]).update(state: state, end_time: Time.now)
