@@ -58,6 +58,16 @@ module Abid
             spy << [:child, date]
           end
         end
+
+        play :failure_play do
+          def run
+            fail Exception, 'test'
+          end
+        end
+
+        task :failure_task do
+          fail Exception, 'test'
+        end
       end
 
       def test_invoke
@@ -112,6 +122,14 @@ module Abid
         assert future.complete?
       ensure
         app.options.wait_external_task = false
+      end
+
+      def test_failure
+        future = app['failure_play'].async_invoke
+        assert_raises(Exception, 'test') { future.value! }
+
+        future = app['failure_task'].async_invoke
+        assert_raises(Exception, 'test') { future.value! }
       end
     end
   end

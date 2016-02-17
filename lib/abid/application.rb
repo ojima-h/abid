@@ -21,7 +21,7 @@ module Abid
     def init(app_name = 'abid')
       standard_exception_handling do
         @config = IniFile.new(content: default_config)
-        @config.merge!(IniFile.load('config/abid.cfg'))
+        @config.merge!(IniFile.load('config/abid.conf'))
       end
 
       super(app_name)
