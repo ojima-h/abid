@@ -8,8 +8,8 @@ module Abid
       Rake.application.worker.define(name, thread_count)
     end
 
-    def default_play_class(&block)
-      Rake.application.default_play_class(&block)
+    def play_base(&block)
+      Rake.application.play_base(&block)
     end
 
     def helpers(*extensions, &block)

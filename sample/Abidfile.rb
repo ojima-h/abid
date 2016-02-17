@@ -1,6 +1,6 @@
 task default: :sample
 
-default_play_class do
+play_base do
   around do |blk|
     begin
       blk.call

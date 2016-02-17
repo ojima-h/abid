@@ -9,7 +9,7 @@ module Abid
       def setup
         @spy = spy_ = []
 
-        default_play_class do
+        play_base do
           set(:spy, spy_)
         end
 

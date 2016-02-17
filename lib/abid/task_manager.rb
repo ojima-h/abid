@@ -31,17 +31,17 @@ module Abid
       @plays[play] = task.dup.tap { |t| t.play = play }
     end
 
-    def default_play_class(&block)
+    def play_base(&block)
       if block_given?
-        @default_play_class = Class.new(Abid::Play, &block)
+        @play_base = Class.new(Abid::Play, &block)
       else
-        @default_play_class ||= Abid::Play
+        @play_base ||= Abid::Play
       end
     end
 
     def lookup_play_class(task_name, scope = nil)
       if task_name.nil?
-        default_play_class
+        play_base
       else
         task_name = task_name.to_s
         t = lookup(task_name, scope)
