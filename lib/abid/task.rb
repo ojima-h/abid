@@ -27,7 +27,7 @@ module Abid
       fail 'no play is bound yet' if @play.nil?
 
       play.prerequisites.map do |pre, params|
-        application[pre, @scope, **params]
+        application[pre, @scope, **self.params.merge(params)]
       end
     end
 

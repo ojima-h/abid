@@ -19,7 +19,7 @@ module Abid
 
       def type_cast(value, type)
         case type
-        when :boolean then value == 'true'
+        when :boolean then value == true || value == 'true'
         when :int then value.to_i
         when :float then value.to_f
         when :string then value.to_s

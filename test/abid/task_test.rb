@@ -12,6 +12,10 @@ module Abid
           needs :parent
         end
       end
+
+      play(:parent) do
+        param :date, type: :date
+      end
     end
 
     def test_unbound_task
@@ -24,6 +28,7 @@ module Abid
 
       assert_kind_of Abid::Task, task
       assert_equal Date.new(2016, 1, 1), task.play.date
+      assert_equal task.play.date, task.prerequisite_tasks.first.play.date
     end
   end
 end
