@@ -6,11 +6,10 @@ module Abid
     end
 
     def define_play(task_class, play_name, extends: nil, &block)
-      task = define_task(task_class, play_name)
-
-      klass = lookup_play_class(extends)
-      task.play_class = Class.new(klass, &block).tap { |c| c.task = task }
-      task
+      define_task(task_class, play_name).tap do |task|
+        task.extends = extends
+        task.play_class_definition = block
+      end
     end
 
     def [](task_name, scopes = nil, **params)
