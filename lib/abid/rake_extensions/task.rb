@@ -13,10 +13,6 @@ module Abid
         @state ||= State.find(self)
       end
 
-      def invoke(*args)
-        async_invoke(*args).wait!
-      end
-
       def async_invoke(*args)
         task_args = Rake::TaskArguments.new(arg_names, args)
         async_invoke_with_call_chain(task_args, Rake::InvocationChain::EMPTY)
