@@ -118,7 +118,7 @@ module Abid
       application.options.preview
     end
 
-    def invoke
+    def _run
       self.class.hooks[:before].each { |blk| instance_eval(&blk) }
 
       call_around_hooks(self.class.hooks[:around]) { run }

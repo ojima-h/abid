@@ -10,7 +10,7 @@ module Abid
 
     def initialize(task_name, app)
       super(task_name, app)
-      @actions << proc { |t| t.play.invoke }
+      @actions << proc { |t| t.play._run }
       @actions.freeze
     end
 

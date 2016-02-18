@@ -37,7 +37,7 @@ module Abid
     def test_definition
       play = SamplePlay.new(date: '2000-01-01', dummy: 'foo')
       play.setup
-      play.invoke
+      play._run
 
       assert_empty Abid::Play.params_spec
       assert_equal :dummy_worker, play.spy[0]
