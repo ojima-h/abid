@@ -50,7 +50,7 @@ module Abid
 
     def invoke_task(task_string) # :nodoc:
       name, args = parse_task_string(task_string)
-      self[name].async_invoke(*args).value!
+      self[name].invoke(*args)
     end
 
     def default_config
