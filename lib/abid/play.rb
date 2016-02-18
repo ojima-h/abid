@@ -22,6 +22,7 @@ module Abid
 
       def hooks
         @hooks ||= {
+          setup: [],
           before: [],
           after: [],
           around: []
@@ -47,16 +48,20 @@ module Abid
         include(*extensions) if extensions.any?
       end
 
+      def setup(&block)
+        hooks[:setup] << block
+      end
+
       def before(&block)
-        (hooks[:before] ||= []) << block
+        hooks[:before] << block
       end
 
       def after(&block)
-        (hooks[:after] ||= []) << block
+        hooks[:after] << block
       end
 
       def around(&block)
-        (hooks[:around] ||= []) << block
+        hooks[:around] << block
       end
     end
 
@@ -80,10 +85,6 @@ module Abid
 
     def task
       self.class.task
-    end
-
-    def setup
-      # noop
     end
 
     def run
@@ -116,6 +117,10 @@ module Abid
 
     def preview?
       application.options.preview
+    end
+
+    def _setup
+      self.class.hooks[:setup].each { |blk| instance_eval(&blk) }
     end
 
     def _run

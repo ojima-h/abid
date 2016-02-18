@@ -51,7 +51,7 @@ end
 play :count do
   param :date, type: :date
 
-  def setup
+  setup do
     needs 'fetch_source', date: date
   end
 
@@ -71,7 +71,7 @@ This Abidfile has two tasks: `fetch_source` and `count`. They can be treated as 
 
 * A play can take parameters. They are declared with `param` keyword, and passed via environment variables.
 * All play results are saved to the external database. If a play is invoked twice with same parameters, it will be ignored.
-* Depending tasks can be declared in `setup` method. If a depending task is a play task, parameters can be passed.
+* Depending tasks can be declared in `setup` block. If a depending task is a play task, parameters can be passed.
 
 ## Development
 

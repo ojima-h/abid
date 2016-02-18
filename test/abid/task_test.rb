@@ -9,7 +9,7 @@ module Abid
       play(:test) do
         param :date, type: :date
 
-        def setup
+        setup do
           needs :parent
         end
       end
@@ -26,7 +26,7 @@ module Abid
         end
 
         play :task_3 do
-          def setup
+          setup do
             needs :task_1
           end
         end

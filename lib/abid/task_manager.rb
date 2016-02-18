@@ -27,7 +27,7 @@ module Abid
 
       return @plays[play] if @plays.include?(play)
 
-      play.setup
+      play._setup
       @plays[play] = task.dup.tap { |t| t.play = play }
     end
 

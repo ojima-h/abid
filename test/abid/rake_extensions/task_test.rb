@@ -29,7 +29,7 @@ module Abid
 
             param :date, type: :date
 
-            def setup
+            setup do
               needs :root, date: date
             end
 
@@ -46,7 +46,7 @@ module Abid
         play :test do
           param :date, type: :date
 
-          def setup
+          setup do
             needs 'ns:parent', date: date
             needs 'ns:parent', date: date + 1
             needs 'ns:rake_task'

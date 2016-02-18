@@ -14,7 +14,7 @@ desc 'sample task'
 play :sample do
   param :date, type: :date
 
-  def setup
+  setup do
     needs 'parents:sample', date: date - 1
   end
 

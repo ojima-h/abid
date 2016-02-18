@@ -10,7 +10,7 @@ module Abid
       param :date, type: :date
       param :dummy, type: :string, significant: false
 
-      def setup
+      setup do
         needs :parent, date: date + 1
       end
 
@@ -36,7 +36,7 @@ module Abid
 
     def test_definition
       play = SamplePlay.new(date: '2000-01-01', dummy: 'foo')
-      play.setup
+      play._setup
       play._run
 
       assert_empty Abid::Play.params_spec

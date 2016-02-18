@@ -8,7 +8,7 @@ module Abid
       play(:test) do
         param :date, type: :date
 
-        def setup
+        setup do
           needs :parent
         end
       end
