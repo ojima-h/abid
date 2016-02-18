@@ -32,6 +32,8 @@ module Abid
         end
       end
       SamplePlay.task = @task
+
+      app.options.preview = true
     end
 
     def test_definition
@@ -43,6 +45,8 @@ module Abid
       assert_equal :dummy_worker, play.spy[0]
       assert_equal Date.new(2000, 1, 1), play.spy[1]
       assert_equal 'foo', play.spy[2]
+
+      assert_equal true, play.preview?
 
       parent_name, parent_params = play.prerequisites.first
       assert_equal :parent, parent_name

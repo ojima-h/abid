@@ -111,7 +111,7 @@ module Abid
     end
 
     def preview?
-      application.options.preview
+      task.application.options.preview
     end
 
     def _setup
