@@ -69,8 +69,7 @@ module Abid
     set :volatile, false
 
     extend Forwardable
-    def_delegators :task, :application, :name, :scope
-    def_delegators 'self.class', :params_spec
+    def_delegators 'self.class', :params_spec, :task
 
     attr_reader :prerequisites
     attr_reader :params
@@ -83,10 +82,6 @@ module Abid
       @params.freeze
     end
 
-    def task
-      self.class.task
-    end
-
     def run
       # noop
     end
@@ -97,7 +92,7 @@ module Abid
 
     def significant_params
       [
-        name,
+        task.name,
         params.select { |p, _| params_spec[p][:significant] }
       ]
     end
