@@ -2,7 +2,6 @@ module Abid
   module TaskManager
     def initialize
       super
-      @plays = {}
     end
 
     def define_play(task_class, play_name, extends: nil, &block)
@@ -15,20 +14,11 @@ module Abid
     def [](task_name, scopes = nil, **params)
       task = super(task_name, scopes)
 
-      if task.respond_to? :play_class
-        intern_play(task, **params)
+      if task.respond_to? :bind
+        task.bind(**params)
       else
         task
       end
-    end
-
-    def intern_play(task, **params)
-      play = task.play_class.new(**params)
-
-      return @plays[play] if @plays.include?(play)
-
-      play._setup
-      @plays[play] = task.dup.tap { |t| t.play = play }
     end
 
     def play_base(&block)
@@ -42,9 +32,10 @@ module Abid
     def lookup_play_class(task_name, scope = nil)
       if task_name.nil?
         play_base
+      elsif task_name.is_a? Class
+        task_name
       else
-        task_name = task_name.to_s
-        t = lookup(task_name, scope)
+        t = lookup(task_name.to_s, scope)
         if t.respond_to? :play_class
           t.play_class
         elsif t.nil?

@@ -2,7 +2,7 @@ namespace :state do
   task default: :list
 
   desc 'Show play histories'
-  play :list do
+  play :list, extends: Abid::Play do
     set :volatile, true
 
     param :started_after, type: :time, default: nil

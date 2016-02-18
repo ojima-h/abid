@@ -1,11 +1,19 @@
 task default: :sample
 
+play :console do
+  set :volatile, true
+  def run
+    require 'pry'
+    Pry.start(self)
+  end
+end
+
 play_base do
   around do |blk|
     begin
       blk.call
     ensure
-      puts "#{name} finished"
+      puts "#{task.name} finished"
     end
   end
 end
