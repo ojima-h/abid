@@ -3,7 +3,7 @@ module Abid
     extend Forwardable
 
     attr_accessor :play_class_definition, :extends
-    attr_accessor :play, :params
+    attr_reader :play, :params
 
     def_delegators :play, :worker, :volatile?
 
@@ -12,11 +12,6 @@ module Abid
       @actions << proc { |t| t.execute_play }
       @actions.freeze
       @siblings = {}
-    end
-
-    def initialize_copy(_obj)
-      @state = nil
-      @prerequisite = []
     end
 
     def play_class
@@ -28,24 +23,31 @@ module Abid
       end
     end
 
-    def bind(**params)
-      parsed_params = ParamsParser.parse(params, play_class.params_spec)
+    def bound?
+      !@play.nil?
+    end
 
+    def bind(**params)
+      fail 'already bound' if bound?
+
+      parsed_params = ParamsParser.parse(params, play_class.params_spec)
       return @siblings[parsed_params] if @siblings.include?(parsed_params)
 
       sorted_params = parsed_params.sort.to_h
       sorted_params.freeze
 
       @siblings[sorted_params] = dup.tap do |t|
-        t.play = play_class.new(t)
-        t.params = sorted_params
-
+        t.instance_eval do
+          @prerequisites = []
+          @params = sorted_params
+          @play = play_class.new(t)
+        end
         play_class.hooks[:setup].each { |blk| t.play.instance_eval(&blk) }
       end
     end
 
     def prerequisite_tasks
-      fail 'no play is bound yet' if @play.nil?
+      fail 'no play is bound yet' unless bound?
 
       prerequisites.map do |pre, params|
         application[pre, @scope, **self.params.merge(params)]
