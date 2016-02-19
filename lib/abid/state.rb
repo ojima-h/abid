@@ -10,7 +10,8 @@ module Abid
 
     class <<self
       def find(task)
-        new(task)
+        @cache ||= {}
+        @cache[task.object_id] ||= new(task)
       end
 
       def list(pattern: nil, started_before: nil, started_after: nil)

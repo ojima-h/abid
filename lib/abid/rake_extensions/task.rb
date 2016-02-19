@@ -10,7 +10,7 @@ module Abid
       end
 
       def state
-        @state ||= State.find(self)
+        State.find(self)
       end
 
       def async_invoke(*args)
