@@ -54,5 +54,13 @@ module Abid
       assert_equal task_1.play_class, task_2.play_class.superclass
       assert_equal task_1.play_class, task_3.prerequisite_tasks.first.play_class
     end
+
+    def test_name_with_args
+      unbound_task = app.lookup(:test)
+      assert_equal 'test date:date', unbound_task.name_with_args
+
+      task = app[:test, date: '2016-01-01']
+      assert_equal 'test date=2016-01-01', task.name_with_args
+    end
   end
 end

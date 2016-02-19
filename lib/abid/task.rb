@@ -69,10 +69,10 @@ module Abid
       end
       return if sig_params.empty?
 
-      if play.nil? # unbound
-        p = sig_params.map { |name, spec| "#{name}:#{spec[:type]}" }
+      if bound? # unbound
+        p = sig_params.map { |name, _| "#{name}=#{params[name]}" }
       else
-        p = sig_params.map { |name, _| "#{name}=#{play.params[name]}" }
+        p = sig_params.map { |name, spec| "#{name}:#{spec[:type]}" }
       end
 
       p.join(' ')
