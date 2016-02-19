@@ -91,7 +91,7 @@ module Abid
         State.find(app['ns:root', nil, date: '2016-01-02']).revoke
 
         @spy.clear
-        app.instance_eval { @futures = {} }
+        State.instance_eval { @cache.clear }
 
         app.options.check_prerequisites = true
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!

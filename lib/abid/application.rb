@@ -4,12 +4,10 @@ module Abid
 
     attr_reader :worker
     attr_reader :config
-    attr_reader :futures
 
     def initialize
       super
       @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb) << abidfile
-      @futures = {}
       @worker = Worker.new(self)
     end
 

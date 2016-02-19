@@ -1,6 +1,7 @@
 module Abid
   class State
     extend Forwardable
+    extend MonitorMixin
 
     RUNNING = 1
     SUCCESSED = 2
@@ -8,10 +9,11 @@ module Abid
 
     STATES = constants.map { |c| [const_get(c), c] }.to_h
 
+    @cache = {}
     class <<self
+
       def find(task)
-        @cache ||= {}
-        @cache[task.object_id] ||= new(task)
+        synchronize { @cache[task.object_id] ||= new(task) }
       end
 
       def list(pattern: nil, started_before: nil, started_after: nil)
@@ -44,10 +46,22 @@ module Abid
     end
 
     def_delegators 'self.class', :serialize, :deserialize
+    attr_reader :ivar
 
     def initialize(task)
       @task = task
+      @record = nil
+      @ivar = Concurrent::IVar.new
+      @already_invoked = false
       reload
+    end
+
+    def only_once(&block)
+      self.class.synchronize do
+        return if @already_invoked
+        @already_invoked = true
+      end
+      block.call
     end
 
     def database
