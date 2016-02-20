@@ -28,6 +28,10 @@ module Abid
         end
       end
 
+      play :child, extends: :sample do
+        undef_param :dummy
+      end
+
       app.options.preview = true
     end
 
@@ -48,6 +52,14 @@ module Abid
       assert_equal Date.new(2000, 1, 2), parent_params[:date]
 
       assert play.callback_called
+    end
+
+    def test_undef_param
+      pc1 = app.lookup_play_class(:child)
+      refute pc1.method_defined?(:dummy)
+
+      pc2 = app.lookup_play_class(:sample)
+      assert pc2.method_defined?(:dummy)
     end
   end
 end

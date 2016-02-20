@@ -20,6 +20,11 @@ module Abid
         define_method(name) { task.params[name] }
       end
 
+      def undef_param(name)
+        params_spec.delete(name)
+        undef_method(name) if method_defined?(name)
+      end
+
       def hooks
         @hooks ||= {
           setup: [],
