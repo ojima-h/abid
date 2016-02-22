@@ -58,8 +58,14 @@ module Abid
           async_execute_with_session(task_args, false)
         else
           counter = Concurrent::DependencyCounter.new(preq_futures.size) do
-            preq_updated = preq_futures.map(&:value!).any?
-            async_execute_with_session(task_args, preq_updated)
+            preq_values = preq_futures.map(&:value)
+            preq_failed = preq_futures.select(&:rejected?)
+            if preq_failed.empty?
+              async_execute_with_session(task_args, preq_values.any?)
+            else
+              err = "#{preq_failed.length} parent tasks failed"
+              state.ivar.try_fail(StandardError.new(err))
+            end
           end
           preq_futures.each { |p| p.add_observer counter }
         end

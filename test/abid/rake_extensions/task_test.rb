@@ -65,6 +65,10 @@ module Abid
           end
         end
 
+        play :parent_failure do
+          setup { needs :failure_play }
+        end
+
         task :failure_task do
           fail Exception, 'test'
         end
@@ -130,6 +134,13 @@ module Abid
 
         future = app['failure_task'].async_invoke
         assert_raises(Exception, 'test') { future.value! }
+      end
+
+      def test_parent_failure
+        f = app[:parent_failure].async_invoke.wait
+        assert f.rejected?
+        assert_kind_of StandardError, f.reason
+        assert_equal '1 parent tasks failed', f.reason.message
       end
     end
   end
