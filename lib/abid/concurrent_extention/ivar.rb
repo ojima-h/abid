@@ -4,7 +4,7 @@ module Abid
       def try_fail(reason = StandardError.new)
         self.fail(reason)
         true
-      rescue MultipleAssignmentError
+      rescue Concurrent::MultipleAssignmentError
         false
       end
     end
