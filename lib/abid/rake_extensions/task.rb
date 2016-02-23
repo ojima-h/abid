@@ -13,6 +13,10 @@ module Abid
         State.find(self)
       end
 
+      def name_with_params
+        name
+      end
+
       def async_invoke(*args)
         task_args = Rake::TaskArguments.new(arg_names, args)
         async_invoke_with_call_chain(task_args, Rake::InvocationChain::EMPTY)
@@ -24,7 +28,7 @@ module Abid
         new_chain = Rake::InvocationChain.append(self, invocation_chain)
 
         state.only_once do
-          application.trace "** Invoke #{name}" if application.options.trace
+          application.trace "** Invoke #{name_with_params}" if application.options.trace
 
           preq_futures = async_invoke_prerequisites(task_args, new_chain)
 
@@ -73,7 +77,7 @@ module Abid
 
       def async_execute_with_session(task_args, prerequisites_updated = false)
         if (state.successed? && !prerequisites_updated) || !needed?
-          application.trace "** Skip #{name}" if application.options.trace
+          application.trace "** Skip #{name_with_params}" if application.options.trace
           state.ivar.try_set(false)
           return
         end
@@ -98,11 +102,11 @@ module Abid
 
       def async_wait_complete
         unless application.options.wait_external_task
-          err = RuntimeError.new("task #{name} already running")
+          err = RuntimeError.new("task #{name_with_params} already running")
           return state.ivar.try_fail(err)
         end
 
-        application.trace "** Wait #{name}" if application.options.trace
+        application.trace "** Wait #{name_with_params}" if application.options.trace
 
         async_execute_in_worker(:waiter) do
           interval = application.options.wait_external_task_interval || 10

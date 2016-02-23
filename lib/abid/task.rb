@@ -9,8 +9,6 @@ module Abid
 
     def initialize(task_name, app)
       super(task_name, app)
-      @actions << proc { |t| t.execute_play }
-      @actions.freeze
       @siblings = {}
     end
 
@@ -63,6 +61,15 @@ module Abid
       end
     end
 
+    # Name of task with params
+    def name_with_params # :nodoc:
+      if params_description
+        "#{name} #{params_description}"
+      else
+        super
+      end
+    end
+
     def params_description
       sig_params = play_class.params_spec.select do |_, spec|
         spec[:significant]
@@ -78,7 +85,18 @@ module Abid
       p.join(' ')
     end
 
-    def execute_play
+    # Execute the play associated with this task.
+    def execute(_args = nil)
+      fail 'no play is bound yet' unless bound?
+
+      if application.options.dryrun
+        application.trace "** Execute (dry run) #{name_with_params}"
+        return
+      end
+      if application.options.trace
+        application.trace "** Execute #{name_with_params}"
+      end
+
       play_class.hooks[:before].each { |blk| play.instance_eval(&blk) }
 
       call_around_hooks(play_class.hooks[:around]) { play.run }
