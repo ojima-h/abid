@@ -11,7 +11,6 @@ module Abid
 
     @cache = {}
     class <<self
-
       def find(task)
         synchronize { @cache[task.object_id] ||= new(task) }
       end
@@ -111,6 +110,34 @@ module Abid
 
     def failed?
       state == FAILED
+    end
+
+    def assume
+      fail 'cannot revoke volatile task' if disabled?
+
+      database.transaction do
+        reload
+        fail 'task is now running' if running?
+
+        new_state = {
+          state: SUCCESSED,
+          start_time: Time.now,
+          end_time: Time.now
+        }
+
+        if @record
+          dataset.where(id: @record[:id]).update(new_state)
+          @record = @record.merge(new_state)
+        else
+          id = dataset.insert(
+            digest: digest,
+            name: @task.name,
+            params: serialize(@task.params),
+            **new_state
+          )
+          @record = { id: id, **new_state }
+        end
+      end
     end
 
     def revoke

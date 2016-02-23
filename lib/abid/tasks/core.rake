@@ -53,6 +53,13 @@ namespace :state do
     end
   end
 
+  desc 'Insert play history'
+  task :assume, [:task] do |_t, args|
+    task = Rake.application[args[:task]]
+    state = Abid::State.find(task)
+    state.assume
+  end
+
   desc 'Delete play history'
   task :revoke, [:task] do |_t, args|
     task = Rake.application[args[:task]]

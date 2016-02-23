@@ -107,5 +107,14 @@ module Abid
 
       assert_nil State.find(task_1).id
     end
+
+    def test_assume
+      task = Rake.application['test', nil, date: '2000-02-01']
+      state = State.find(task)
+      state.assume
+
+      state.reload
+      assert state.successed?
+    end
   end
 end

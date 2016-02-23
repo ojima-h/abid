@@ -38,7 +38,7 @@ module Abid
     def test_definition
       task = app[:sample, date: '2000-01-01', dummy: 'foo']
       play = task.play
-      task.execute_play
+      task.execute
 
       assert_empty Abid::Play.params_spec
       assert_equal :dummy_worker, play.spy[0]
