@@ -72,6 +72,11 @@ module Abid
         task :failure_task do
           fail Exception, 'test'
         end
+
+        play :wrong_worker do
+          set :worker, :dummy
+          setup { needs 'ns:parent', date: Date.today }
+        end
       end
 
       def test_invoke
@@ -141,6 +146,12 @@ module Abid
         assert f.rejected?
         assert_kind_of StandardError, f.reason
         assert_equal '1 parent tasks failed', f.reason.message
+      end
+
+      def test_wrong_worker
+        f = app[:wrong_worker].async_invoke.wait
+        assert f.rejected?
+        assert_equal 'worker dummy is not defined', f.reason.to_s
       end
     end
   end

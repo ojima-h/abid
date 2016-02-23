@@ -48,4 +48,3 @@ play :failure do
     fail
   end
 end
-
