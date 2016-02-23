@@ -64,7 +64,7 @@ end
 namespace :db do
   desc 'Run migrations'
   task :migrate, [:version] do |_t, args|
-    migrations_path = File.expand_path('../../migrations', __FILE__)
+    migrations_path = File.expand_path('../../../../migrations', __FILE__)
 
     require 'sequel'
     Sequel.extension :migration
