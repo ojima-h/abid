@@ -72,7 +72,9 @@ module Abid
       task = Rake.application['test', nil, date: '2000-01-01']
       state = State.find(task)
       state.start_session
-      refute state.start_session, 'failed to open session'
+      assert_raises AbidErrorTaskAlreadyRunning do
+        state.start_session
+      end
       state.close_session
 
       task = Rake.application['volatile']

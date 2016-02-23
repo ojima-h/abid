@@ -1,4 +1,6 @@
 module Abid
+  class AbidErrorTaskAlreadyRunning < StandardError; end
+
   class State
     extend Forwardable
     extend MonitorMixin
@@ -153,13 +155,20 @@ module Abid
       @record = nil
     end
 
+    def session(&block)
+      started = start_session
+      block.call
+    ensure
+      close_session($ERROR_INFO) if started
+    end
+
     def start_session
       return true if disabled? || preview?
 
       database.transaction do
         reload
 
-        return false if running?
+        fail AbidErrorTaskAlreadyRunning if running?
 
         new_state = {
           state: RUNNING,

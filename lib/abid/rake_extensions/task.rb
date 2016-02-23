@@ -82,21 +82,13 @@ module Abid
           return
         end
 
-        if state.start_session
+        async_execute_in_worker do
           begin
-            async_execute_in_worker do
-              begin
-                execute(task_args)
-                state.ivar.try_set(true)
-              ensure
-                state.close_session($ERROR_INFO)
-              end
-            end
-          ensure
-            state.close_session($ERROR_INFO) if $ERROR_INFO
+            state.session { execute(task_args) }
+            state.ivar.try_set(true)
+          rescue AbidErrorTaskAlreadyRunning
+            async_wait_complete
           end
-        else
-          async_wait_complete
         end
       end
 
