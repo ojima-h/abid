@@ -79,6 +79,11 @@ module Abid
         end
       end
 
+      def clear
+        @spy.clear
+        State.instance_eval { @cache.clear }
+      end        
+
       def test_invoke
         @spy.clear
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
@@ -92,7 +97,7 @@ module Abid
         assert_includes @spy, [:rake_task]
       end
 
-      def test_check_prerequisites
+      def test_repair
         @spy.clear
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
         assert_equal 6, @spy.length
@@ -102,15 +107,40 @@ module Abid
         @spy.clear
         State.instance_eval { @cache.clear }
 
-        app.options.check_prerequisites = true
+        app.options.repair = true
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
-        assert_equal 3, @spy.length
+        assert_equal 4, @spy.length
 
         root_result = @spy.select { |n, _| n == :root }
         assert_equal 1, root_result.length
         assert_equal [:root, Date.new(2016, 1, 2)], root_result.first
       ensure
-        app.options.check_prerequisites = false
+        app.options.repair = false
+      end
+
+      def test_repair_failure
+        clear
+
+        t = app['ns:root', nil, date: '2016-01-01']
+        t.state.start_session
+        t.state.close_session(StandardError.new)
+
+        result = app[:test, nil, date: '2016-01-01'].async_invoke.wait
+        assert result.rejected?
+        assert_equal '1 prerequisites failed', result.reason.message
+
+        i = app['ns:parent', nil, date: '2016-01-01'].state.ivar
+        assert i.rejected?
+        assert_equal 'prerequisites have been failed', i.reason.message
+
+        clear
+        app.options.repair = true
+
+        result = app[:test, nil, date: '2016-01-01'].async_invoke.wait
+        assert result.fulfilled?
+        assert_equal 4, @spy.count
+      ensure
+        app.options.repair = false
       end
 
       def test_external_task_waiting
@@ -145,7 +175,7 @@ module Abid
         f = app[:parent_failure].async_invoke.wait
         assert f.rejected?
         assert_kind_of StandardError, f.reason
-        assert_equal '1 parent tasks failed', f.reason.message
+        assert_equal '1 prerequisites failed', f.reason.message
       end
 
       def test_wrong_worker

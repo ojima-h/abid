@@ -114,6 +114,10 @@ module Abid
       state == FAILED
     end
 
+    def not_found?
+      !disabled? && @record.nil?
+    end
+
     def assume
       fail 'cannot revoke volatile task' if disabled?
 

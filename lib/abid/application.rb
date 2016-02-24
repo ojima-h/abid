@@ -81,9 +81,9 @@ module Abid
     def abid_options # :nodoc:
       sort_options(
         [
-          ['--check-parents', '-c',
-           'Run the task if the parents was updated.',
-           proc { options.check_prerequisites = true }
+          ['--repair',
+           'Run the task in repair mode.',
+           proc { options.repair = true }
           ],
           ['--preview', '-p',
            'Run tasks in preview mode.',

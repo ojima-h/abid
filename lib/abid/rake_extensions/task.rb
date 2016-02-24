@@ -28,66 +28,71 @@ module Abid
         new_chain = Rake::InvocationChain.append(self, invocation_chain)
 
         state.only_once do
-          application.trace "** Invoke #{name_with_params}" if application.options.trace
-
-          preq_futures = async_invoke_prerequisites(task_args, new_chain)
-
-          async_invoke_after_prerequisites(task_args, preq_futures)
+          async_invoke_with_prerequisites(task_args, new_chain)
         end
         state.ivar
       ensure
         state.ivar.try_fail($ERROR_INFO) if $ERROR_INFO
       end
 
-      def async_invoke_prerequisites(task_args, invocation_chain)
-        # skip if successed
-        if state.successed?
-          if !application.options.check_prerequisites
-            preqs = []
-          else
-            preqs = prerequisite_tasks.reject(&:volatile?)
+      def async_invoke_with_prerequisites(task_args, invocation_chain)
+        unless application.options.repair
+          if state.successed?
+            state.ivar.try_set(false)
+            return # skip if successed
+          elsif prerequisite_tasks.any? { |p| p.state.failed? }
+            err = RuntimeError.new('prerequisites have been failed')
+            state.ivar.try_fail(err)
+            return
           end
-        else
-          preqs = prerequisite_tasks
         end
 
-        preqs.map do |p|
-          preq_args = task_args.new_scope(p.arg_names)
-          p.async_invoke_with_call_chain(preq_args, invocation_chain)
+        application.trace "** Invoke #{name_with_params}" if application.options.trace
+
+        volatiles, non_volatiles = prerequisite_tasks.partition(&:volatile?)
+
+        async_invoke_tasks(non_volatiles, task_args, invocation_chain) do |updated|
+          if state.successed? && !updated
+            application.trace "** Skip #{name_with_params}" if application.options.trace
+            state.ivar.try_set(false)
+          else
+            async_invoke_tasks(volatiles, task_args, invocation_chain) do
+              async_execute_with_session(task_args)
+            end
+          end
         end
       end
 
-      def async_invoke_after_prerequisites(task_args, preq_futures)
-        if preq_futures.empty?
-          async_execute_with_session(task_args, false)
+      def async_invoke_tasks(tasks, task_args, invocation_chain, &block)
+        ivars = tasks.map do |t|
+          args = task_args.new_scope(t.arg_names)
+          t.async_invoke_with_call_chain(args, invocation_chain)
+        end
+
+        if ivars.empty?
+          block.call(false)
         else
-          counter = Concurrent::DependencyCounter.new(preq_futures.size) do
+          counter = Concurrent::DependencyCounter.new(ivars.size) do
             begin
-              preq_values = preq_futures.map(&:value)
-              preq_failed = preq_futures.select(&:rejected?)
-              if preq_failed.empty?
-                async_execute_with_session(task_args, preq_values.any?)
+              if ivars.any?(&:rejected?)
+                n = ivars.count(&:rejected?)
+                fail "#{n} prerequisites failed"
               else
-                fail "#{preq_failed.length} parent tasks failed"
+                updated = ivars.map(&:value).any?
+                block.call(updated)
               end
             rescue Exception => err
               state.ivar.try_fail(err)
             end
           end
-          preq_futures.each { |p| p.add_observer counter }
+          ivars.each { |i| i.add_observer counter }
         end
       end
 
-      def async_execute_with_session(task_args, prerequisites_updated = false)
-        if (state.successed? && !prerequisites_updated) || !needed?
-          application.trace "** Skip #{name_with_params}" if application.options.trace
-          state.ivar.try_set(false)
-          return
-        end
-
+      def async_execute_with_session(task_args)
         async_execute_in_worker do
           begin
-            state.session { execute(task_args) }
+            state.session { execute(task_args) if needed? }
             state.ivar.try_set(true)
           rescue AbidErrorTaskAlreadyRunning
             async_wait_complete
