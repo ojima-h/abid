@@ -1,50 +1,26 @@
-task default: :sample
+require 'open-uri'
 
-play :console do
-  set :volatile, true
+task default: 'count'
+
+play :fetch_source do
+  param :date, type: :date
+
   def run
-    require 'pry'
-    Pry.start(self)
-  end
-end
-
-play_base do
-  around do |blk|
-    begin
-      blk.call
-    ensure
-      puts "#{task.name} finished"
+    open('http://example.com') do |f|
+      FileUtils.makedirs "out/#{date.strftime('%Y-%m-%d')}"
+      File.write("out/#{date.strftime('%Y-%m-%d')}/example.com", f.read)
     end
   end
 end
 
-desc 'sample task'
-play :sample do
+play :count do
   param :date, type: :date
 
   setup do
-    needs 'parents:sample', date: date - 1
+    needs 'fetch_source', date: date
   end
 
   def run
-    puts "sample called with date=#{date}"
-  end
-end
-
-namespace :parents do
-  desc 'sample parent task'
-  play :sample do
-    param :date, type: :date
-
-    def run
-      puts "parents:sample called with date=#{date}"
-    end
-  end
-end
-
-desc 'broken task'
-play :failure do
-  def run
-    fail
+    puts File.read("out/#{date.strftime('%Y-%m-%d')}/example.com").lines.length
   end
 end
