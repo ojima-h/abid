@@ -77,7 +77,7 @@ This Abidfile has two tasks: `fetch_source` and `count`. They are kinds of rake 
 ## Execution Model
 
 When a play is invoked, its parameters and results are saved in a database by default.
-If the play has been successed with same parameters, it will be skipped.
+If the play has been executed with same parameters and successed, it will be skipped.
 
 ```ruby
 # Abidfile.rb
@@ -88,9 +88,9 @@ play :test do
   end
 end
 
-$ abid test apple #=> "apple"
-$ abid test apple # nothing happens
-$ abid test orange #=> "orange"
+$ abid test name=apple #=> "apple"
+$ abid test name=apple # nothing happens
+$ abid test name=orange #=> "orange"
 ```
 
 Normal rake task results are not stored in DB.
@@ -122,6 +122,21 @@ $ abid query   #=> ok
 $ abid report  #=> ok
 
 ```
+
+### Volatile plays
+
+Abid plays can also be volatile.
+
+```
+play :voaltile_play do
+  set :volatile, true
+  def run
+    ...
+  end
+end
+```
+
+These plays are not stored in DB and will be always executed.
 
 ### Repair mode
 
@@ -208,6 +223,10 @@ Plays settings can be declared by `set` and referenced in `run` method.
 If block given, it is evaluated in the same context as `run` method.
 The block is called only once and its result is cached.
 
+Following settings are used in abid core:
+- `worker`
+- `volatile`
+
 ### Dependencies
 
 ```ruby
@@ -270,6 +289,16 @@ end
 
 $ abid count #=> hive -f sql/count.sql
 ```
+
+Common base play can be defined by `play_base` keyword:
+
+```
+play_base do
+  param :date, type: :date
+end
+```
+
+All plays inherit the `play_base` definition.
 
 ### Plays internal
 
