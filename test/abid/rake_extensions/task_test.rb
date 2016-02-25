@@ -149,7 +149,7 @@ module Abid
 
         task = app['test', nil, date: '2016-02-01']
         state = State.find(task)
-        state.instance_eval { start_session }
+        state.start_session
 
         future = task.async_invoke
 
