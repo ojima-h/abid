@@ -152,7 +152,7 @@ $ abid --repair report  #=> :query and :report tasks are executed
 
 All tasks are executed in a thread pool.
 
-By default, size of the thread pool size is 1, i.e. all tasks are executed in single thread. When `-m` option is given, the thread pool size is decided from CPU size. You can specify the thread pool size by `-j` option.
+By default, the thread pool size is 1, i.e. all tasks are executed in single thread. When `-m` option is given, the thread pool size is decided from CPU size. You can specify the thread pool size by `-j` option.
 
 Abid supports multiple thread pools.
 Each tasks can be executed in different thread pools.
