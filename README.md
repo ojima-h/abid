@@ -41,8 +41,8 @@ play :fetch_source do
   param :date, type: :date
 
   def run
-    mkdir 'out'
     open('http://example.com') do |f|
+      FileUtils.makedirs "out/#{date.strftime('%Y-%m-%d')}"
       File.write("out/#{date.strftime('%Y-%m-%d')}/example.com", f.read)
     end
   end
@@ -67,11 +67,250 @@ Then you can invoke the task:
 $ bundle exec abid count date=2016-01-01
 ```
 
-This Abidfile has two tasks: `fetch_source` and `count`. They can be treated as a normal rake task, but they have some additional features:
+This Abidfile has two tasks: `fetch_source` and `count`. They are kinds of rake tasks, but they have some additional features:
 
 * A play can take parameters. They are declared with `param` keyword, and passed via environment variables.
 * All play results are saved to the external database. If a play is invoked twice with same parameters, it will be ignored.
 * Depending tasks can be declared in `setup` block. If a depending task is a play task, parameters can be passed.
+
+
+## Execution Model
+
+When a play is invoked, its parameters and results are saved in a database by default.
+If the play has been successed with same parameters, it will be skipped.
+
+```ruby
+# Abidfile.rb
+play :test do
+  params :name, type: :string
+  def run
+    puts name
+  end
+end
+
+$ abid test apple #=> "apple"
+$ abid test apple # nothing happens
+$ abid test orange #=> "orange"
+```
+
+Normal rake task results are not stored in DB.
+They are always executed even if they have been executed and successed.
+These tasks are called "volatile".
+
+If prerequisites tasks have been failed, the subsequent task also fails.
+When prerequisites failed, you have to manually fix a problem and re-execute them.
+
+```ruby
+# Abidfile.rb
+play :query do
+  def run
+    result = `mysql -e 'SELECT COUNT(*) FROM users'`
+    File.write(result, 'result.txt')
+  end
+end
+play :report do
+  setup { needs :query }
+  def run
+    `cat result.txt | sendmail all@example.com`
+  end
+end
+
+$ abid query   #=> Failed because of MySQL server down
+$ abid report  #=> Fails because prerequisites failed
+$ ...          # restart MySQL server
+$ abid query   #=> ok
+$ abid report  #=> ok
+
+```
+
+### Repair mode
+
+When abid is executed with `--repair` flag, failed prerequisites are re-executed and successed tasks are executed only when their prerequisites are executed.
+
+```
+$ abid report           #=> Failed because of MySQL server down
+$ ...                   # restart MySQL server
+$ abid --repair report  #=> :query and :report tasks are executed
+```
+
+### Parallel execution
+
+All tasks are executed in a thread pool.
+
+By default, size of the thread pool size is 1, i.e. all tasks are executed in single thread. When `-m` option is given, the thread pool size is decided from CPU size. You can specify the thread pool size by `-j` option.
+
+Abid supports multiple thread pools.
+Each tasks can be executed in different thread pools.
+
+```ruby
+define_worker :copy, 2
+define_worker :hive, 4
+
+play :copy_source_1 do
+  set :worker, :copy
+  def run
+    ...
+  end
+end
+
+play :hive_query_1 do
+  set :worker, :hive
+  def run
+    ...
+  end
+end
+```
+
+Two thread pools `copy` and `hive` are defined in above example, each thread pool sizes are 2 and 4.
+`:copy_source_1` is executed in `copy` thread pool, and `:hive_query_1` is executed in `hive` thread pool.
+
+## Plays detail
+
+### Params
+
+```ruby
+play :sample do
+  param :name, type: :string
+  param :date, type: :date, default: Date.today - 1
+
+  def run
+    date #=> #<Date: ????-??-?? ((0000000j,0s,0n),+0s,0000000j)>
+  end
+end
+```
+
+Each parameters are initialized by corresponding environment variables. If no environment variable with same name is found, default will be used.
+
+Abid supports following types:
+
+- `boolean`
+- `int`
+- `float`
+- `string`
+- `date`
+- `datetime`
+- `time`
+
+### Settings
+
+```ruby
+play :count do
+  set(:file_path, './sql/count.sql')
+  set(:query) { File.read(file_path) }
+
+  def run
+    query #=> the contents of './sql/count.sql'
+  end
+end
+```
+
+Plays settings can be declared by `set` and referenced in `run` method.
+If block given, it is evaluated in the same context as `run` method.
+The block is called only once and its result is cached.
+
+### Dependencies
+
+```ruby
+play :sample do
+  param :name, type: :string  
+  setup do
+    needs "parent_task":#{name}"
+  end
+
+  def run
+    # executed after `parent_task`
+  end
+end
+```
+
+All prerequisites must be declared in `setup` block.
+You can refer parameters and settings in `setup` block.
+
+### Callbacks
+
+```ruby
+play :sample do
+  def run
+    ...
+  end
+
+  before do
+    # executed before running
+  end
+
+  after do
+    # executed when the task successed
+  end
+
+  around do |body|
+    body.call # `run` method is called
+  ensure
+    ...       # executed even if the task failed
+  end
+end
+```
+
+### Extending plays
+
+You can extend plays in object-oriented style.
+All parameters, settings and methods are inherited.
+
+```ruby
+play :abstract_count do
+  def run
+    `hive -f #{file_path}`
+  end
+end
+
+play :count, extends: :abstract_count do
+  set :file_path, 'sql/count.sql'
+end
+
+---
+
+$ abid count #=> hive -f sql/count.sql
+```
+
+### Plays internal
+
+The play implementation can be illustrated as below:
+
+```ruby
+play :sample do
+  param :date, type: :date
+  set(:file_path, 'sql/count.sql')
+  set(:query) { File.read(file_path) }
+  def run
+    ...
+  end
+end
+
+# <=>
+
+class Sample < Abid::Play
+  attr_reader :date
+  def initialize(date)
+    @date = date
+  end
+
+  def file_path
+    'sql/count.sql'
+  end
+  def query
+    @query ||= File.read(file_path)
+  end
+
+  def run
+    ...
+  end
+end
+
+task :sample do
+  Sample.new(ENV['date']).run
+end
+```
+
+When play is defined, new subclass of Avid::Play is created and play body is evaluated in that new class context. So, any class goodies can be put in play's body, i.e. including modules, `attr_reader` / `attr_writer`, method definitions, etc..
 
 ## Development
 

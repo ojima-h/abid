@@ -24,3 +24,11 @@ play :count do
     puts File.read("out/#{date.strftime('%Y-%m-%d')}/example.com").lines.length
   end
 end
+
+play :console do
+  set :volatile, true
+  def run
+require 'pry'
+    Pry.start(self)
+  end
+end
