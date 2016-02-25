@@ -77,7 +77,7 @@ This Abidfile has two tasks: `fetch_source` and `count`. They are kinds of rake 
 ## Execution Model
 
 When a play is invoked, its parameters and results are saved in a database by default.
-If the play has been executed with same parameters and successed, it will be skipped.
+If the play has been executed with same parameters and successed, it will not be executed any more.
 
 ```ruby
 # Abidfile.rb
