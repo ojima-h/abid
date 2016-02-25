@@ -233,7 +233,7 @@ Following settings are used in abid core:
 play :sample do
   param :name, type: :string  
   setup do
-    needs "parent_task":#{name}"
+    needs "parent_task:#{name}"
   end
 
   def run
@@ -319,7 +319,7 @@ end
 class Sample < Abid::Play
   attr_reader :date
   def initialize(date)
-    @date = date
+    @date = Date.parse(date)
   end
 
   def file_path
@@ -340,6 +340,40 @@ end
 ```
 
 When play is defined, new subclass of Avid::Play is created and play body is evaluated in that new class context. So, any class goodies can be put in play's body, i.e. including modules, `attr_reader` / `attr_writer`, method definitions, etc..
+
+## Built-in tasks
+
+### `state:list`
+
+```
+$ abid state:list started_after="2000-01-01 00:00:00" started_before="2000=01-02 00:00:00"
+```
+
+Display plays current states.
+
+### `state:revoke`
+
+```
+$ abid revoke[task_name] date=2000-01-01
+```
+
+Remove the play recored from DB.
+
+### `state:assume`
+
+```
+$ abid assume[task_name] date=2000-01-01
+```
+
+Insert a record that the play successed into DB.
+
+### `db:migrate`
+
+```
+$ abid db:migrate
+```
+
+Initialize or update DB.
 
 ## Development
 
