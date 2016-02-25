@@ -354,7 +354,7 @@ Display plays current states.
 ### `state:revoke`
 
 ```
-$ abid revoke[task_name] date=2000-01-01
+$ abid state:revoke[task_name] date=2000-01-01
 ```
 
 Remove the play recored from DB.
@@ -362,7 +362,7 @@ Remove the play recored from DB.
 ### `state:assume`
 
 ```
-$ abid assume[task_name] date=2000-01-01
+$ abid state:assume[task_name] date=2000-01-01
 ```
 
 Insert a record that the play successed into DB.
