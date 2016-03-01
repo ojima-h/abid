@@ -1,7 +1,7 @@
 require 'rake'
 require 'date'
 require 'digest/md5'
-require 'english'
+require 'English'
 require 'forwardable'
 require 'monitor'
 require 'time'
