@@ -354,7 +354,7 @@ Display plays current states.
 ### `state:revoke`
 
 ```
-$ abid state:revoke[task_name] date=2000-01-01
+$ abid state:revoke[id]
 ```
 
 Remove the play recored from DB.

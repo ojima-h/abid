@@ -105,7 +105,8 @@ module Abid
 
       assert_equal 2, State.list.length
 
-      state_1.revoke
+      State.revoke(state_1.id)
+      state_1.reload
 
       assert_nil State.find(task_1).id
     end

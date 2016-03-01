@@ -61,10 +61,8 @@ namespace :state do
   end
 
   desc 'Delete play history'
-  task :revoke, [:task] do |_t, args|
-    task = Rake.application[args[:task]]
-    state = Abid::State.find(task)
-    state.revoke
+  task :revoke do |_t, args|
+    args.extras.each { |id| Abid::State.revoke(id) }
   end
 end
 

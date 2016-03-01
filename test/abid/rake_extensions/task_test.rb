@@ -108,7 +108,8 @@ module Abid
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
         assert_equal 6, @spy.length
 
-        State.find(app['ns:root', nil, date: '2016-01-02']).revoke
+        st = State.find(app['ns:root', nil, date: '2016-01-02'])
+        State.revoke(st.id)
 
         @spy.clear
         State.instance_eval { @cache.clear }

@@ -37,6 +37,15 @@ module Abid
         end.compact
       end
 
+      def revoke(id)
+        db = Rake.application.database
+        db.transaction do
+          running = db[:states].where(id: id, state: RUNNING).count > 0
+          fail 'task is now running' if running
+          db[:states].where(id: id).delete
+        end
+      end
+
       def serialize(params)
         YAML.dump(params)
       end
@@ -144,19 +153,6 @@ module Abid
           @record = { id: id, **new_state }
         end
       end
-    end
-
-    def revoke
-      fail 'cannot revoke volatile task' if disabled?
-
-      database.transaction do
-        reload
-        fail 'task is not executed yet' if id.nil?
-        fail 'task is now running' if running?
-        dataset.where(id: id).delete
-      end
-
-      @record = nil
     end
 
     def session(&block)
