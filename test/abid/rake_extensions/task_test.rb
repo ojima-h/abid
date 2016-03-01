@@ -77,6 +77,12 @@ module Abid
           set :worker, :dummy
           setup { needs 'ns:parent', date: Date.today }
         end
+
+        play :sleep do
+          def run
+            sleep
+          end
+        end
       end
 
       def clear
@@ -182,6 +188,17 @@ module Abid
         f = app[:wrong_worker].async_invoke.wait
         assert f.rejected?
         assert_equal 'worker dummy is not defined', f.reason.to_s
+      end
+
+      def test_thread_killed
+        f = app[:sleep].async_invoke.wait(0.5)
+
+        app.worker.kill
+        sleep 0.5
+
+        assert app[:sleep].state.failed?
+        assert f.rejected?
+        assert_equal 'thread killed', f.reason.message
       end
     end
   end

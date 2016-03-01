@@ -42,7 +42,10 @@ module Abid
 
     def run_with_threads
       yield
-    ensure
+    rescue Exception => err
+      worker.kill
+      raise err
+    else
       worker.shutdown
     end
 

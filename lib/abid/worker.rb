@@ -33,11 +33,16 @@ module Abid
         idletime: FIXNUM_MAX
       )
     end
-
     def shutdown
       @pools.each do |_, pool|
         pool.shutdown
         pool.wait_for_termination
+      end
+    end
+
+    def kill
+      @pools.each do |_, pool|
+        pool.kill
       end
     end
   end
