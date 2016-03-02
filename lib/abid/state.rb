@@ -158,17 +158,8 @@ module Abid
     def session(&block)
       started = start_session
       block.call
-      finished = true
     ensure
-      if $ERROR_INFO
-        err = $ERROR_INFO
-      elsif !finished
-        err = RuntimeError.new('thread killed')
-      end
-
-      close_session(err) if started
-
-      fail err unless $ERROR_INFO || finished # fail if thread killed
+      close_session($ERROR_INFO) if started
     end
 
     def start_session

@@ -92,7 +92,15 @@ module Abid
       def async_execute_with_session(task_args)
         async_execute_in_worker do
           begin
-            state.session { execute(task_args) if needed? }
+            state.session do
+              begin
+                execute(task_args) if needed?
+                finished = true
+              ensure
+                fail 'thread killed' unless finished
+              end
+            end
+
             state.ivar.try_set(true)
           rescue AbidErrorTaskAlreadyRunning
             async_wait_complete
