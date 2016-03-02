@@ -97,7 +97,7 @@ module Abid
                 execute(task_args) if needed?
                 finished = true
               ensure
-                fail 'thread killed' unless finished
+                fail 'thread killed' if $ERROR_INFO.nil? && !finished
               end
             end
 
