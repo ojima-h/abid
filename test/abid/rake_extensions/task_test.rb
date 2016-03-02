@@ -134,7 +134,7 @@ module Abid
 
         result = app[:test, nil, date: '2016-01-01'].async_invoke.wait
         assert result.rejected?
-        assert_equal '1 prerequisites failed', result.reason.message
+        assert_equal 'task has been failed', result.reason.message
 
         i = app['ns:parent', nil, date: '2016-01-02'].state.ivar
         assert i.fulfilled?
@@ -180,8 +180,7 @@ module Abid
       def test_parent_failure
         f = app[:parent_failure].async_invoke.wait
         assert f.rejected?
-        assert_kind_of StandardError, f.reason
-        assert_equal '1 prerequisites failed', f.reason.message
+        assert_equal 'test', f.reason.message
       end
 
       def test_wrong_worker

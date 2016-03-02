@@ -75,8 +75,7 @@ module Abid
           counter = Concurrent::DependencyCounter.new(ivars.size) do
             begin
               if ivars.any?(&:rejected?)
-                n = ivars.count(&:rejected?)
-                fail "#{n} prerequisites failed"
+                state.ivar.try_fail(ivars.find(&:rejected?).reason)
               else
                 updated = ivars.map(&:value).any?
                 block.call(updated)
