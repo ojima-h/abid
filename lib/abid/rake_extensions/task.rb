@@ -42,7 +42,7 @@ module Abid
             return # skip if successed
           elsif state.failed? && !invocation_chain.empty?
             # fail if not top level
-            fail 'task has been failed' rescue state.ivar.try_fail($ERROR_INFO)
+            fail "#{name} -- task has been failed" rescue state.ivar.try_fail($ERROR_INFO)
             return
           end
         end
@@ -96,7 +96,7 @@ module Abid
                 execute(task_args) if needed?
                 finished = true
               ensure
-                fail 'thread killed' if $ERROR_INFO.nil? && !finished
+                fail "#{name} -- thread killed" if $ERROR_INFO.nil? && !finished
               end
             end
 
@@ -126,7 +126,7 @@ module Abid
               state.ivar.try_set(true)
               break
             elsif Time.now.to_f >= timeout_tm
-              state.ivar.try_fail(StandardError.new('timeout exceeded'))
+              fail "#{name} -- timeout exceeded" rescue state.ivar.try_fail($ERROR_INFO)
               break
             else
               sleep interval

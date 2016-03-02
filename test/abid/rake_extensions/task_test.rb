@@ -134,7 +134,7 @@ module Abid
 
         result = app[:test, nil, date: '2016-01-01'].async_invoke.wait
         assert result.rejected?
-        assert_equal 'task has been failed', result.reason.message
+        assert_equal 'ns:parent -- task has been failed', result.reason.message
 
         i = app['ns:parent', nil, date: '2016-01-02'].state.ivar
         assert i.fulfilled?
@@ -197,7 +197,7 @@ module Abid
 
         assert app[:sleep].state.failed?
         assert f.rejected?
-        assert_equal 'thread killed', f.reason.message
+        assert_equal 'sleep -- thread killed', f.reason.message
       end
     end
   end
