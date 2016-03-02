@@ -199,6 +199,13 @@ module Abid
         assert f.rejected?
         assert_equal 'sleep -- thread killed', f.reason.message
       end
+
+      def test_retry_failed
+        app[:failure_play].async_invoke.wait
+        clear
+        f = app[:failure_play].async_invoke.wait
+        assert_equal 'test', f.reason.message
+      end
     end
   end
 end

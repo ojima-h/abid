@@ -28,7 +28,15 @@ module Abid
         new_chain = Rake::InvocationChain.append(self, invocation_chain)
 
         state.only_once do
-          async_invoke_with_prerequisites(task_args, new_chain)
+          if !application.options.repair && state.successed?
+            # skip if successed
+            state.ivar.try_set(false)
+          elsif !application.options.repair && state.failed? && !invocation_chain.empty?
+            # fail if not top level
+            fail "#{name} -- task has been failed" rescue state.ivar.try_fail($ERROR_INFO)
+          else
+            async_invoke_with_prerequisites(task_args, new_chain)
+          end
         end
         state.ivar
       ensure
@@ -36,17 +44,6 @@ module Abid
       end
 
       def async_invoke_with_prerequisites(task_args, invocation_chain)
-        unless application.options.repair
-          if state.successed?
-            state.ivar.try_set(false)
-            return # skip if successed
-          elsif state.failed? && !invocation_chain.empty?
-            # fail if not top level
-            fail "#{name} -- task has been failed" rescue state.ivar.try_fail($ERROR_INFO)
-            return
-          end
-        end
-
         application.trace "** Invoke #{name_with_params}" if application.options.trace
 
         volatiles, non_volatiles = prerequisite_tasks.partition(&:volatile?)
