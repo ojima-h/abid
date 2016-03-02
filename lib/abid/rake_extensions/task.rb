@@ -40,9 +40,9 @@ module Abid
           if state.successed?
             state.ivar.try_set(false)
             return # skip if successed
-          elsif prerequisite_tasks.any? { |p| p.state.failed? }
-            err = RuntimeError.new('prerequisites have been failed')
-            state.ivar.try_fail(err)
+          elsif state.failed? && !invocation_chain.empty?
+            # fail if not top level
+            fail 'task has been failed' rescue state.ivar.try_fail($ERROR_INFO)
             return
           end
         end

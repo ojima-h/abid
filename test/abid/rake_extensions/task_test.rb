@@ -128,7 +128,7 @@ module Abid
       def test_repair_failure
         clear
 
-        t = app['ns:root', nil, date: '2016-01-01']
+        t = app['ns:parent', nil, date: '2016-01-01']
         t.state.start_session
         t.state.close_session(StandardError.new)
 
@@ -136,9 +136,8 @@ module Abid
         assert result.rejected?
         assert_equal '1 prerequisites failed', result.reason.message
 
-        i = app['ns:parent', nil, date: '2016-01-01'].state.ivar
-        assert i.rejected?
-        assert_equal 'prerequisites have been failed', i.reason.message
+        i = app['ns:parent', nil, date: '2016-01-02'].state.ivar
+        assert i.fulfilled?
 
         clear
         app.options.repair = true
