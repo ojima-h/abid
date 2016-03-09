@@ -15,6 +15,10 @@ module Abid
     def helpers(*extensions, &block)
       Abid::Play.helpers(*extensions, &block)
     end
+
+    def invoke(task, *args, **params)
+      Rake.application[task, **params].async_invoke(*args).wait!
+    end
   end
 end
 

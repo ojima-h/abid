@@ -2,6 +2,15 @@ require 'open-uri'
 
 task default: 'count'
 
+play :sample do
+  set :volatile, true
+  param :name, type: :string
+
+  def run
+    puts name
+  end
+end
+
 play :fetch_source do
   param :date, type: :date
 
