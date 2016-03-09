@@ -15,9 +15,8 @@ module Abid
       end
 
       def param(name, **param_spec)
-        params_spec[name] = { significant: true }.merge(param_spec)
-
         define_method(name) { task.params[name] }
+        params_spec[name] = { significant: true }.merge(param_spec)
       end
 
       def undef_param(name)
@@ -36,6 +35,7 @@ module Abid
 
       def set(name, value = nil, &block)
         var = :"@#{name}"
+
         define_method(name) do
           unless instance_variable_defined?(var)
             if !value.nil?
@@ -67,6 +67,10 @@ module Abid
 
       def around(&block)
         hooks[:around] << block
+      end
+
+      def method_added(name)
+        params_spec.delete(name) # undef param
       end
     end
 

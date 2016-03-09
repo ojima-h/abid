@@ -32,6 +32,10 @@ module Abid
         undef_param :dummy
       end
 
+      play :child2, extends: :sample do
+        set :date, Date.new(2000, 1, 1)
+      end
+
       app.options.preview = true
     end
 
@@ -60,6 +64,12 @@ module Abid
 
       pc2 = app.lookup_play_class(:sample)
       assert pc2.method_defined?(:dummy)
+    end
+
+    def test_overwrite_param
+      task = app[:child2, dummy: 'foo']
+
+      assert Date.new(2000, 1, 1), task.play.date
     end
   end
 end
