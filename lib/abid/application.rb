@@ -9,20 +9,14 @@ module Abid
       super
       @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb) << abidfile
       @worker = Worker.new(self)
+
+      @config = IniFile.new(content: default_config)
+      @config.merge!(IniFile.load('config/abid.conf'))
     end
 
     def run
-      Rake.application = self
+      Abid.application = self
       super
-    end
-
-    def init(app_name = 'abid')
-      standard_exception_handling do
-        @config = IniFile.new(content: default_config)
-        @config.merge!(IniFile.load('config/abid.conf'))
-      end
-
-      super(app_name)
     end
 
     # allows the built-in tasks to load without a abidfile
