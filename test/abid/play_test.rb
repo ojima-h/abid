@@ -68,7 +68,9 @@ module Abid
 
     def test_overwrite_param
       task = app[:child2, dummy: 'foo']
+      assert Date.new(2000, 1, 1), task.play.date
 
+      task = app[:sample, date: '2000-01-01', dummy: 'foo']
       assert Date.new(2000, 1, 1), task.play.date
     end
   end
