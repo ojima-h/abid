@@ -5,9 +5,6 @@ module Abid
       @pools = {}
       @pool_definitions = {}
 
-      @pool_definitions[:waiter] = nil
-      @pools[:waiter] = Concurrent::SimpleExecutorService.new
-
       if application.options.always_multitask
         default_thread_num = @application.options.thread_pool_size || \
                              Rake.suggested_thread_count - 1
@@ -15,6 +12,8 @@ module Abid
         default_thread_num = 1
       end
       define(:default, default_thread_num)
+
+      define(:fresh, -1)
     end
 
     def define(name, thread_count)
@@ -24,15 +23,23 @@ module Abid
     end
 
     def [](name)
+      return @pools[name] if @pools.include?(name)
+      return self[:fresh] if name == :waiter # alias
+
       unless @pool_definitions.include?(name)
         fail "worker #{name} is not defined"
       end
 
-      @pools[name] ||= Concurrent::FixedThreadPool.new(
-        @pool_definitions[name],
-        idletime: FIXNUM_MAX
-      )
+      if @pool_definitions[name] > 0
+        @pools[name] = Concurrent::FixedThreadPool.new(
+          @pool_definitions[name],
+          idletime: FIXNUM_MAX
+        )
+      else
+        @pools[name] = Concurrent::SimpleExecutorService.new
+      end
     end
+
     def shutdown
       @pools.each do |_, pool|
         pool.shutdown
