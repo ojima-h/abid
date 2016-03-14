@@ -24,11 +24,12 @@ namespace :state do
           state[:name],
           params,
           state[:start_time].to_s,
-          state[:end_time].to_s
+          state[:end_time].to_s,
+          Time.at(state[:end_time] - state[:start_time]).utc.strftime("%H:%M")
         ]
       end
 
-      header = %w(id state name params start_time end_time)
+      header = %w(id state name params start_time end_time time)
 
       tab_width = header.each_with_index.map do |c, i|
         [c.length, table.map { |row| row[i].length }.max || 0].max
