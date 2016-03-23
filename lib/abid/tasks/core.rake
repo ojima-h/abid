@@ -26,6 +26,8 @@ namespace :state do
           else
             exec_time = Time.at(time_diff).utc.strftime('%H:%M:%S').to_s
           end
+        else
+          exec_time = ''
         end
 
         [
