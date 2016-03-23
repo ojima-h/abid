@@ -1,3 +1,4 @@
+require 'pry'
 namespace :state do
   task default: :list
 
@@ -18,6 +19,21 @@ namespace :state do
         params = state[:params].map do |k, v|
           v.to_s =~ /\s/ ? "#{k}='#{v}'" : "#{k}=#{v}"
         end.join(' ')
+
+        if (state[:start_time] && state[:end_time]).nil? then
+          exec_time = ''
+        else
+          time_diff = (Time.at(state[:end_time] - state[:start_time])).to_i
+          if time_diff >= 60*60*24
+            days    = time_diff.div(60*60*24).to_s + " days"
+            seconds = Time.at(time_diff.modulo(60*60*24)).utc.strftime('%H:%M:%S').to_s
+            exec_time = days + ' ' + seconds
+          else
+            seconds = Time.at(time_diff).utc.strftime('%H:%M:%S').to_s
+            exec_time = seconds
+          end
+        end
+
         [
           state[:id].to_s,
           state[:state].to_s,
@@ -25,11 +41,11 @@ namespace :state do
           params,
           state[:start_time].to_s,
           state[:end_time].to_s,
-          Time.at(state[:end_time] - state[:start_time]).utc.strftime("%H:%M")
+          exec_time
         ]
       end
 
-      header = %w(id state name params start_time end_time time)
+      header = %w(id state name params start_time end_time exec_time)
 
       tab_width = header.each_with_index.map do |c, i|
         [c.length, table.map { |row| row[i].length }.max || 0].max
