@@ -1,4 +1,3 @@
-require 'pry'
 namespace :state do
   task default: :list
 
