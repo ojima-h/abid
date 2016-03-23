@@ -20,10 +20,8 @@ namespace :state do
           v.to_s =~ /\s/ ? "#{k}='#{v}'" : "#{k}=#{v}"
         end.join(' ')
 
-        if (state[:start_time] && state[:end_time]).nil? then
-          exec_time = ''
-        else
-          time_diff = (Time.at(state[:end_time] - state[:start_time])).to_i
+        if state[:start_time] && state[:end_time]
+          time_diff = (state[:end_time] - state[:start_time]).to_i
           if time_diff >= 60*60*24
             exec_time = time_diff.div(60*60*24).to_s + " days"
           else
