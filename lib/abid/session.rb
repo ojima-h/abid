@@ -42,7 +42,7 @@ module Abid
       self.fail(e)
     ensure
       if e.nil? && !finished
-        fail 'thread killed' rescue self.fail($ERROR_INFO)
+        raise 'thread killed' rescue self.fail($ERROR_INFO)
       end
     end
 
