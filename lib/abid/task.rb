@@ -40,8 +40,8 @@ module Abid
           @params = sorted_params
           @play = play_class.new(t)
           call_play_hooks(:setup)
-          hooks[:before_execute] = [proc { call_play_hooks(:before) }]
-          hooks[:after_invoke] = [proc { call_play_hooks(:after) }]
+          bind_play_hooks(:before, :before_execute)
+          bind_play_hooks(:after, :after_invoke)
         end
       end
     end
@@ -114,6 +114,11 @@ module Abid
 
     def needed?
       !state.successed? || prerequisite_tasks.any? { |t| t.session.updated? }
+    end
+
+    def bind_play_hooks(tag, to = nil)
+      to ||= tag
+      hooks[to] = [proc { |*args| call_play_hooks(tag, *args) }]
     end
 
     def call_play_hooks(tag, *args)
