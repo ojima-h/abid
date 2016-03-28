@@ -25,25 +25,18 @@ module Abid
     end
 
     def enter(&block)
-      capture_exception do
-        synchronize do
-          return @ivar if @entered
-          @entered = true
-        end
-        block.call
+      synchronize do
+        return @ivar if @entered
+        @entered = true
       end
+      block.call
       @ivar
     end
 
     def capture_exception(&block)
       block.call
-      finished = true
     rescue Exception => e
       self.fail(e)
-    ensure
-      if e.nil? && !finished
-        raise "#{@task.name_with_args} thread killed" rescue self.fail($ERROR_INFO)
-      end
     end
 
     def add_observer(*args, &block)

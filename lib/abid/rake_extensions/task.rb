@@ -48,18 +48,20 @@ module Abid
 
       def async_invoke_with_call_chain(task_args, invocation_chain)
         session.enter do
-          new_chain = Rake::InvocationChain.append(self, invocation_chain)
+          session.capture_exception do
+            new_chain = Rake::InvocationChain.append(self, invocation_chain)
 
-          unless concerned?
-            session.skip
-            break
+            unless concerned?
+              session.skip
+              break
+            end
+
+            call_hooks(:before_invoke)
+
+            async_invoke_prerequisites(task_args, new_chain)
+
+            async_execute_after_prerequisites(task_args)
           end
-
-          call_hooks(:before_invoke)
-
-          async_invoke_prerequisites(task_args, new_chain)
-
-          async_execute_after_prerequisites(task_args)
         end
       end
 
@@ -90,19 +92,17 @@ module Abid
           return
         end
 
-        application.worker[worker].post do
-          session.capture_exception do
-            if !needed?
-              session.skip
-            elsif session.lock
-              call_hooks(:before_execute)
+        async_post(worker) do
+          if !needed?
+            session.skip
+          elsif session.lock
+            call_hooks(:before_execute)
 
-              execute(task_args)
+            execute(task_args)
 
-              session.success
-            else
-              async_wait_external
-            end
+            session.success
+          else
+            async_wait_external
           end
         end
       end
@@ -114,22 +114,33 @@ module Abid
 
         application.trace "** Wait #{name_with_params}" if application.options.trace
 
-        application.worker[:waiter].post do
-          session.capture_exception do
-            interval = application.options.wait_external_task_interval || 10
-            timeout = application.options.wait_external_task_timeout || 3600
-            timeout_tm = Time.now.to_f + timeout
+        async_post(:waiter) do
+          interval = application.options.wait_external_task_interval || 10
+          timeout = application.options.wait_external_task_timeout || 3600
+          timeout_tm = Time.now.to_f + timeout
 
-            loop do
-              state.reload
-              if !state.running?
-                session.success
-                break
-              elsif Time.now.to_f >= timeout_tm
-                fail "#{name} -- timeout exceeded"
-              else
-                sleep interval
-              end
+          loop do
+            state.reload
+            if !state.running?
+              session.success
+              break
+            elsif Time.now.to_f >= timeout_tm
+              fail "#{name} -- timeout exceeded"
+            else
+              sleep interval
+            end
+          end
+        end
+      end
+
+      def async_post(worker_name, &block)
+        application.worker[worker_name].post do
+          session.capture_exception do
+            begin
+              block.call
+              finished = true
+            ensure
+              fail 'thread killed' if $ERROR_INFO.nil? && !finished
             end
           end
         end
