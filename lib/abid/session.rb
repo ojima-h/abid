@@ -42,7 +42,7 @@ module Abid
       self.fail(e)
     ensure
       if e.nil? && !finished
-        raise 'thread killed' rescue self.fail($ERROR_INFO)
+        raise "#{@task.name_with_args} thread killed" rescue self.fail($ERROR_INFO)
       end
     end
 
