@@ -7,7 +7,6 @@ module Abid
 
       def inherited(child)
         params_spec.each { |k, v| child.params_spec[k] = v.dup }
-        hooks.each { |k, v| child.hooks[k] = v.dup }
       end
 
       def params_spec
@@ -25,12 +24,7 @@ module Abid
       end
 
       def hooks
-        @hooks ||= {
-          setup: [],
-          before: [],
-          after: [],
-          around: []
-        }
+        @hooks ||= Hash.new { |h, k| h[k] = [] }
       end
 
       def set(name, value = nil, &block)
@@ -63,10 +57,6 @@ module Abid
 
       def after(&block)
         hooks[:after] << block
-      end
-
-      def around(&block)
-        hooks[:around] << block
       end
 
       def method_added(name)

@@ -88,11 +88,23 @@ module Abid
       def clear
         @spy.clear
         State.instance_eval { @cache.clear }
+        app.tasks.each do |t|
+          t.instance_eval do
+            @session = nil
+            if @siblings
+              @siblings.each { |_, s| s.instance_eval { @session = nil } }
+            end
+          end
+        end
       end        
 
       def test_invoke
-        @spy.clear
+        clear
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
+
+        assert app[:test, nil, date: '2016-01-01'].state.successed?
+        assert app[:test, nil, date: '2016-01-01'].session.successed?
+        assert app[:test, nil, date: '2016-01-01'].session.updated?
 
         parents_result = @spy.select { |n, _| n == :parent }.sort_by(&:last)
         assert_equal [:parent, Date.new(2016, 1, 1)], parents_result[0]
@@ -104,15 +116,14 @@ module Abid
       end
 
       def test_repair
-        @spy.clear
+        clear
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
         assert_equal 6, @spy.length
 
         st = State.find(app['ns:root', nil, date: '2016-01-02'])
         State.revoke(st.id)
 
-        @spy.clear
-        State.instance_eval { @cache.clear }
+        clear
 
         app.options.repair = true
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
@@ -129,20 +140,19 @@ module Abid
         clear
 
         t = app['ns:parent', nil, date: '2016-01-01']
-        t.state.start_session
-        t.state.close_session(StandardError.new)
+        t.state.start
+        t.state.finish(StandardError.new)
 
         result = app[:test, nil, date: '2016-01-01'].async_invoke.wait
         assert result.rejected?
         assert_equal 'ns:parent -- task has been failed', result.reason.message
 
-        i = app['ns:parent', nil, date: '2016-01-02'].state.ivar
-        assert i.fulfilled?
+        assert app['ns:parent', nil, date: '2016-01-02'].session.successed?
 
         clear
         app.options.repair = true
 
-        result = app[:test, nil, date: '2016-01-01'].async_invoke.wait
+        result = app[:test, nil, date: '2016-01-01'].async_invoke.wait!
         assert result.fulfilled?
         assert_equal 4, @spy.count
       ensure
@@ -155,7 +165,7 @@ module Abid
 
         task = app['test', nil, date: '2016-02-01']
         state = State.find(task)
-        state.start_session
+        state.start
 
         future = task.async_invoke
 
@@ -166,6 +176,7 @@ module Abid
         sleep 0.1
         assert future.complete?
       ensure
+        future.wait!
         app.options.wait_external_task = false
       end
 
@@ -194,15 +205,21 @@ module Abid
 
         app.worker.kill
         sleep 0.5
-
         assert app[:sleep].state.failed?
         assert f.rejected?
-        assert_equal 'sleep -- thread killed', f.reason.message
+        assert_equal 'thread killed', f.reason.message
       end
 
       def test_retry_failed
-        app[:failure_play].async_invoke.wait
+        f = app[:failure_play].async_invoke.wait
+        assert_equal 'test', f.reason.message
+
         clear
+        f = app[:failure_play].async_invoke.wait
+        assert_equal 'failure_play -- task has been failed', f.reason.message
+
+        clear
+        app.top_level_tasks << 'failure_play'
         f = app[:failure_play].async_invoke.wait
         assert_equal 'test', f.reason.message
       end

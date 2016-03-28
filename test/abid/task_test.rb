@@ -8,10 +8,13 @@ module Abid
     def setup
       play(:test) do
         param :date, type: :date
+        attr_accessor :callback_called
 
         setup do
           needs :parent
         end
+
+        before { self.callback_called = true }
       end
 
       play(:parent) do
@@ -61,6 +64,14 @@ module Abid
 
       task = app[:test, date: '2016-01-01']
       assert_equal 'test date=2016-01-01', task.name_with_args
+      end
+
+    def test_callback
+      task = app[:test, date: '2016-01-01']
+      play = task.play
+      task.async_invoke.wait!
+
+      assert play.callback_called
     end
   end
 end

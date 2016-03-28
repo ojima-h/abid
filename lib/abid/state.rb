@@ -56,22 +56,12 @@ module Abid
     end
 
     def_delegators 'self.class', :serialize, :deserialize
-    attr_reader :ivar
 
     def initialize(task)
       @task = task
       @record = nil
-      @ivar = Concurrent::IVar.new
-      @already_invoked = false
+      @started = false
       reload
-    end
-
-    def only_once(&block)
-      self.class.synchronize do
-        return if @already_invoked
-        @already_invoked = true
-      end
-      block.call
     end
 
     def database
@@ -155,14 +145,7 @@ module Abid
       end
     end
 
-    def session(&block)
-      started = start_session
-      block.call
-    ensure
-      close_session($ERROR_INFO) if started
-    end
-
-    def start_session
+    def start
       return true if disabled? || preview?
 
       database.transaction do
@@ -189,13 +172,15 @@ module Abid
           @record = { id: id, **new_state }
         end
 
+        @started = true
         true
       end
     end
 
-    def close_session(error = nil)
+    def finish(error = nil)
       return if disabled? || preview?
       return unless @record
+      return unless @started
       state = error ? FAILED : SUCCESSED
       dataset.where(id: @record[:id]).update(state: state, end_time: Time.now)
       reload

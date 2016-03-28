@@ -39,8 +39,10 @@ module Abid
           @prerequisites = []
           @params = sorted_params
           @play = play_class.new(t)
+          call_play_hooks(:setup)
+          hooks[:before_execute] << proc { call_play_hooks(:before) }
+          hooks[:after_execute] << proc { call_play_hooks(:after) }
         end
-        play_class.hooks[:setup].each { |blk| t.play.instance_eval(&blk) }
       end
     end
 
@@ -97,22 +99,27 @@ module Abid
         application.trace "** Execute #{name_with_params}"
       end
 
-      play_class.hooks[:before].each { |blk| play.instance_eval(&blk) }
-
-      call_around_hooks(play_class.hooks[:around]) { play.run }
-
-      play_class.hooks[:after].each { |blk| play.instance_eval(&blk) }
+      play.run
     end
 
-    def call_around_hooks(hooks, &body)
-      if hooks.empty?
-        body.call
-      else
-        h, *rest = hooks
-        play.instance_exec(-> { call_around_hooks(rest, &body) }, &h)
+    def concerned?
+      state.reload
+
+      if !application.options.repair && state.failed? && !top_level?
+        fail "#{name} -- task has been failed"
       end
+
+      application.options.repair || !state.successed?
     end
-    private :call_around_hooks
+
+    def needed?
+      !state.successed? || prerequisite_tasks.any? { |t| t.session.updated? }
+    end
+
+    def call_play_hooks(tag, *args)
+      return unless bound?
+      play_class.hooks[tag].each { |blk| play.instance_exec(*args, &blk) }
+    end
 
     class <<self
       def define_play(*args, &block) # :nodoc:

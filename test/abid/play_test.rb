@@ -7,7 +7,6 @@ module Abid
 
     def setup
       play :sample do
-        attr_accessor :callback_called
         set(:spy) { [] }
         set :worker, :dummy_worker
 
@@ -20,11 +19,6 @@ module Abid
 
         def run
           @spy = [worker, date, dummy]
-        end
-
-        around do |p|
-          self.callback_called = true
-          p.call
         end
       end
 
@@ -54,8 +48,6 @@ module Abid
       parent_name, parent_params = task.prerequisites.first
       assert_equal :parent, parent_name
       assert_equal Date.new(2000, 1, 2), parent_params[:date]
-
-      assert play.callback_called
     end
 
     def test_undef_param

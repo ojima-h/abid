@@ -1,12 +1,28 @@
 module Abid
   module RakeExtensions
     module Task
+      extend Forwardable
+      def_delegators :session, :updated?, :failed?, :error
+
       def volatile?
         true
       end
 
       def worker
         :default
+      end
+
+      def session
+        @session ||= Session.new(self).tap do |session|
+          session.add_observer do |_, _, reason|
+            if reason.nil?
+              call_hooks(:successed)
+            else
+              call_hooks(:failed, reason)
+            end
+            call_hooks(:ensure, reason)
+          end
+        end
       end
 
       def state
@@ -17,127 +33,113 @@ module Abid
         name
       end
 
+      def concerned?
+        true
+      end
+
+      def top_level?
+        application.top_level_tasks.any? { |t| application[t] == self }
+      end
+
+      def hooks
+        @hooks ||= Hash.new { |h, k| h[k] = [] }
+      end
+
+      def call_hooks(tag, *args)
+        hooks[tag].each { |h| h.call(*args) }
+      end
+
       def async_invoke(*args)
         task_args = Rake::TaskArguments.new(arg_names, args)
         async_invoke_with_call_chain(task_args, Rake::InvocationChain::EMPTY)
       end
 
       def async_invoke_with_call_chain(task_args, invocation_chain)
-        state.reload
+        session.enter do
+          new_chain = Rake::InvocationChain.append(self, invocation_chain)
 
-        new_chain = Rake::InvocationChain.append(self, invocation_chain)
-
-        state.only_once do
-          if !application.options.repair && state.successed?
-            # skip if successed
-            state.ivar.try_set(false)
-          elsif !application.options.repair && state.failed? && !invocation_chain.empty?
-            # fail if not top level
-            fail "#{name} -- task has been failed" rescue state.ivar.try_fail($ERROR_INFO)
-          else
-            async_invoke_with_prerequisites(task_args, new_chain)
+          unless concerned?
+            session.skip
+            break
           end
-        end
-        state.ivar
-      ensure
-        state.ivar.try_fail($ERROR_INFO) if $ERROR_INFO
-      end
 
-      def async_invoke_with_prerequisites(task_args, invocation_chain)
-        application.trace "** Invoke #{name_with_params}" if application.options.trace
+          async_invoke_prerequisites(task_args, new_chain)
 
-        volatiles, non_volatiles = prerequisite_tasks.partition(&:volatile?)
-
-        async_invoke_tasks(non_volatiles, task_args, invocation_chain) do |updated|
-          if state.successed? && !updated
-            application.trace "** Skip #{name_with_params}" if application.options.trace
-            state.ivar.try_set(false)
-          else
-            async_invoke_tasks(volatiles, task_args, invocation_chain) do
-              async_execute_with_session(task_args)
-            end
-          end
+          async_execute_after_prerequisites(task_args)
         end
       end
 
-      def async_invoke_tasks(tasks, task_args, invocation_chain, &block)
-        ivars = tasks.map do |t|
+      def async_invoke_prerequisites(task_args, invocation_chain)
+        call_hooks(:before_prerequisites)
+
+        prerequisite_tasks.each do |t|
           args = task_args.new_scope(t.arg_names)
           t.async_invoke_with_call_chain(args, invocation_chain)
         end
+      end
 
-        if ivars.empty?
-          block.call(false)
+      def async_execute_after_prerequisites(task_args)
+        if prerequisite_tasks.empty?
+          async_execute(task_args)
         else
-          counter = Concurrent::DependencyCounter.new(ivars.size) do
-            begin
-              if ivars.any?(&:rejected?)
-                state.ivar.try_fail(ivars.find(&:rejected?).reason)
-              else
-                updated = ivars.map(&:value).any?
-                block.call(updated)
-              end
-            rescue Exception => err
-              state.ivar.try_fail(err)
+          counter = Concurrent::DependencyCounter.new(prerequisite_tasks.size) do
+            session.capture_exception do
+              async_execute(task_args)
             end
           end
-          ivars.each { |i| i.add_observer counter }
+          prerequisite_tasks.each { |t| t.session.add_observer counter }
         end
       end
 
-      def async_execute_with_session(task_args)
-        async_execute_in_worker do
-          begin
-            state.session do
-              begin
-                execute(task_args) if needed?
-                finished = true
-              ensure
-                fail "#{name} -- thread killed" if $ERROR_INFO.nil? && !finished
-              end
-            end
+      def async_execute(task_args)
+        if prerequisite_tasks.any?(&:failed?)
+          session.fail(prerequisite_tasks.find(&:failed?).error)
+          return
+        end
 
-            state.ivar.try_set(true)
-          rescue AbidErrorTaskAlreadyRunning
-            async_wait_complete
+        application.worker[worker].post do
+          session.capture_exception do
+            if !needed?
+              session.skip
+            elsif session.lock
+              call_hooks(:before_execute)
+
+              execute(task_args)
+
+              call_hooks(:after_execute)
+
+              session.success
+            else
+              async_wait_external
+            end
           end
         end
       end
 
-      def async_wait_complete
+      def async_wait_external
         unless application.options.wait_external_task
-          err = RuntimeError.new("task #{name_with_params} already running")
-          return state.ivar.try_fail(err)
+          fail "task #{name_with_params} already running"
         end
 
         application.trace "** Wait #{name_with_params}" if application.options.trace
 
-        async_execute_in_worker(:waiter) do
-          interval = application.options.wait_external_task_interval || 10
-          timeout = application.options.wait_external_task_timeout || 3600
-          timeout_tm = Time.now.to_f + timeout
+        application.worker[:waiter].post do
+          session.capture_exception do
+            interval = application.options.wait_external_task_interval || 10
+            timeout = application.options.wait_external_task_timeout || 3600
+            timeout_tm = Time.now.to_f + timeout
 
-          loop do
-            state.reload
-            if !state.running?
-              state.ivar.try_set(true)
-              break
-            elsif Time.now.to_f >= timeout_tm
-              fail "#{name} -- timeout exceeded" rescue state.ivar.try_fail($ERROR_INFO)
-              break
-            else
-              sleep interval
+            loop do
+              state.reload
+              if !state.running?
+                session.success
+                break
+              elsif Time.now.to_f >= timeout_tm
+                fail "#{name} -- timeout exceeded"
+              else
+                sleep interval
+              end
             end
-          end
-        end
-      end
-
-      def async_execute_in_worker(worker = nil, &block)
-        application.worker[worker || self.worker].post do
-          begin
-            block.call
-          rescue Exception => err
-            state.ivar.try_fail(err)
           end
         end
       end
