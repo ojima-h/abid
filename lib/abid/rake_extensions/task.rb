@@ -12,7 +12,9 @@ module Abid
       def session
         @session ||= Session.new(self).tap do |session|
           session.add_observer do |_, _, reason|
-            call_hooks(:after_invoke, reason)
+            if session.successed? || session.failed?
+              call_hooks(:after_invoke, reason)
+            end
           end
         end
       end
