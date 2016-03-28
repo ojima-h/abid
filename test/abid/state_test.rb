@@ -21,7 +21,7 @@ module Abid
     def test_find
       task = Rake.application['test', nil, date: '2000-01-01']
       state = State.find(task)
-      state.start_session
+      state.start
       assert_equal state.id, State.find(task).id
     end
 
@@ -32,9 +32,9 @@ module Abid
 
       assert_nil state.state
 
-      state.start_session
+      state.start
       assert state.running?
-      state.close_session
+      state.finish
 
       assert state.successed?
 
@@ -48,7 +48,7 @@ module Abid
 
       assert_nil state.state
 
-      state.start_session && state.close_session(StandardError.new('test'))
+      state.start && state.finish(StandardError.new('test'))
 
       assert state.failed?
 
@@ -63,7 +63,7 @@ module Abid
       assert_nil state.state
       assert state.disabled?
 
-      state.start_session && state.close_session
+      state.start && state.finish
 
       refute State.find(task).successed?
     end
@@ -71,22 +71,20 @@ module Abid
     def test_running_error
       task = Rake.application['test', nil, date: '2000-01-01']
       state = State.find(task)
-      state.start_session
-      assert_raises AbidErrorTaskAlreadyRunning do
-        state.start_session
-      end
-      state.close_session
+      assert state.start
+      assert_raises(AbidErrorTaskAlreadyRunning) { state.start }
+      state.finish
 
       task = Rake.application['volatile']
       state = State.find(task)
-      state.start_session
-      assert state.start_session, 'successed to open session'
+      state.start
+      assert state.start, 'successed to open session'
     end
 
     def test_list
       task = Rake.application['test', nil, date: '2000-01-01']
       state = State.find(task)
-      state.start_session && state.close_session
+      state.start && state.finish
 
       states = State.list(started_after: Time.now - 60)
       assert 1, states.length
@@ -97,11 +95,11 @@ module Abid
     def test_revoke
       task_1 = Rake.application['test', nil, date: '2000-01-01']
       state_1 = State.find(task_1)
-      state_1.start_session && state_1.close_session
+      state_1.start && state_1.finish
 
       task_2 = Rake.application['test', nil, date: '2000-01-02']
       state_2 = State.find(task_2)
-      state_2.start_session && state_2.close_session
+      state_2.start && state_2.finish
 
       assert_equal 2, State.list.length
 

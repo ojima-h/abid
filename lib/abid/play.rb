@@ -25,12 +25,7 @@ module Abid
       end
 
       def hooks
-        @hooks ||= {
-          setup: [],
-          before: [],
-          after: [],
-          around: []
-        }
+        @hooks ||= Hash.new { |h, k| h[k] = [] }
       end
 
       def set(name, value = nil, &block)
@@ -63,10 +58,6 @@ module Abid
 
       def after(&block)
         hooks[:after] << block
-      end
-
-      def around(&block)
-        hooks[:around] << block
       end
 
       def method_added(name)
