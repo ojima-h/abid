@@ -86,9 +86,11 @@ module Abid
       end
 
       def async_execute(task_args)
-        failed_task = prerequisite_tasks.find { |t| t.session.failed? }
+        failed_task = prerequisite_tasks.find do |t|
+          t.session.failed? || t.session.canceled?
+        end
         if failed_task
-          session.fail(failed_task.session.error)
+          session.cancel(failed_task.session.error)
           return
         end
 

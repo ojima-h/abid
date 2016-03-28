@@ -104,7 +104,6 @@ module Abid
 
         assert app[:test, nil, date: '2016-01-01'].state.successed?
         assert app[:test, nil, date: '2016-01-01'].session.successed?
-        assert app[:test, nil, date: '2016-01-01'].session.updated?
 
         parents_result = @spy.select { |n, _| n == :parent }.sort_by(&:last)
         assert_equal [:parent, Date.new(2016, 1, 1)], parents_result[0]

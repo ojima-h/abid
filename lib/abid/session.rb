@@ -2,10 +2,10 @@ module Abid
   class Session
     extend MonitorMixin
 
-    attr_reader :updated, :successed, :failed, :error
-    alias_method :updated?, :updated
-    alias_method :successed?, :successed
-    alias_method :failed?, :failed
+    %w(successed skipped failed canceled).each do |result|
+      define_method(:"#{result}?") { @result == result.to_sym }
+    end
+    attr_reader :error
 
     def initialize(task)
       @task = task
@@ -13,11 +13,12 @@ module Abid
 
       @entered = false
       @locked = false
-      @updated = false
-      @successed = false
-      @failed = false
+      @result = nil
       @error = nil
       @ivar = Concurrent::IVar.new
+
+      @on_success = []
+      @on_fail = []
     end
 
     def synchronize(&block)
@@ -61,26 +62,31 @@ module Abid
     end
 
     def success
-      @successed = true
-      @updated = true
       unlock
+      @result = :successed
       @ivar.try_set(true)
     end
 
     def skip
-      @successed = true
-      @updated = false
       unlock
+      @result = :skipped
       @ivar.try_set(false)
     end
 
     def fail(error)
-      @failed = true
+      @result = :failed
       @error = error
       unlock(error)
       @ivar.fail(error) rescue Concurrent::MultipleAssignmentError
     rescue Exception => e
       @ivar.fail(e) rescue Concurrent::MultipleAssignmentError
+    end
+
+    def cancel(error)
+      unlock(error)
+      @result = :canceled
+      @error = error
+      @ivar.fail(error) rescue Concurrent::MultipleAssignmentError
     end
   end
 end

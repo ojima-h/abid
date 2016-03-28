@@ -113,7 +113,7 @@ module Abid
     end
 
     def needed?
-      !state.successed? || prerequisite_tasks.any? { |t| t.session.updated? }
+      !state.successed? || prerequisite_tasks.any? { |t| t.session.successed? }
     end
 
     def bind_play_hooks(tag, to = nil)
