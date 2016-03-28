@@ -41,7 +41,9 @@ module Abid
     rescue Exception => e
       self.fail(e)
     ensure
-      self.fail(RuntimeError.new('thread killed')) if e.nil? && !finished
+      if e.nil? && !finished
+        fail 'thread killed' rescue self.fail($ERROR_INFO)
+      end
     end
 
     def add_observer(*args, &block)
