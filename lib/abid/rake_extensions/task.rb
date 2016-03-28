@@ -1,9 +1,6 @@
 module Abid
   module RakeExtensions
     module Task
-      extend Forwardable
-      def_delegators :session, :updated?, :failed?, :error
-
       def volatile?
         true
       end
@@ -15,12 +12,7 @@ module Abid
       def session
         @session ||= Session.new(self).tap do |session|
           session.add_observer do |_, _, reason|
-            if reason.nil?
-              call_hooks(:successed)
-            else
-              call_hooks(:failed, reason)
-            end
-            call_hooks(:ensure, reason)
+            call_hooks(:after_invoke, reason)
           end
         end
       end
@@ -63,6 +55,8 @@ module Abid
             break
           end
 
+          call_hooks(:before_invoke)
+
           async_invoke_prerequisites(task_args, new_chain)
 
           async_execute_after_prerequisites(task_args)
@@ -70,8 +64,6 @@ module Abid
       end
 
       def async_invoke_prerequisites(task_args, invocation_chain)
-        call_hooks(:before_prerequisites)
-
         prerequisite_tasks.each do |t|
           args = task_args.new_scope(t.arg_names)
           t.async_invoke_with_call_chain(args, invocation_chain)
@@ -92,8 +84,9 @@ module Abid
       end
 
       def async_execute(task_args)
-        if prerequisite_tasks.any?(&:failed?)
-          session.fail(prerequisite_tasks.find(&:failed?).error)
+        failed_task = prerequisite_tasks.find { |t| t.session.failed? }
+        if failed_task
+          session.fail(failed_task.session.error)
           return
         end
 
@@ -105,8 +98,6 @@ module Abid
               call_hooks(:before_execute)
 
               execute(task_args)
-
-              call_hooks(:after_execute)
 
               session.success
             else

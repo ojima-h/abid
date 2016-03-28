@@ -40,8 +40,8 @@ module Abid
           @params = sorted_params
           @play = play_class.new(t)
           call_play_hooks(:setup)
-          hooks[:before_execute] << proc { call_play_hooks(:before) }
-          hooks[:after_execute] << proc { call_play_hooks(:after) }
+          hooks[:before_execute] = [proc { call_play_hooks(:before) }]
+          hooks[:after_invoke] = [proc { call_play_hooks(:after) }]
         end
       end
     end
