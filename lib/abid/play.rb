@@ -7,6 +7,7 @@ module Abid
 
       def inherited(child)
         params_spec.each { |k, v| child.params_spec[k] = v.dup }
+        hooks.each { |k, v| child.hooks[k] = v.dup }
       end
 
       def params_spec
