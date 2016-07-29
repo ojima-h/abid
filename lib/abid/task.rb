@@ -15,9 +15,11 @@ module Abid
     def play_class
       return @play_class if @play_class
 
+      task = self
       klass = application.lookup_play_class(extends, scope)
-      @play_class = Class.new(klass, &play_class_definition).tap do |c|
-        c.task = self
+      @play_class = Class.new(klass) do |c|
+        c.task = task
+        c.class_eval(&task.play_class_definition)
       end
     end
 

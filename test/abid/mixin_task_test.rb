@@ -17,7 +17,13 @@ module Abid
 
     def setup
       namespace :ns do
+        mixin :mixin_0 do
+          set :attr_0, -1
+        end
+
         mixin :mixin_1 do
+          include :mixin_0
+
           set :name, 'mixin_1'
           set :attr_2, 30
         end
@@ -38,6 +44,7 @@ module Abid
       task = app['task']
 
       assert 'mixin_2', task.play.name
+      assert -1, task.play.attr_0
       assert 10, task.play.attr_1
       assert 30, task.play.attr_2
     end

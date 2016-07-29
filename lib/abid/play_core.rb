@@ -20,7 +20,7 @@ module Abid
         if m.is_a? Module
           m
         else
-          mixin_task = Rake.application[m, @scope]
+          mixin_task = task.application[m, task.scope]
 
           fail "#{m} is not a mixin" unless mixin_task.is_a? MixinTask
 

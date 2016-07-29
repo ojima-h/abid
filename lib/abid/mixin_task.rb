@@ -2,12 +2,18 @@ module Abid
   class MixinTask < Rake::Task
     class Mixin < Module
       include PlayCore
+      attr_reader :task
+
+      def initialize(task, *args, &block)
+        @task = task
+        super(*args, &block)
+      end
     end
 
     attr_accessor :mixin_definition
 
     def mixin
-      @mixin ||= Mixin.new(&mixin_definition)
+      @mixin ||= Mixin.new(self, &mixin_definition)
     end
 
     def execute(_args = nil)
