@@ -2,7 +2,7 @@ require 'forwardable'
 
 module Abid
   class Play
-    extend Plugin
+    extend PlayCore
 
     class << self
       attr_accessor :task
