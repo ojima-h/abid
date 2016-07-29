@@ -11,6 +11,12 @@ module Abid
       end
     end
 
+    def define_mixin(task_class, mixin_name, &block)
+      define_task(task_class, mixin_name).tap do |task|
+        task.mixin_definition = block
+      end
+    end
+
     def [](task_name, scopes = nil, **params)
       task = super(task_name, scopes)
 

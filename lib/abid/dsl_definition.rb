@@ -19,6 +19,10 @@ module Abid
     def invoke(task, *args, **params)
       Rake.application[task, **params].async_invoke(*args).wait!
     end
+
+    def mixin(*args, &block)
+      Abid::MixinTask.define_mixin(*args, &block)
+    end
   end
 end
 
