@@ -12,20 +12,6 @@ module Abid
         hooks.each { |k, v| child.hooks[k] = v.dup }
       end
 
-      def params_spec
-        @params_spec ||= {}
-      end
-
-      def param(name, **param_spec)
-        define_method(name) { task.params[name] }
-        params_spec[name] = { significant: true }.merge(param_spec)
-      end
-
-      def undef_param(name)
-        params_spec.delete(name)
-        undef_method(name) if method_defined?(name)
-      end
-
       def hooks
         @hooks ||= Hash.new { |h, k| h[k] = [] }
       end
