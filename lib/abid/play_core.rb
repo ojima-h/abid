@@ -15,6 +15,20 @@ module Abid
       end
     end
 
+    def params_spec
+      @params_spec ||= {}
+    end
+
+    def param(name, **param_spec)
+      define_method(name) { task.params[name] }
+      params_spec[name] = { significant: true }.merge(param_spec)
+    end
+
+    def undef_param(name)
+      params_spec.delete(name)
+      undef_method(name) if method_defined?(name)
+    end
+
     def include(*mod)
       ms = mod.map do |m|
         if m.is_a? Module
@@ -24,7 +38,12 @@ module Abid
 
           fail "#{m} is not a mixin" unless mixin_task.is_a? MixinTask
 
-          mixin_task.mixin
+          mixin_task.mixin.tap do |mixin|
+            # inherit params_spec
+            mixin.params_spec.each do |k, v|
+              params_spec[k] ||= v
+            end
+          end
         end
       end
 
