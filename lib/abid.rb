@@ -12,6 +12,7 @@ require 'rbtree'
 require 'sqlite3'
 require 'sequel'
 
+require 'abid/config'
 require 'abid/rake_extensions'
 require 'abid/version'
 require 'abid/abid_module'
