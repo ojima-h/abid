@@ -2,9 +2,9 @@ module Abid
   class Config < Hash
     DEFAULT_CONFIG_FILE = './config/abid.yml'.freeze
     DEFAULT_DATABASE_CONFIG = {
-      adapter: 'sqlite',
-      database: './abid.db',
-      max_connections: 1
+      'adapter' => 'sqlite',
+      'database' => './abid.db',
+      'max_connections' => 1
     }.freeze
 
     attr_reader :database
@@ -16,7 +16,7 @@ module Abid
 
     def load(config_file = nil)
       clear
-      merge(load_config_file(config_file || DEFAULT_CONFIG_FILE))
+      update(load_config_file(config_file || DEFAULT_CONFIG_FILE))
       @database = load_database_config
       self
     end
@@ -28,11 +28,7 @@ module Abid
     end
 
     def load_database_config
-      if key?('database')
-        Common::Utils.symbolize_keys(fetch('database'))
-      else
-        DEFAULT_DATABASE_CONFIG.dup
-      end
+      fetch('database') { DEFAULT_DATABASE_CONFIG.dup }
     end
   end
 end
