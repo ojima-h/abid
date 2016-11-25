@@ -7,11 +7,11 @@ class AbidTest < Minitest::Test
   def app
     @app ||= Abid::Application.new.tap do |app|
       app.init
-      app.config['abid database'] = {
+      Abid.config.database.replace(
         'adapter' => 'sqlite',
         'database' => File.expand_path('../../tmp/abid.db', __FILE__),
         'max_connections' => 1
-      }
+      )
       app.top_level_tasks.clear
     end
   end

@@ -3,15 +3,13 @@ module Abid
     include Abid::TaskManager
 
     attr_reader :worker
-    attr_reader :config
 
     def initialize
       super
       @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb) << abidfile
       @worker = Worker.new(self)
 
-      @config = IniFile.new(content: default_config)
-      @config.merge!(IniFile.load('config/abid.conf'))
+      Abid.config.load
     end
 
     def run
@@ -46,18 +44,6 @@ module Abid
     def invoke_task(task_string) # :nodoc:
       name, args = parse_task_string(task_string)
       self[name].async_invoke(*args).wait!
-    end
-
-    def default_config
-      {}
-    end
-
-    def default_database_config
-      {
-        adapter: 'sqlite',
-        database: File.join(Dir.pwd, 'abid.db'),
-        max_connections: 1
-      }
     end
 
     def standard_rake_options
@@ -128,12 +114,12 @@ module Abid
 
     def database
       return @database if @database
-      if config.sections.include?('abid database')
-        cfg = config['abid database'].map { |k, v| [k.to_sym, v] }.to_h
-      else
-        cfg = default_database_config
-      end
-      @database = Sequel.connect(**cfg)
+
+      # symbolize keys
+      params = {}
+      Abid.config.database.each { |k, v| params[k.to_sym] = v }
+
+      @database = Sequel.connect(**params)
     end
   end
 end
