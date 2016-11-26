@@ -19,7 +19,7 @@ class AbidTest < Minitest::Test
       # app.options.backtrace = true
       # Rake.verbose(true)
 
-      app.database[:states].delete
+      Abid::StateManager.database[:states].delete
       super
     end
   end

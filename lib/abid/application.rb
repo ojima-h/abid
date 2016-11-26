@@ -111,15 +111,5 @@ module Abid
         opts.environment('RAKEOPT')
       end.parse!
     end
-
-    def database
-      return @database if @database
-
-      # symbolize keys
-      params = {}
-      Abid.config.database.each { |k, v| params[k.to_sym] = v }
-
-      @database = Sequel.connect(**params)
-    end
   end
 end

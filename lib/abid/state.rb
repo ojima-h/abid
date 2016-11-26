@@ -18,7 +18,7 @@ module Abid
       end
 
       def list(pattern: nil, started_before: nil, started_after: nil)
-        dataset = Rake.application.database[:states]
+        dataset = StateManager.database[:states]
 
         dataset = dataset.where { start_time < started_before } if started_before
         dataset = dataset.where { start_time > started_after } if started_after
@@ -38,7 +38,7 @@ module Abid
       end
 
       def revoke(id)
-        db = Rake.application.database
+        db = StateManager.database
         db.transaction do
           running = db[:states].where(id: id, state: RUNNING).count > 0
           fail 'task is now running' if running
@@ -65,7 +65,7 @@ module Abid
     end
 
     def database
-      Rake.application.database
+      StateManager.database
     end
 
     def dataset
