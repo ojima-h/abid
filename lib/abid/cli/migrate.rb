@@ -1,3 +1,5 @@
+require 'abid/state_manager'
+
 module Abid
   class CLI
     class Migrate
@@ -6,18 +8,16 @@ module Abid
       end
 
       def run
-        migrations_path = File.expand_path('../../../../migrations', __FILE__)
+        db = StateManager.database
+        dir = StateManager::Database.migrations_path
 
-        Sequel.extension :migration
-        db = Abid.application.database
-
-        if Sequel::Migrator.is_current?(db, migrations_path)
+        if Sequel::Migrator.is_current?(db, dir)
           puts 'Schema is latest.'
           return
         end
 
         puts 'Start migration...'
-        Sequel::Migrator.run(db, migrations_path)
+        Sequel::Migrator.run(db, dir)
         puts 'Done'
       end
     end
