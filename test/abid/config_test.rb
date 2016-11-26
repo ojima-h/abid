@@ -7,6 +7,7 @@ module Abid
     def setup
       @config1 = Tempfile.open('config_test')
       @config1.puts <<-YAML
+---
 id: 1
 database:
   adapter: mysql
@@ -16,6 +17,7 @@ database:
 
       @config2 = Tempfile.open('config_test')
       @config2.puts <<-YAML
+---
 id: 2
       YAML
       @config2.close
@@ -54,6 +56,12 @@ id: 2
       assert_raises(Abid::Error) do
         config.load('dummy')
       end
+    end
+
+    def test_to_yaml
+      config = Abid::Config.new
+      config.load(@config1.path)
+      assert_equal File.read(@config1.path), config.to_yaml
     end
   end
 end

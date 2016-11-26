@@ -20,11 +20,8 @@ module Abid
     end
 
     # @return [Hash] database configuration
-    attr_reader :database
-
-    def initialize
-      super
-      @database = {}
+    def database
+      self['database']
     end
 
     # Load config file.
@@ -40,8 +37,13 @@ module Abid
     # @return [Config] self
     def load(config_file = nil)
       replace(load_config_file(config_file))
-      @database = load_database_config
+      assign_default
       self
+    end
+
+    # @return [String] YAML string
+    def to_yaml
+      YAML.dump(to_h)
     end
 
     private
@@ -60,8 +62,8 @@ module Abid
       YAML.load_file(file_path)
     end
 
-    def load_database_config
-      fetch('database') { DEFAULT_DATABASE_CONFIG.dup }
+    def assign_default
+      self['database'] ||= DEFAULT_DATABASE_CONFIG.dup
     end
   end
 end
