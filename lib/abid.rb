@@ -13,6 +13,8 @@ require 'sequel'
 
 require 'abid/config'
 require 'abid/error'
+require 'abid/state_manager'
+
 require 'abid/rake_extensions'
 require 'abid/version'
 require 'abid/abid_module'

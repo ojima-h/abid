@@ -24,7 +24,7 @@ Abid is a simple Workflow Engine based on Rake.
 
 2. Setup a database.
 
-        $ bundle exec abid db:migrate
+        $ bundle exec abidsc migrate
 
 ## Usage
 

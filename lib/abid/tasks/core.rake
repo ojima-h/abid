@@ -78,21 +78,3 @@ namespace :state do
     args.extras.each { |id| Abid::State.revoke(id) }
   end
 end
-
-namespace :db do
-  desc 'Run migrations'
-  task :migrate, [:version] do |_t, args|
-    migrations_path = File.expand_path('../../../../migrations', __FILE__)
-
-    require 'sequel'
-    Sequel.extension :migration
-    db = Rake.application.database
-    if args[:version]
-      puts "Migrating to version #{args[:version]}"
-      Sequel::Migrator.run(db, migrations_path, target: args[:version].to_i)
-    else
-      puts 'Migrating to latest'
-      Sequel::Migrator.run(db, migrations_path)
-    end
-  end
-end
