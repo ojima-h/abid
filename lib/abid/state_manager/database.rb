@@ -13,7 +13,11 @@ module Abid
         params = {}
         Abid.config.database.each { |k, v| params[k.to_sym] = v }
 
-        Sequel.connect(**params)
+        database = Sequel.connect(**params)
+        Sequel::Migrator.check_current(database, migrations_path)
+        database
+      rescue Sequel::Migrator::NotCurrentError
+        raise Error, 'current schema is out of date'
       end
 
       def self.migrations_path
