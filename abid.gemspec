@@ -29,4 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'sequel'
   spec.add_dependency 'sqlite3'
   spec.add_dependency 'rbtree'
+  spec.add_dependency 'thor'
 end
