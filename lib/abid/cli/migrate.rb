@@ -8,7 +8,7 @@ module Abid
       end
 
       def run
-        db = StateManager.database
+        db = StateManager::Database.connect!
         dir = StateManager::Database.migrations_path
 
         if Sequel::Migrator.is_current?(db, dir)
