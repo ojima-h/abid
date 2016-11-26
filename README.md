@@ -1,5 +1,7 @@
 # Abid
 
+[![Build Status](https://travis-ci.org/ojima-h/abid.svg?branch=master)](https://travis-ci.org/ojima-h/abid)
+
 Abid is a simple Workflow Engine based on Rake.
 
 ## Installation
