@@ -1,9 +1,5 @@
 module Abid
   class Config < Hash
-    DEFAULT_SEARCH_PATH = [
-      './config/abid.yml'
-    ].freeze
-
     DEFAULT_DATABASE_CONFIG = {
       'adapter' => 'sqlite',
       'database' => './abid.db',
@@ -14,10 +10,14 @@ module Abid
     #
     # You can append an additinal config file path:
     #
-    #     config.search_path.unshift('your_config_file')
+    #     Config.search_path.unshift('your_config_file')
     #
     # @return [Array<String>] search path
-    attr_reader :search_path
+    def self.search_path
+      @search_path ||= [
+        './config/abid.yml'
+      ]
+    end
 
     # @return [Hash] database configuration
     attr_reader :database
@@ -25,7 +25,6 @@ module Abid
     def initialize
       super
       @database = {}
-      @search_path = DEFAULT_SEARCH_PATH.dup
     end
 
     # Load config file.
@@ -33,7 +32,7 @@ module Abid
     # If `config_file` is specified and does not exist, it raises an error.
     #
     # If `config_file` is not specified, it searches config file in
-    # `search_path`.
+    # Config.earch_path.
     #
     # When #load is called again, original cofnigurations is cleared.
     #
@@ -56,7 +55,7 @@ module Abid
     end
 
     def load_default_config_file
-      file_path = search_path.find { |path| File.exist?(path) }
+      file_path = self.class.search_path.find { |path| File.exist?(path) }
       return {} unless file_path
       YAML.load_file(file_path)
     end

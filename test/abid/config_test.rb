@@ -40,10 +40,12 @@ id: 2
 
     def test_search_path
       config = Abid::Config.new
-      config.search_path.unshift(@config1.path)
+      Config.search_path.unshift(@config1.path)
       config.load
 
       assert_equal 1, config['id']
+    ensure
+      Config.search_path.delete(@config1.path)
     end
 
     def test_load_error
