@@ -13,5 +13,11 @@ module Abid
     def config
       puts Abid.config.to_yaml
     end
+
+    desc 'migrate', 'Run database migration'
+    def migrate
+      require 'abid/cli/migrate'
+      Migrate.new(options).run
+    end
   end
 end
