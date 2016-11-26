@@ -1,0 +1,5 @@
+---
+database:
+  adapter: sqlite
+  database: ./test/abid.db
+  max_connections: 1

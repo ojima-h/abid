@@ -11,5 +11,9 @@ module Abid
       @application = app
       Rake.application = app
     end
+
+    def config
+      @config ||= Config.new
+    end
   end
 end

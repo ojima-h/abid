@@ -9,3 +9,7 @@
 /tmp/
 *.db
 /sample/out/
+
+/vendor/bundle
+.ruby-version
+.DS_Store
