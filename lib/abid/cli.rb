@@ -38,5 +38,16 @@ module Abid
       List.new(options, prefix).run
     end
     map ls: :list
+
+    desc 'revoke JOB_ID...', 'Revoke jobs history'
+    option :force, type: :boolean, aliases: '-f',
+                   desc: 'revoke the states even if the job is running'
+    option :quiet, type: :boolean, aliases: '-q',
+                   desc: 'no prompt before removal'
+    def revoke(job_id, *rest_args)
+      require 'abid/cli/revoke'
+      Revoke.new(options, [job_id, *rest_args]).run
+    end
+    map rm: :revoke
   end
 end

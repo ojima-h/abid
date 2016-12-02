@@ -90,6 +90,24 @@ module Abid
         assert_equal states[6].id, found[1].id
         assert_equal states[8].id, found[2].id
       end
+
+      def test_revoke
+        states = Array.new(10) do |i|
+          State.assume(Job.new('job', i: i))
+        end
+
+        states[0].revoke
+        assert_nil State[states[0].id]
+
+        states[1].update(state: State::RUNNING)
+        assert_raises AlreadyRunningError do
+          states[1].revoke
+        end
+        states[1].revoke(force: true)
+        assert_nil State[states[1].id]
+
+        assert_equal 8, State.count
+      end
     end
   end
 end
