@@ -19,5 +19,15 @@ module Abid
       require 'abid/cli/migrate'
       Migrate.new(options).run
     end
+
+    desc 'assume TASK [TASKS..] [PARAMS]', 'Assume the job to be SUCCESSED'
+    option :force, type: :boolean, aliases: '-f',
+                   desc: 'set the state even if the job is running'
+    def assume(task, *rest_args)
+      require 'abid/cli/assume'
+      Assume.new(options, [task, *rest_args]).run
+    rescue AlreadyRunningError
+      exit 1
+    end
   end
 end
