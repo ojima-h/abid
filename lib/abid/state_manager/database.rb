@@ -1,3 +1,5 @@
+require 'sequel/plugins/serialization'
+
 module Abid
   module StateManager
     module Database

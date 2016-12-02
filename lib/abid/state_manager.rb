@@ -11,5 +11,7 @@ module Abid
     def self.database
       @database ||= Database.connect
     end
+
+    autoload :State, 'abid/state_manager/state'
   end
 end
