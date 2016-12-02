@@ -3,6 +3,7 @@ require 'shellwords'
 module Abid
   module ParamsFormat
     def self.format(params)
+      return '' unless params.is_a? Hash
       params.map do |key, value|
         val = Shellwords.escape(format_value(value))
         "#{key}=#{val}"
