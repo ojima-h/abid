@@ -15,6 +15,7 @@ require 'abid/config'
 require 'abid/error'
 require 'abid/params_format'
 require 'abid/state_manager'
+require 'abid/job'
 
 require 'abid/rake_extensions'
 require 'abid/version'

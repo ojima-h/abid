@@ -2,26 +2,6 @@ require 'shellwords'
 
 module Abid
   module ParamsFormat
-    def self.normalize(params)
-      params.sort.to_h.freeze
-    end
-
-    def self.dump(params)
-      YAML.dump(normalize(params))
-    end
-
-    def self.load(string)
-      YAML.load(string)
-    end
-
-    def self.signature(name, params)
-      name + "\n" + dump(params)
-    end
-
-    def self.digest(name, params)
-      Digest::MD5.hexdigest(signature(name, params))
-    end
-
     def self.format(params)
       normalize(params).map do |key, value|
         val = Shellwords.escape(format_value(value))
