@@ -3,7 +3,7 @@ require 'shellwords'
 module Abid
   module ParamsFormat
     def self.format(params)
-      normalize(params).map do |key, value|
+      params.map do |key, value|
         val = Shellwords.escape(format_value(value))
         "#{key}=#{val}"
       end.join(' ')

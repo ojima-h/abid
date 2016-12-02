@@ -2,20 +2,14 @@ require 'test_helper'
 
 module Abid
   class ParamsFormatTest < AbidTest
-    def test_dump
-      params = { b: 2, a: 1 }
-      str = ParamsFormat.dump(params)
-      assert_equal "---\n:a: 1\n:b: 2\n", str, 'keys are sorted'
-    end
-
     def test_format
       params = {
-        d: Date.new(2000, 1, 1),
-        e: Time.new(2000, 1, 1, 12, 0, 0),
-        f: 'some text',
         a: 1,
         b: 0.1,
-        c: false
+        c: false,
+        d: Date.new(2000, 1, 1),
+        e: Time.new(2000, 1, 1, 12, 0, 0),
+        f: 'some text'
       }
       str = ParamsFormat.format(params)
 
