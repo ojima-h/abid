@@ -96,21 +96,17 @@ module Abid
           State.assume(Job.new('job', i: i))
         end
 
-        State.revoke(states[0].id)
+        states[0].revoke
         assert_nil State[states[0].id]
 
         states[1].update(state: State::RUNNING)
         assert_raises AlreadyRunningError do
-          State.revoke(states[1].id)
+          states[1].revoke
         end
-        State.revoke(states[1].id, force: true)
+        states[1].revoke(force: true)
         assert_nil State[states[1].id]
 
         assert_equal 8, State.count
-
-        assert_raises StateNotFoundError do
-          State.revoke(-1)
-        end
       end
     end
   end

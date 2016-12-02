@@ -72,17 +72,15 @@ module Abid
 
       # Delete the state.
       #
-      # @param state_id [Integer] state id
       # @param force [Boolean] If true, delete the state even if running
       # @return [void]
-      def self.revoke(state_id, force: false)
+      def revoke(force: false)
         StateManager.database.transaction do
-          state = State[state_id]
-          if state.nil?
-            raise StateNotFoundError, "state_id: #{state_id} not found"
+          unless force
+            refresh
+            check_running!
           end
-          state.check_running! unless force
-          state.delete
+          delete
         end
       end
 
