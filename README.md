@@ -343,39 +343,17 @@ end
 
 When play is defined, new subclass of Avid::Play is created and play body is evaluated in that new class context. So, any class goodies can be put in play's body, i.e. including modules, `attr_reader` / `attr_writer`, method definitions, etc..
 
-## Built-in tasks
+## `abidsc` command
 
-### `state:list`
-
-```
-$ abid state:list started_after="2000-01-01 00:00:00" started_before="2000=01-02 00:00:00"
-```
-
-Display plays current states.
-
-### `state:revoke`
+You can manage plays states using `abidsc` command.
 
 ```
-$ abid state:revoke[id]
+$ abidsc list --after='2000-01-01 00:00:00" --before="2000=01-02 00:00:00"  # Display plays current states.
+$ abidsc revoke STATE_ID # remove the job history  # Remove the play recored from DB.
+$ abidsc assume TASK_NAME date=2000-01-01  # Insert a record that the play successed into DB.
+
+$ abidsc migrate  # Initialize or upgrade DB schema.
 ```
-
-Remove the play recored from DB.
-
-### `state:assume`
-
-```
-$ abid state:assume[task_name] date=2000-01-01
-```
-
-Insert a record that the play successed into DB.
-
-### `db:migrate`
-
-```
-$ abid db:migrate
-```
-
-Initialize or update DB.
 
 ## Development
 
