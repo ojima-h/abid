@@ -86,6 +86,20 @@ module Abid
       def failed?
         state == FAILED
       end
+
+      def state_label
+        case state
+        when 1 then 'RUNNING'
+        when 2 then 'SUCCESSED'
+        when 3 then 'FAILED'
+        else 'UNKNOWN'
+        end
+      end
+
+      def exec_time
+        return unless start_time && end_time
+        end_time - start_time
+      end
     end
   end
 end
