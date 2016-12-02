@@ -70,6 +70,19 @@ module Abid
         end
       end
 
+      # Delete the state.
+      #
+      # @param state_id [Integer] state id
+      # @param force [Boolean] If true, delete the state even if running
+      # @return [void]
+      def self.revoke(state_id, force: false)
+        StateManager.database.transaction do
+          state = State[state_id]
+          state.check_running! unless force
+          state.delete
+        end
+      end
+
       # check if the state is running
       def check_running!
         raise AlreadyRunningError, 'job already running' if running?
