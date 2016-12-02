@@ -78,6 +78,9 @@ module Abid
       def self.revoke(state_id, force: false)
         StateManager.database.transaction do
           state = State[state_id]
+          if state.nil?
+            raise StateNotFoundError, "state_id: #{state_id} not found"
+          end
           state.check_running! unless force
           state.delete
         end

@@ -107,6 +107,10 @@ module Abid
         assert_nil State[states[1].id]
 
         assert_equal 8, State.count
+
+        assert_raises StateNotFoundError do
+          State.revoke(-1)
+        end
       end
     end
   end
