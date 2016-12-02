@@ -69,6 +69,27 @@ module Abid
         assert_equal job.digest, state3.digest
         assert state3.successed?
       end
+
+      def test_filter
+        states = Array.new(10) do |i|
+          s = State.assume(Job.new("job#{i % 2}:foo#{i}", i: i))
+          s.update(
+            start_time: Time.new(2000, 1, 1, i),
+            end_time: Time.new(2000, 1, 1, i + 1)
+          )
+          s
+        end
+
+        found = State.filter_by_prefix('job0:')
+                     .filter_by_start_time(
+                       after: Time.new(2000, 1, 1, 3),
+                       before: Time.new(2000, 1, 1, 8)
+                     ).order(:id).to_a
+        assert_equal 3, found.length
+        assert_equal states[4].id, found[0].id
+        assert_equal states[6].id, found[1].id
+        assert_equal states[8].id, found[2].id
+      end
     end
   end
 end

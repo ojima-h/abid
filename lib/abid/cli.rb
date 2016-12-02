@@ -29,5 +29,14 @@ module Abid
     rescue AlreadyRunningError
       exit 1
     end
+
+    desc 'list [PREFIX]', 'List jobs'
+    option :after, type: :string, aliases: '-a', desc: 'start time fliter'
+    option :before, type: :string, aliases: '-b', desc: 'start time filter'
+    def list(prefix = nil)
+      require 'abid/cli/list'
+      List.new(options, prefix).run
+    end
+    map ls: :list
   end
 end

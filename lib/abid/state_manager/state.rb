@@ -6,6 +6,30 @@ module Abid
       SUCCESSED = 2
       FAILED = 3
 
+      # @!method self.filter_by_start_time(after: nil, before: nil)
+      #   @param after [Time] lower bound of start_time
+      #   @param before [Time] upper bound of start_time
+      #   @return [Sequel::Dataset<State>] a set of states started between
+      #     the given range.
+      #
+      # @!method self.filter_by_prefix(prefix)
+      #   @param prefix [String] the prefix of task names
+      #   @return [Sequel::Dataset<State>] a set of states which name starts
+      #     with the given prefix.
+      dataset_module do
+        def filter_by_start_time(after: nil, before: nil)
+          dataset = self
+          dataset = dataset.where { start_time >= after } if after
+          dataset = dataset.where { start_time <= before } if before
+          dataset
+        end
+
+        def filter_by_prefix(prefix)
+          return self if prefix.nil?
+          where { Sequel.like(:name, prefix + '%') }
+        end
+      end
+
       # Find a state by the job.
       #
       # @param job [Job] job
@@ -61,6 +85,20 @@ module Abid
 
       def failed?
         state == FAILED
+      end
+
+      def state_label
+        case state
+        when 1 then 'RUNNING'
+        when 2 then 'SUCCESSED'
+        when 3 then 'FAILED'
+        else 'UNKNOWN'
+        end
+      end
+
+      def exec_time
+        return unless start_time && end_time
+        end_time - start_time
       end
     end
   end
