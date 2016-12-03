@@ -42,9 +42,16 @@ module Abid
         ).first
       end
 
-      def self.find_or_initialize_by_job(job)
-        find_by_job(job) || \
-          new(name: job.name, params: job.params_str, digest: job.digest)
+      # Initialize a state by a job.
+      #
+      # @param job [Job] job
+      # @return [State] state object
+      def self.init_by_job(job)
+        new(
+          name: job.name,
+          params: job.params_str,
+          digest: job.digest
+        )
       end
 
       # Assume the job to be successed
@@ -52,21 +59,17 @@ module Abid
       # If the force option is true, update the state to SUCCESSED even if the
       # task is running.
       #
-      # @param job [Job] job
       # @param force [Boolean] force update the state
-      # @return [State] state object
-      def self.assume(job, force: false)
+      # @return [void]
+      def assume(force: false)
         StateManager.database.transaction do
-          state = find_or_initialize_by_job(job)
+          return if successed?
+          check_running! unless force
 
-          return state if state.successed?
-          state.check_running! unless force
-
-          state.state = SUCCESSED
-          state.start_time = Time.now
-          state.end_time = Time.now
-          state.save
-          state
+          self.state = SUCCESSED
+          self.start_time = Time.now
+          self.end_time = Time.now
+          save
         end
       end
 

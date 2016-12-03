@@ -18,8 +18,9 @@ module Abid
       @digest ||= Digest::MD5.hexdigest(name + "\n" + params_str)
     end
 
-    def assume(force: false)
-      State.assume(self, force: force)
+    def state
+      @state ||= StateManager::State.find_by_job(self) || \
+                 StateManager::State.init_by_job(self)
     end
   end
 end

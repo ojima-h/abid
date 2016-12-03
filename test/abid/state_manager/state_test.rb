@@ -44,7 +44,8 @@ module Abid
         job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
 
         # Non-existing job
-        state = State.assume(job)
+        state = Job.new('name', b: 1, a: Date.new(2000, 1, 1)).state
+        state.assume
         assert_equal 'name', state.name
         assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state.params
         assert_equal job.digest, state.digest
@@ -52,7 +53,8 @@ module Abid
 
         # Failed job
         state.update(state: State::FAILED)
-        state2 = State.assume(job)
+        state2 = Job.new('name', b: 1, a: Date.new(2000, 1, 1)).state
+        state2.assume
         assert_equal state.id, state2.id
         assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state2.params
         assert_equal job.digest, state2.digest
@@ -60,10 +62,11 @@ module Abid
 
         # Running job
         state.update(state: State::RUNNING)
+        state3 = Job.new('name', b: 1, a: Date.new(2000, 1, 1)).state
         assert_raises AlreadyRunningError do
-          State.assume(job)
+          state3.assume
         end
-        state3 = State.assume(job, force: true)
+        state3.assume(force: true)
         assert_equal state.id, state3.id
         assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state3.params
         assert_equal job.digest, state3.digest
@@ -72,7 +75,8 @@ module Abid
 
       def test_filter
         states = Array.new(10) do |i|
-          s = State.assume(Job.new("job#{i % 2}:foo#{i}", i: i))
+          s = Job.new("job#{i % 2}:foo#{i}", i: i).state
+          s.assume
           s.update(
             start_time: Time.new(2000, 1, 1, i),
             end_time: Time.new(2000, 1, 1, i + 1)
@@ -93,7 +97,7 @@ module Abid
 
       def test_revoke
         states = Array.new(10) do |i|
-          State.assume(Job.new('job', i: i))
+          Job.new('job', i: i).state.tap(&:assume)
         end
 
         states[0].revoke

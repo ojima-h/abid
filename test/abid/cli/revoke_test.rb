@@ -6,7 +6,7 @@ module Abid
     class RevokeTest < AbidTest
       def test_run
         states = Array.new(10) do |i|
-          StateManager::State.assume(Job.new("job#{i}", i: i))
+          Job.new("job#{i}", i: i).state.tap(&:assume)
         end
 
         Revoke.new({ quiet: true }, states[3..5].map(&:id)).run
