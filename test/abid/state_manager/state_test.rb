@@ -40,6 +40,54 @@ module Abid
         assert_equal state1.id, found.id
       end
 
+      def test_start
+        job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
+        state = job.state
+
+        # Non-existing job
+        state.start
+        assert_equal 'name', state.name
+        assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state.params
+        assert_equal job.digest, state.digest
+        assert state.running?
+
+        # Failed job
+        state.update(state: State::FAILED)
+        state.start
+        assert state.running?
+
+        # Running job
+        state.update(state: State::RUNNING)
+        assert_raises AlreadyRunningError do
+          state.start
+        end
+      end
+
+      def test_finish
+        job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
+        state = job.state
+
+        # Non-existing job
+        state.finish
+        assert state.new? # do nothing
+
+        # Failed job
+        state.assume
+        state.update(state: State::FAILED)
+        state.finish
+        assert state.failed? # do nothing
+
+        # Running job
+        state.start
+        state.finish
+        assert state.successed?
+
+        # With an error
+        state.start
+        state.finish(StandardError.new)
+        assert state.failed?
+      end
+
       def test_assume
         job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
 

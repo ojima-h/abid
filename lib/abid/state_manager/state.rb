@@ -64,6 +64,35 @@ module Abid
         find_by_job(job) || init_by_job(job)
       end
 
+      # Update the state to RUNNING.
+      def start
+        StateManager.database.transaction do
+          refresh unless new?
+          check_running!
+
+          self.state = RUNNING
+          self.start_time = Time.now
+          self.end_time = nil
+          save
+        end
+      end
+
+      # Update the state to SUCCESSED or FAILED.
+      #
+      # If error is given, the state will be FAILED.
+      #
+      # @param error [Error] error object
+      def finish(error = nil)
+        StateManager.database.transaction do
+          refresh unless new?
+          return unless running?
+
+          self.state = error ? FAILED : SUCCESSED
+          self.end_time = Time.now
+          save
+        end
+      end
+
       # Assume the job to be successed
       #
       # If the force option is true, update the state to SUCCESSED even if the
