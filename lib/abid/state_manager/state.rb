@@ -1,6 +1,8 @@
 module Abid
   module StateManager
     # O/R Mapper for `states` table.
+    #
+    # Use #init_by_job to initialize a state object.
     class State < Sequel::Model(StateManager.database)
       RUNNING = 1
       SUCCESSED = 2
@@ -54,6 +56,14 @@ module Abid
         )
       end
 
+      # Find or initialize a state by a job.
+      #
+      # @param job [Job] job
+      # @return [State] state object
+      def self.find_or_init_by_job(job)
+        find_by_job(job) || init_by_job(job)
+      end
+
       # Assume the job to be successed
       #
       # If the force option is true, update the state to SUCCESSED even if the
@@ -63,6 +73,7 @@ module Abid
       # @return [void]
       def assume(force: false)
         StateManager.database.transaction do
+          refresh unless new?
           return if successed?
           check_running! unless force
 
