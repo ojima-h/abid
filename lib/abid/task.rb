@@ -115,6 +115,7 @@ module Abid
     end
 
     def needed?
+      state.reload
       !state.successed? || prerequisite_tasks.any? { |t| t.session.successed? }
     end
 

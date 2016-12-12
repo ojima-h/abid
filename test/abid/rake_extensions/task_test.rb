@@ -87,7 +87,6 @@ module Abid
 
       def clear
         @spy.clear
-        State.instance_eval { @cache.clear }
         app.tasks.each do |t|
           t.instance_eval do
             @session = nil
@@ -96,7 +95,7 @@ module Abid
             end
           end
         end
-      end        
+      end
 
       def test_invoke
         clear
@@ -119,9 +118,7 @@ module Abid
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
         assert_equal 6, @spy.length
 
-        st = State.find(app['ns:root', nil, date: '2016-01-02'])
-        State.revoke(st.id)
-
+        Job.new('ns:root', date: Date.new(2016, 1, 2)).state.revoke
         clear
 
         app.options.repair = true
@@ -163,7 +160,7 @@ module Abid
         app.options.wait_external_task_interval = 0.1
 
         task = app['test', nil, date: '2016-02-01']
-        state = State.find(task)
+        state = Job.new(task.name, task.params).state
         state.start
 
         future = task.async_invoke
@@ -171,7 +168,7 @@ module Abid
         sleep 0.1
         assert future.incomplete?
 
-        state.dataset.where(id: state.id).update(state: State::SUCCESSED)
+        state.update(state: StateManager::State::SUCCESSED)
         sleep 0.1
         assert future.complete?
       ensure
@@ -197,16 +194,6 @@ module Abid
         f = app[:wrong_worker].async_invoke.wait
         assert f.rejected?
         assert_equal 'worker dummy is not defined', f.reason.to_s
-      end
-
-      def test_thread_killed
-        f = app[:sleep].async_invoke.wait(0.5)
-
-        app.worker.kill
-        sleep 0.5
-        assert app[:sleep].state.failed?
-        assert f.rejected?
-        assert_equal 'thread killed', f.reason.message
       end
 
       def test_retry_failed

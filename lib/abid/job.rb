@@ -19,7 +19,7 @@ module Abid
     end
 
     def state
-      @state ||= StateManager::State.find_or_init_by_job(self)
+      StateManager::State.find_or_init_by_job(self)
     end
   end
 end

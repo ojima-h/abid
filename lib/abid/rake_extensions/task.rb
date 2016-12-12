@@ -20,7 +20,7 @@ module Abid
       end
 
       def state
-        State.find(self)
+        Job.new(name, defined?(params) ? params : {}).state
       end
 
       def name_with_params

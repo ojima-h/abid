@@ -127,6 +127,12 @@ module Abid
         end
       end
 
+      def reload
+        refresh
+      rescue Sequel::NoExistingObject
+        nil
+      end
+
       # check if the state is running
       def check_running!
         raise AlreadyRunningError, 'job already running' if running?

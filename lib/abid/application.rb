@@ -36,6 +36,7 @@ module Abid
       yield
     rescue Exception => err
       worker.kill
+      Session.current_sessions.each { |_, s| s.fail(err) }
       raise err
     else
       worker.shutdown

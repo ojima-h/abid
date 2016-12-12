@@ -1,3 +1,5 @@
+require 'concurrent/hash'
+
 module Abid
   class Session
     extend MonitorMixin
@@ -6,6 +8,10 @@ module Abid
       define_method(:"#{result}?") { @result == result.to_sym }
     end
     attr_reader :error
+
+    def self.current_sessions
+      @current_sessions ||= Concurrent::Hash.new
+    end
 
     def initialize(task)
       @task = task
@@ -45,19 +51,25 @@ module Abid
     end
 
     def lock
+      return true if state_disabled? || state_preview?
+
       synchronize do
         @state.start unless @locked
         @locked = true
+        self.class.current_sessions[object_id] = self
         true
       end
-    rescue AbidErrorTaskAlreadyRunning
+    rescue AlreadyRunningError
       false
     end
 
     def unlock(error = nil)
+      return if state_disabled? || state_preview?
+
       synchronize do
         @state.finish(error) if @locked
         @locked = false
+        self.class.current_sessions.delete(object_id)
       end
     end
 
@@ -87,6 +99,14 @@ module Abid
       @result = :canceled
       @error = error
       @ivar.fail(error) rescue Concurrent::MultipleAssignmentError
+    end
+
+    def state_disabled?
+      @task.volatile? || Rake.application.options.disable_state
+    end
+
+    def state_preview?
+      Rake.application.options.dryrun || Rake.application.options.preview
     end
   end
 end
