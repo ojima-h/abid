@@ -1,22 +1,32 @@
+require 'monitor'
+
 module Abid
   # Job instance that is consists of a task name and params.
   class Job
+    extend MonitorMixin
+
     attr_reader :name, :params
 
-    # @param task [Rake::Task]
-    # @return job [Job]
-    def self.new_by_task(task)
-      params = task.respond_to?(:params) ? task.params : {}
-      new(task.name, params, task: task)
+    def self.[](name, params = {})
+      synchronize do
+        @cache ||= {}
+        key = [name, params.sort.freeze].freeze
+        @cache[key] ||= new(name, params)
+      end
     end
 
-    # @param name [String] task name
-    # @param params [Hash] task params
-    # @param task [Rake::Task] task object
-    def initialize(name, params, task: nil)
+    def self.clear_cache
+      synchronize do
+        @cache = {}
+      end
+    end
+
+    private_class_method :new
+
+    # @!visibility private
+    def initialize(name, params)
       @name = name
       @params = params.sort.to_h.freeze
-      @task = task
     end
 
     def params_str

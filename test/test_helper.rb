@@ -21,12 +21,13 @@ class AbidTest < Minitest::Test
       # Rake.verbose(true)
 
       Abid::StateManager.database[:states].delete
+      Abid::Job.clear_cache
       super
     end
   end
 
   def mock_state(*args)
-    job = Abid::Job.new(*args)
+    job = Abid::Job[*args]
     state = Abid::StateManager::State.init_by_job(job)
     yield state if block_given?
     state.state ||= Abid::StateManager::State::SUCCESSED

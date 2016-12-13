@@ -20,7 +20,7 @@ module Abid
       end
 
       def job
-        @job ||= Job.new_by_task(self)
+        Job[name, defined?(params) ? params : {}]
       end
 
       def name_with_params

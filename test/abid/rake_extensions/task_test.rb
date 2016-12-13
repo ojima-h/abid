@@ -118,7 +118,7 @@ module Abid
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
         assert_equal 6, @spy.length
 
-        s = Job.new('ns:root', date: Date.new(2016, 1, 2)).state
+        s = Job['ns:root', date: Date.new(2016, 1, 2)].state
         StateManager::State.revoke(s.id)
         clear
 

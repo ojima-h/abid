@@ -30,10 +30,10 @@ module Abid
       end
 
       def test_find_by_job
-        job1 = Job.new('name', a: 1)
+        job1 = Job['name', a: 1]
         state1 = State.create(name: job1.name, params: job1.params_str, digest: job1.digest)
 
-        job2 = Job.new('name', a: 2)
+        job2 = Job['name', a: 2]
         State.create(name: job2.name, params: job2.params_str, digest: job2.digest)
 
         found = State.find_by_job(job1)
@@ -41,7 +41,7 @@ module Abid
       end
 
       def test_start
-        job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
+        job = Job['name', b: 1, a: Date.new(2000, 1, 1)]
 
         # Non-existing job
         State.start(job)
@@ -64,7 +64,7 @@ module Abid
       end
 
       def test_finish
-        job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
+        job = Job['name', b: 1, a: Date.new(2000, 1, 1)]
 
         # Non-existing job
         State.finish(job)
@@ -87,7 +87,7 @@ module Abid
       end
 
       def test_assume
-        job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
+        job = Job['name', b: 1, a: Date.new(2000, 1, 1)]
 
         # Non-existing job
         State.assume(job)
