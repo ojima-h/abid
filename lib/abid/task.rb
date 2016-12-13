@@ -105,7 +105,7 @@ module Abid
     end
 
     def concerned?
-      state.reload
+      state = job.state
 
       if !application.options.repair && state.failed? && !top_level?
         fail "#{name} -- task has been failed"
@@ -115,8 +115,8 @@ module Abid
     end
 
     def needed?
-      state.reload
-      !state.successed? || prerequisite_tasks.any? { |t| t.session.successed? }
+      !job.state.successed? \
+      || prerequisite_tasks.any? { |t| t.session.successed? }
     end
 
     def bind_play_hooks(tag, to = nil)

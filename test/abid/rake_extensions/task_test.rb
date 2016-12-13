@@ -101,7 +101,7 @@ module Abid
         clear
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
 
-        assert app[:test, nil, date: '2016-01-01'].state.successed?
+        assert app[:test, nil, date: '2016-01-01'].job.state.successed?
         assert app[:test, nil, date: '2016-01-01'].session.successed?
 
         parents_result = @spy.select { |n, _| n == :parent }.sort_by(&:last)
@@ -118,7 +118,8 @@ module Abid
         app[:test, nil, date: '2016-01-01'].async_invoke.wait!
         assert_equal 6, @spy.length
 
-        Job.new('ns:root', date: Date.new(2016, 1, 2)).state.revoke
+        s = Job.new('ns:root', date: Date.new(2016, 1, 2)).state
+        StateManager::State.revoke(s.id)
         clear
 
         app.options.repair = true
@@ -135,9 +136,9 @@ module Abid
       def test_repair_failure
         clear
 
-        t = app['ns:parent', nil, date: '2016-01-01']
-        t.state.start
-        t.state.finish(StandardError.new)
+        j = app['ns:parent', nil, date: '2016-01-01'].job
+        j.start
+        j.finish(StandardError.new)
 
         result = app[:test, nil, date: '2016-01-01'].async_invoke.wait
         assert result.rejected?
@@ -160,15 +161,17 @@ module Abid
         app.options.wait_external_task_interval = 0.1
 
         task = app['test', nil, date: '2016-02-01']
-        state = Job.new(task.name, task.params).state
-        state.start
+        task.job.start
 
         future = task.async_invoke
 
         sleep 0.1
         assert future.incomplete?
 
-        state.update(state: StateManager::State::SUCCESSED)
+        state = task.job.state
+        StateManager::State[state.id].update(
+          state: StateManager::State::SUCCESSED
+        )
         sleep 0.1
         assert future.complete?
       ensure

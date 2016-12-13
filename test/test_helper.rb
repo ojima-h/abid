@@ -10,6 +10,7 @@ class AbidTest < Minitest::Test
     @app ||= Abid::Application.new.tap do |app|
       app.init
       app.top_level_tasks.clear
+      Abid.application = app
     end
   end
 
@@ -22,5 +23,15 @@ class AbidTest < Minitest::Test
       Abid::StateManager.database[:states].delete
       super
     end
+  end
+
+  def mock_state(*args)
+    job = Abid::Job.new(*args)
+    state = Abid::StateManager::State.init_by_job(job)
+    yield state if block_given?
+    state.state ||= Abid::StateManager::State::SUCCESSED
+    state.start_time ||= Time.now
+    state.end_time ||= Time.now
+    state.tap(&:save)
   end
 end

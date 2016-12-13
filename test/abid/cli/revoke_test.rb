@@ -6,7 +6,7 @@ module Abid
     class RevokeTest < AbidTest
       def test_run
         states = Array.new(10) do |i|
-          Job.new("job#{i}", i: i).state.tap(&:assume)
+          mock_state("job#{i}", i: i)
         end
 
         Revoke.new({ quiet: true }, states[3..5].map(&:id)).run

@@ -65,15 +65,16 @@ module Abid
       end
 
       # Update the state to RUNNING.
-      def start
+      #
+      # @param job [Job] job
+      def self.start(job)
         StateManager.database.transaction do
-          refresh unless new?
-          check_running!
-
-          self.state = RUNNING
-          self.start_time = Time.now
-          self.end_time = nil
-          save
+          state = find_or_init_by_job(job)
+          state.check_running!
+          state.state = RUNNING
+          state.start_time = Time.now
+          state.end_time = nil
+          state.save
         end
       end
 
@@ -81,15 +82,16 @@ module Abid
       #
       # If error is given, the state will be FAILED.
       #
+      # @param job [Job] job
       # @param error [Error] error object
-      def finish(error = nil)
+      def self.finish(job, error = nil)
         StateManager.database.transaction do
-          refresh unless new?
-          return unless running?
+          state = find_or_init_by_job(job)
+          return unless state.running?
 
-          self.state = error ? FAILED : SUCCESSED
-          self.end_time = Time.now
-          save
+          state.state = error ? FAILED : SUCCESSED
+          state.end_time = Time.now
+          state.save
         end
       end
 
@@ -98,39 +100,36 @@ module Abid
       # If the force option is true, update the state to SUCCESSED even if the
       # task is running.
       #
+      # @param job [Job] job
       # @param force [Boolean] force update the state
       # @return [void]
-      def assume(force: false)
+      def self.assume(job, force: false)
         StateManager.database.transaction do
-          refresh unless new?
-          return if successed?
-          check_running! unless force
+          state = find_or_init_by_job(job)
+          return state if state.successed?
+          state.check_running! unless force
 
-          self.state = SUCCESSED
-          self.start_time = Time.now
-          self.end_time = Time.now
-          save
+          state.state = SUCCESSED
+          state.start_time = Time.now
+          state.end_time = Time.now
+          state.save
+          state
         end
       end
 
       # Delete the state.
       #
+      # @param state_id [Integer] State ID
       # @param force [Boolean] If true, delete the state even if running
       # @return [void]
-      def revoke(force: false)
+      def self.revoke(state_id, force: false)
         StateManager.database.transaction do
-          unless force
-            refresh
-            check_running!
-          end
-          delete
+          state = self[state_id]
+          return false if state.nil?
+          state.check_running! unless force
+          state.delete
+          true
         end
-      end
-
-      def reload
-        refresh
-      rescue Sequel::NoExistingObject
-        nil
       end
 
       # check if the state is running

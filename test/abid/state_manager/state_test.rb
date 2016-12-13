@@ -42,94 +42,83 @@ module Abid
 
       def test_start
         job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
-        state = job.state
 
         # Non-existing job
-        state.start
+        State.start(job)
+        state = State.find_by_job(job)
         assert_equal 'name', state.name
         assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state.params
         assert_equal job.digest, state.digest
         assert state.running?
 
         # Failed job
-        state.update(state: State::FAILED)
-        state.start
-        assert state.running?
+        State[state.id].update(state: State::FAILED)
+        State.start(job)
+        assert State.find_by_job(job).running?
 
         # Running job
-        state.update(state: State::RUNNING)
+        State[state.id].update(state: State::RUNNING)
         assert_raises AlreadyRunningError do
-          state.start
+          State.start(job)
         end
       end
 
       def test_finish
         job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
-        state = job.state
 
         # Non-existing job
-        state.finish
-        assert state.new? # do nothing
+        State.finish(job)
+        assert_nil State.find_by_job(job)
 
         # Failed job
-        state.assume
-        state.update(state: State::FAILED)
-        state.finish
-        assert state.failed? # do nothing
+        mock_state(job.name, job.params) { |s| s.state = State::FAILED }
+        State.finish(job)
+        assert State.find_by_job(job).failed? # do nothing
 
         # Running job
-        state.start
-        state.finish
-        assert state.successed?
+        State.start(job)
+        State.finish(job)
+        assert State.find_by_job(job).successed?
 
         # With an error
-        state.start
-        state.finish(StandardError.new)
-        assert state.failed?
+        State.start(job)
+        State.finish(job, StandardError.new)
+        assert State.find_by_job(job).failed?
       end
 
       def test_assume
         job = Job.new('name', b: 1, a: Date.new(2000, 1, 1))
 
         # Non-existing job
-        state = Job.new('name', b: 1, a: Date.new(2000, 1, 1)).state
-        state.assume
+        State.assume(job)
+        state = State.find_by_job(job)
         assert_equal 'name', state.name
         assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state.params
         assert_equal job.digest, state.digest
         assert state.successed?
 
         # Failed job
-        state.update(state: State::FAILED)
-        state2 = Job.new('name', b: 1, a: Date.new(2000, 1, 1)).state
-        state2.assume
-        assert_equal state.id, state2.id
-        assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state2.params
-        assert_equal job.digest, state2.digest
-        assert state2.successed?
+        State.find_by_job(job).update(state: State::FAILED)
+        State.assume(job)
+        assert_equal 1, State.where(digest: job.digest).count
+        assert State.find_by_job(job).successed?
 
         # Running job
-        state.update(state: State::RUNNING)
-        state3 = Job.new('name', b: 1, a: Date.new(2000, 1, 1)).state
+        State.find_by_job(job).update(state: State::RUNNING)
         assert_raises AlreadyRunningError do
-          state3.assume
+          State.assume(job)
         end
-        state3.assume(force: true)
-        assert_equal state.id, state3.id
-        assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state3.params
-        assert_equal job.digest, state3.digest
-        assert state3.successed?
+        State.assume(job, force: true)
+        assert_equal 1, State.where(digest: job.digest).count
+        assert State.find_by_job(job).successed?
       end
 
       def test_filter
         states = Array.new(10) do |i|
-          s = Job.new("job#{i % 2}:foo#{i}", i: i).state
-          s.assume
-          s.update(
-            start_time: Time.new(2000, 1, 1, i),
-            end_time: Time.new(2000, 1, 1, i + 1)
-          )
-          s
+          mock_state("job#{i % 2}:foo#{i}", i: i) do |s|
+            s.start_time = Time.new(2000, 1, 1, i)
+            s.end_time = Time.new(2000, 1, 1, i + 1)
+          end
         end
 
         found = State.filter_by_prefix('job0:')
@@ -144,18 +133,16 @@ module Abid
       end
 
       def test_revoke
-        states = Array.new(10) do |i|
-          Job.new('job', i: i).state.tap(&:assume)
-        end
+        states = Array.new(10) { |i| mock_state('job', i: i) }
 
-        states[0].revoke
+        State.revoke(states[0].id)
         assert_nil State[states[0].id]
 
         states[1].update(state: State::RUNNING)
         assert_raises AlreadyRunningError do
-          states[1].revoke
+          State.revoke(states[1].id)
         end
-        states[1].revoke(force: true)
+        State.revoke(states[1].id, force: true)
         assert_nil State[states[1].id]
 
         assert_equal 8, State.count

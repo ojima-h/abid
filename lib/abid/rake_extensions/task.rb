@@ -19,8 +19,8 @@ module Abid
         end
       end
 
-      def state
-        Job.new(name, defined?(params) ? params : {}).state
+      def job
+        @job ||= Job.new_by_task(self)
       end
 
       def name_with_params
@@ -124,8 +124,7 @@ module Abid
           timeout_tm = Time.now.to_f + timeout
 
           loop do
-            state.reload
-            if !state.running?
+            if !job.state.running?
               session.success
               break
             elsif Time.now.to_f >= timeout_tm

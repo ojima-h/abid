@@ -26,7 +26,7 @@ module Abid
       end
 
       def revoke(state)
-        state.revoke(force: @force)
+        StateManager::State.revoke(state.id, force: @force)
         puts "revoked #{state.id}"
       rescue AlreadyRunningError
         params = ParamsFormat.format(YAML.load(state.params))

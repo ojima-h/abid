@@ -6,13 +6,10 @@ module Abid
     class ListTest < AbidTest
       def test_build_table
         states = Array.new(10) do |i|
-          s = Job.new("job#{i % 2}:foo#{i}", i: i).state
-          s.assume
-          s.update(
-            start_time: Time.new(2000, 1, 1, i),
-            end_time: Time.new(2000, 1, 1, i + 1)
-          )
-          s
+          mock_state("job#{i % 2}:foo#{i}", i: i) do |s|
+            s.start_time = Time.new(2000, 1, 1, i)
+            s.end_time = Time.new(2000, 1, 1, i + 1)
+          end
         end
 
         command = List.new(
