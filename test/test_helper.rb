@@ -22,6 +22,8 @@ class AbidTest < Minitest::Test
 
       Abid::StateManager.database[:states].delete
       Abid::Job.clear_cache
+
+      load File.expand_path('../test_tasks.rb', __FILE__)
       super
     end
   end

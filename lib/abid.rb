@@ -13,6 +13,7 @@ require 'sequel'
 
 require 'abid/config'
 require 'abid/error'
+require 'abid/engine/process'
 require 'abid/params_format'
 require 'abid/state_manager'
 require 'abid/job'

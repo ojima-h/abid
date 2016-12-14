@@ -41,6 +41,12 @@ module Abid
       @task ||= Abid.application[name, nil, params]
     end
 
+    def process
+      Job.synchronize do
+        @process ||= Engine::Process.new(self)
+      end
+    end
+
     def state
       if volatile?
         StateManager::State.init_by_job(self).tap(&:freeze)
@@ -53,6 +59,13 @@ module Abid
     def start
       return if dryrun? || volatile?
       StateManager::State.start(self)
+    end
+
+    def try_start
+      start
+      true
+    rescue AlreadyRunningError
+      false
     end
 
     # Update the state to SUCCESSED / FAILED
