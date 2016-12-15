@@ -1,4 +1,5 @@
 require 'concurrent/ivar'
+require 'forwardable'
 
 module Abid
   module Engine
@@ -22,13 +23,34 @@ module Abid
     #     process.result.value #=> :successed or :failed
     #     process.state #=> :complete
     #
+    # Possible results are:
+    #
+    # <dl>
+    #   <dt>:successed</dt>
+    #   <dd>The task is successed.</dd>
+    #   <dt>:failed</dt>
+    #   <dd>The task is failed.</dd>
+    #   <dt>:cancelled</dt>
+    #   <dd>The task is not executed because some prerequisite task is failed.
+    #   </dd>
+    #   <dt>:skipped</dt>
+    #   <dd>The task is not executed because already successed.</dd>
+    # </dl>
     class Process
-      attr_reader :state, :error, :result
+      extend Forwardable
+
+      attr_reader :state, :error
+
+      def_delegators :@result_ivar, :add_observer, :wait, :complete?
 
       def initialize(job)
         @job = job
-        @result = Concurrent::IVar.new
+        @result_ivar = Concurrent::IVar.new
         @state = :unscheduled
+      end
+
+      def result
+        @result_ivar.value!
       end
 
       # Execute the task in the task's worker thread.
@@ -40,12 +62,22 @@ module Abid
         true
       end
 
+      # Set the state to :complete and the result to :failed
+      #
+      # @return [Boolean] false if the state is processing or complete.
+      def fail(error)
+        return false unless compare_and_set_state(:complete, :unscheduled)
+        @result_ivar.set :failed
+        @error = error
+        true
+      end
+
       # Set the state to :complete and the result to :canceled
       #
       # @return [Boolean] false if the state is processing or complete.
       def cancel
         return false unless compare_and_set_state(:complete, :unscheduled)
-        @result.set :cancelled
+        @result_ivar.set :cancelled
         true
       end
 
@@ -54,7 +86,7 @@ module Abid
       # @return [Boolean] false if the state is processing or complete.
       def skip
         return false unless compare_and_set_state(:complete, :unscheduled)
-        @result.set :skipped
+        @result_ivar.set :skipped
         true
       end
 
@@ -130,7 +162,7 @@ module Abid
           @state = :complete
           @error = error
         end
-        @result.set(error.nil? ? :successed : :failed)
+        @result_ivar.set(error.nil? ? :successed : :failed)
       end
     end
   end

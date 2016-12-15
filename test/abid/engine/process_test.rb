@@ -4,32 +4,34 @@ module Abid
   module Engine
     class ProcessTest < AbidTest
       def test_new
-        refute Job['test_ok'].process.result.complete?
+        refute Job['test_ok'].process.complete?
         assert_equal :unscheduled, Job['test_ok'].process.state
       end
 
       def test_execute
         assert Job['test_ok'].process.execute
-        assert_equal :successed, Job['test_ok'].process.result.value(1)
+        Job['test_ok'].process.wait
+        assert_equal :successed, Job['test_ok'].process.result
         assert_equal :complete, Job['test_ok'].process.state
       end
 
       def test_execute_failed
         assert Job['test_ng'].process.execute
-        assert_equal :failed, Job['test_ng'].process.result.value(1)
+        Job['test_ng'].process.wait
+        assert_equal :failed, Job['test_ng'].process.result
         assert_equal :complete, Job['test_ng'].process.state
       end
 
       def test_cancel
         assert Job['test_ok'].process.cancel
-        assert_equal :cancelled, Job['test_ok'].process.result.value(1)
+        assert_equal :cancelled, Job['test_ok'].process.result
         assert_equal :complete, Job['test_ok'].process.state
         refute Job['test_ok'].process.cancel
       end
 
       def test_skip
         assert Job['test_ok'].process.skip
-        assert_equal :skipped, Job['test_ok'].process.result.value(1)
+        assert_equal :skipped, Job['test_ok'].process.result
         assert_equal :complete, Job['test_ok'].process.state
         refute Job['test_ok'].process.skip
       end
@@ -49,7 +51,8 @@ module Abid
         Job['test_ok'].start
 
         Job['test_ok'].process.execute
-        assert_equal :failed, Job['test_ok'].process.result.value(1)
+        Job['test_ok'].process.wait
+        assert_equal :failed, Job['test_ok'].process.result
         assert_equal :complete, Job['test_ok'].process.state
         assert_kind_of AlreadyRunningError, Job['test_ok'].process.error
       end
