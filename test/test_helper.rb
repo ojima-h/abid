@@ -6,6 +6,10 @@ require 'minitest/autorun'
 Abid::Config.search_path.unshift File.expand_path('../abid.yml', __FILE__)
 
 class AbidTest < Minitest::Test
+  def self.history
+    @history ||= []
+  end
+
   def app
     @app ||= Abid::Application.new.tap do |app|
       app.init
@@ -22,8 +26,9 @@ class AbidTest < Minitest::Test
 
       Abid::StateManager.database[:states].delete
       Abid::Job.clear_cache
+      AbidTest.history.clear
 
-      load File.expand_path('../test_tasks.rb', __FILE__)
+      load File.expand_path('../Abidfile.rb', __FILE__)
       super
     end
   end
@@ -36,5 +41,13 @@ class AbidTest < Minitest::Test
     state.start_time ||= Time.now
     state.end_time ||= Time.now
     state.tap(&:save)
+  end
+
+  def in_repair_mode
+    original_flag = Abid.application.options.repair
+    Abid.application.options.repair = true
+    yield
+  ensure
+    Abid.application.options.repair = original_flag
   end
 end

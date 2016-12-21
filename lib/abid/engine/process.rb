@@ -50,7 +50,7 @@ module Abid
       end
 
       def result
-        @result_ivar.value!
+        @result_ivar.value if @result_ivar.complete?
       end
 
       # Execute the task in the task's worker thread.

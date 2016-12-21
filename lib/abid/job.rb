@@ -15,6 +15,10 @@ module Abid
       end
     end
 
+    def self.find_by_task(task)
+      self[task.name, task.respond_to?(:params) ? task.params : {}]
+    end
+
     def self.clear_cache
       synchronize do
         @cache = {}
@@ -39,6 +43,12 @@ module Abid
 
     def task
       @task ||= Abid.application[name, nil, params]
+    end
+
+    def prerequisites
+      task.prerequisite_tasks.map do |preq_task|
+        Job.find_by_task(preq_task)
+      end
     end
 
     def process
@@ -76,6 +86,12 @@ module Abid
 
     def assume(force: false)
       StateManager::State.assume(self, force: force)
+    end
+
+    # for testing
+    def mock_fail(error)
+      start
+      finish(error)
     end
 
     private
