@@ -7,22 +7,22 @@ module Abid
         job = Job['test_ok']
         Scheduler.invoke(job)
         assert job.state.successed?
-        assert_equal :successed, job.process.result
+        assert job.process.successed?
       end
 
       def test_invoke_ng
         job = Job['test_ng']
         Scheduler.invoke(job)
         assert job.state.failed?
-        assert_equal :failed, job.process.result
+        assert job.process.failed?
       end
 
       def test_invoke
         job = Job['test_p3']
         Scheduler.invoke(job)
 
-        assert_equal :successed, job.process.result
         assert job.state.successed?
+        assert job.process.successed?
 
         assert_includes AbidTest.history, ['test_p1', i: 0]
         assert_includes AbidTest.history, ['test_p1', i: 1]
@@ -47,8 +47,8 @@ module Abid
         job = Job['test_p3']
         Scheduler.invoke(job)
 
-        assert_equal :cancelled, job.process.result
         assert job.state.new?
+        assert job.process.cancelled?
         assert 'task has been failed', job_failed.process.error.message
 
         assert_includes AbidTest.history, ['test_p1', i: 0]
@@ -63,10 +63,12 @@ module Abid
         job = Job['test_p2', i: 1]
         job.mock_fail RuntimeError.new('test')
 
-        Scheduler.invoke(job)
+        job.task.stub(:top_level?, true) do
+          Scheduler.invoke(job)
+        end
 
-        assert_equal :successed, job.process.result
         assert job.state.successed?
+        assert job.process.successed?
 
         assert_equal 2, AbidTest.history.length
         assert_includes AbidTest.history, ['test_p1', i: 1]
@@ -80,9 +82,9 @@ module Abid
         job = Job['test_p3']
         Scheduler.invoke(job)
 
-        assert_equal :successed, job.process.result
         assert job.state.successed?
-        assert_equal :skipped, job_successed.process.result
+        assert job.process.successed?
+        assert job_successed.process.skipped?
 
         assert_includes AbidTest.history, ['test_p1', i: 0]
         refute_includes AbidTest.history, ['test_p1', i: 1]
@@ -103,10 +105,10 @@ module Abid
           job = Job['test_p3']
           Scheduler.invoke(job)
 
-          assert_equal :successed, job.process.result
           assert job.state.successed?
-          assert_equal :skipped, job_successed.process.result
-          assert_equal :successed, job_failed.process.result
+          assert job.process.successed?
+          assert job_successed.process.skipped?
+          assert job_failed.process.successed?
 
           refute_includes AbidTest.history, ['test_p1', i: 0]
           assert_includes AbidTest.history, ['test_p1', i: 1]
@@ -118,14 +120,9 @@ module Abid
       end
 
       def test_circular_dependency
-        c1 = Job['scheduler_test:c1']
-        c3 = Job['scheduler_test:c3']
-
-        Scheduler.invoke(c1)
-
-        assert_equal :cancelled, c1.process.result
-        assert_equal :failed, c3.process.result
-        assert_match(/Circular dependency/, c3.process.error.message)
+        assert_raises RuntimeError, /Circular dependency/ do
+          Scheduler.invoke(Job['scheduler_test:c1'])
+        end
       end
     end
   end

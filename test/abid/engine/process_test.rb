@@ -5,56 +5,93 @@ module Abid
     class ProcessTest < AbidTest
       def test_new
         refute Job['test_ok'].process.complete?
-        assert_equal :unscheduled, Job['test_ok'].process.state
+        assert_equal :unscheduled, Job['test_ok'].process.status
       end
 
-      def test_execute
-        assert Job['test_ok'].process.execute
-        Job['test_ok'].process.wait
-        assert_equal :successed, Job['test_ok'].process.result
-        assert_equal :complete, Job['test_ok'].process.state
-      end
-
-      def test_execute_failed
-        assert Job['test_ng'].process.execute
-        Job['test_ng'].process.wait
-        assert_equal :failed, Job['test_ng'].process.result
-        assert_equal :complete, Job['test_ng'].process.state
-      end
-
-      def test_cancel
-        assert Job['test_ok'].process.cancel
-        assert_equal :cancelled, Job['test_ok'].process.result
-        assert_equal :complete, Job['test_ok'].process.state
-        refute Job['test_ok'].process.cancel
-      end
-
-      def test_skip
-        assert Job['test_ok'].process.skip
-        assert_equal :skipped, Job['test_ok'].process.result
-        assert_equal :complete, Job['test_ok'].process.state
-        refute Job['test_ok'].process.skip
-      end
-
-      def test_execute_completed
-        assert Job['test_ok'].process.cancel
-        refute Job['test_ok'].process.execute
-      end
-
-      def test_cancel_processing
+      def test_execute_ok
         process = Job['test_ok'].process
-        process.send(:compare_and_set_state, :processing, :unscheduled)
-        refute Job['test_ok'].process.cancel
+        assert process.prepare
+        assert process.start
+        process.wait
+        assert process.successed?
+        assert_equal :complete, process.status
+        assert_includes AbidTest.history, ['test_ok']
+      end
+
+      def test_execute_ng
+        process = Job['test_ng'].process
+        assert process.prepare
+        assert process.start
+        process.wait
+        assert process.failed?
+        assert_equal :complete, process.status
+        assert_equal 'ng', process.error.message
+        assert_includes AbidTest.history, ['test_ng']
+      end
+
+      def test_cancel_in_prepare
+        Job['test_ok'].mock_fail(RuntimeError.new('test'))
+        process = Job['test_ok'].process
+
+        refute process.prepare
+        assert process.cancelled?
+        assert_equal :complete, process.status
+
+        refute process.start
+      end
+
+      def test_skip_in_prepare
+        Job['test_ok'].assume
+        process = Job['test_ok'].process
+
+        refute process.prepare
+        assert process.skipped?
+        assert_equal :complete, process.status
+
+        refute process.start
+      end
+
+      def test_cancel_after_prerequsites
+        job = Job['test_p2', i: 0]
+        job.prerequisites.each do |p|
+          p.process.quit(RuntimeError.new('test'))
+        end
+
+        process = job.process
+        assert process.prepare
+        refute process.start
+        assert process.cancelled?
+        assert_equal :complete, process.status
+      end
+
+      def test_prepare_after_running
+        process = Job['test_ok'].process
+        process.send(:compare_and_set_status, :running, :unscheduled)
+        refute process.prepare
+      end
+
+      def test_start_twice
+        process = Job['test_ok'].process
+        assert process.prepare
+        assert process.start
+        process.wait
+        assert process.successed?
+
+        process2 = Job['test_ok'].process
+        refute process2.prepare
+        refute process2.start
       end
 
       def test_execute_running
         Job['test_ok'].start
 
-        Job['test_ok'].process.execute
-        Job['test_ok'].process.wait
-        assert_equal :failed, Job['test_ok'].process.result
-        assert_equal :complete, Job['test_ok'].process.state
-        assert_kind_of AlreadyRunningError, Job['test_ok'].process.error
+        process = Job['test_ok'].process
+        process.prepare
+        process.start
+        process.wait
+        assert process.failed?
+        assert_equal :complete, process.status
+        assert_kind_of AlreadyRunningError, process.error
       end
     end
   end
