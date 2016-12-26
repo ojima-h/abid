@@ -105,7 +105,7 @@ module Abid
     end
 
     def concerned?
-      state = job.state
+      state = job.state.find
 
       if !application.options.repair && state.failed? && !top_level?
         fail "#{name} -- task has been failed"

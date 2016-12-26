@@ -17,7 +17,7 @@ module Abid
       def assume(task, params)
         params_str = ParamsFormat.format(params)
 
-        state = Job[task, params].assume(force: @force)
+        state = Job[task, params].state.assume(force: @force)
 
         puts "#{task} #{params_str} (id: #{state.id})" \
              ' is assumed to be SUCCESSED.'

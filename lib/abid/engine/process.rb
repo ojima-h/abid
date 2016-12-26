@@ -85,7 +85,7 @@ module Abid
       def prepare
         return false unless compare_and_set_status(:pending, :unscheduled)
 
-        state = @job.state
+        state = @job.state.find
         return false if precheck_to_cancel(state)
         return false if precheck_to_skip(state)
         true
@@ -188,7 +188,7 @@ module Abid
       # task finished otherwise.
       def execute_or_wait
         return unless compare_and_set_status(:running, :starting)
-        if @job.try_start
+        if @job.state.try_start
           worker.post { capture_exception { execute } }
         else
           wait_task
@@ -203,7 +203,7 @@ module Abid
         _, error = safe_execute
 
         return unless compare_and_set_status(:complete, :running)
-        @job.finish(error)
+        @job.state.finish(error)
         @error = error
         @result_ivar.set(error.nil? ? :successed : :failed)
       end

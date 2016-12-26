@@ -42,7 +42,7 @@ module Abid
 
       def test_invoke_already_failed
         job_failed = Job['test_p2', i: 1]
-        job_failed.mock_fail RuntimeError.new('test')
+        job_failed.state.mock_fail RuntimeError.new('test')
 
         job = Job['test_p3']
         Scheduler.invoke(job)
@@ -61,7 +61,7 @@ module Abid
 
       def test_invoke_already_failed_directly
         job = Job['test_p2', i: 1]
-        job.mock_fail RuntimeError.new('test')
+        job.state.mock_fail RuntimeError.new('test')
 
         job.task.stub(:top_level?, true) do
           Scheduler.invoke(job)
@@ -77,7 +77,7 @@ module Abid
 
       def test_invoke_already_successed
         job_successed = Job['test_p2', i: 1]
-        job_successed.assume
+        job_successed.state.assume
 
         job = Job['test_p3']
         Scheduler.invoke(job)
@@ -97,10 +97,10 @@ module Abid
       def test_invoke_in_repair_mode
         in_repair_mode do
           job_successed = Job['test_p1', i: 0]
-          job_successed.assume
+          job_successed.state.assume
 
           job_failed = Job['test_p1', i: 1]
-          job_failed.mock_fail RuntimeError.new('test')
+          job_failed.state.mock_fail RuntimeError.new('test')
 
           job = Job['test_p3']
           Scheduler.invoke(job)

@@ -137,8 +137,7 @@ module Abid
         clear
 
         j = app['ns:parent', nil, date: '2016-01-01'].job
-        j.start
-        j.finish(StandardError.new)
+        j.state.mock_fail(StandardError.new)
 
         result = app[:test, nil, date: '2016-01-01'].async_invoke.wait
         assert result.rejected?
@@ -161,7 +160,7 @@ module Abid
         app.options.wait_external_task_interval = 0.1
 
         task = app['test', nil, date: '2016-02-01']
-        task.job.start
+        task.job.state.start
 
         future = task.async_invoke
 

@@ -13,5 +13,6 @@ module Abid
     end
 
     autoload :State, 'abid/state_manager/state'
+    autoload :StateProxy, 'abid/state_manager/state_proxy'
   end
 end

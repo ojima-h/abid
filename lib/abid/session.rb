@@ -16,7 +16,7 @@ module Abid
     def initialize(task)
       @task = task
       @job = task.job
-      
+
       @entered = false
       @locked = false
       @result = nil
@@ -52,7 +52,7 @@ module Abid
 
     def lock
       synchronize do
-        @job.start unless @locked
+        @job.state.start unless @locked
         @locked = true
         self.class.current_sessions[object_id] = self
         true
@@ -63,7 +63,7 @@ module Abid
 
     def unlock(error = nil)
       synchronize do
-        @job.finish(error) if @locked
+        @job.state.finish(error) if @locked
         @locked = false
         self.class.current_sessions.delete(object_id)
       end

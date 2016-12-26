@@ -30,7 +30,7 @@ module Abid
       end
 
       def test_cancel_in_prepare
-        Job['test_ok'].mock_fail(RuntimeError.new('test'))
+        Job['test_ok'].state.mock_fail(RuntimeError.new('test'))
         process = Job['test_ok'].process
 
         refute process.prepare
@@ -41,7 +41,7 @@ module Abid
       end
 
       def test_skip_in_prepare
-        Job['test_ok'].assume
+        Job['test_ok'].state.assume
         process = Job['test_ok'].process
 
         refute process.prepare
@@ -83,7 +83,7 @@ module Abid
       end
 
       def test_execute_running
-        Job['test_ok'].start
+        Job['test_ok'].state.start
 
         process = Job['test_ok'].process
         process.prepare

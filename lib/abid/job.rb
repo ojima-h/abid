@@ -1,7 +1,7 @@
 require 'monitor'
 
 module Abid
-  # Job instance that is consists of a task name and params.
+  # Job is an aggregation object of components around the task.
   class Job
     extend MonitorMixin
 
@@ -45,6 +45,10 @@ module Abid
       @task ||= Abid.application[name, nil, params]
     end
 
+    def state
+      @state ||= StateManager::StateProxy.new(self)
+    end
+
     def prerequisites
       task.prerequisite_tasks.map do |preq_task|
         Job.find_by_task(preq_task)
@@ -56,45 +60,6 @@ module Abid
         @process ||= Engine::Process.new(self)
       end
     end
-
-    def state
-      if volatile?
-        StateManager::State.init_by_job(self).tap(&:freeze)
-      else
-        StateManager::State.find_or_init_by_job(self).tap(&:freeze)
-      end
-    end
-
-    # Update the state to RUNNING
-    def start
-      return if dryrun? || volatile?
-      StateManager::State.start(self)
-    end
-
-    def try_start
-      start
-      true
-    rescue AlreadyRunningError
-      false
-    end
-
-    # Update the state to SUCCESSED / FAILED
-    def finish(error = nil)
-      return if dryrun? || volatile?
-      StateManager::State.finish(self, error)
-    end
-
-    def assume(force: false)
-      StateManager::State.assume(self, force: force)
-    end
-
-    # for testing
-    def mock_fail(error)
-      start
-      finish(error)
-    end
-
-    private
 
     def volatile?
       task.volatile? || Abid.application.options.disable_state
