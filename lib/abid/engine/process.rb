@@ -53,6 +53,43 @@ module Abid
     class Process
       extend Forwardable
 
+      # ProcessSet compares processes by #object_id
+      class ProcessSet
+        def initialize
+          @set = {}
+        end
+
+        def add(process)
+          Job.synchronize { @set[process.object_id] = process }
+        end
+
+        def delete(process)
+          Job.synchronize { @set.delete(process.object_id) }
+        end
+
+        def each(&block)
+          Job.synchronize { @set.values.each(&block) }
+        end
+
+        def include?(process)
+          @set.include?(process.object_id)
+        end
+
+        def clear
+          Job.synchronize { @set.clear }
+        end
+      end
+
+      @active = ProcessSet.new
+
+      class << self
+        attr_reader :active
+      end
+
+      def self.kill(error)
+        active.each { |p| p.quit(error) }
+      end
+
       attr_reader :status, :error
 
       def_delegators :@result_ivar, :add_observer, :wait, :complete?
@@ -125,7 +162,17 @@ module Abid
         Job.synchronize do
           return unless expected_current.include? @status
           @status = next_state
+          update_active_processes
           true
+        end
+      end
+
+      def update_active_processes
+        case @status
+        when :pending, :running
+          Process.active.add(self)
+        when :complete
+          Process.active.delete(self)
         end
       end
     end

@@ -4,6 +4,15 @@ module Abid
   module Engine
     # Scheduler operates whole job flow execution.
     class Scheduler
+      def self.invoke(job, *args, invocation_chain: nil)
+        task_args = Rake::TaskArguments.new(job.task.arg_names, args)
+        invocation_chain ||= Rake::InvocationChain::EMPTY
+
+        detect_circular_dependency(job, invocation_chain)
+        new(job, task_args, invocation_chain).invoke
+        job.process.wait
+      end
+
       # @!visibility private
 
       # Execute given block when DependencyCounter#update is called `count`
@@ -20,9 +29,7 @@ module Abid
         end
       end
 
-      def self.detect_circular_dependency(job, chain = nil)
-        chain ||= Rake::InvocationChain::EMPTY
-
+      def self.detect_circular_dependency(job, chain)
         # raise error if job.task is a member of the chain
         new_chain = Rake::InvocationChain.append(job.task, chain)
 
@@ -31,17 +38,18 @@ module Abid
         end
       end
 
-      def initialize(job)
+      def initialize(job, args, invocation_chain)
         @job = job
-        @executor = Executor.new(job)
-        @chain = nil
+        @args = args
+        @chain = invocation_chain.conj(@job.task)
+        @executor = Executor.new(job, args)
       end
 
-      def invoke(invocation_chain = nil)
+      def invoke
         return unless @executor.prepare
 
         trace_invoke
-        attach_chain(invocation_chain || Rake::InvocationChain::EMPTY)
+        attach_chain
         invoke_prerequisites
         after_prerequisites do
           @executor.capture_exception do
@@ -58,8 +66,7 @@ module Abid
           "** Invoke #{@job.task.name} #{@job.task.format_trace_flags}"
       end
 
-      def attach_chain(invocation_chain)
-        @chain = invocation_chain.conj(@job.task)
+      def attach_chain
         @job.process.add_observer do
           error = @job.process.error
           next if error.nil?
@@ -73,7 +80,8 @@ module Abid
 
       def invoke_prerequisites
         @job.prerequisites.each do |preq_job|
-          Scheduler.new(preq_job).invoke(@chain)
+          preq_args = @args.new_scope(@job.task.arg_names)
+          Scheduler.new(preq_job, preq_args, @chain).invoke
         end
       end
 

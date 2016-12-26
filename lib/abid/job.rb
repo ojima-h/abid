@@ -16,7 +16,7 @@ module Abid
     end
 
     def self.find_by_task(task)
-      self[task.name, task.respond_to?(:params) ? task.params : {}]
+      self[task.name, task.params]
     end
 
     def self.clear_cache

@@ -17,7 +17,7 @@ module Abid
     end
 
     def invoke(task, *args, **params)
-      Rake.application[task, **params].async_invoke(*args).wait!
+      Engine.invoke(Job.find_by_task(Abid.application[task, **params]), *args)
     end
 
     def mixin(*args, &block)

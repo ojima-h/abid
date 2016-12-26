@@ -36,7 +36,7 @@ module Abid
       yield
     rescue Exception => err
       worker.kill
-      Session.current_sessions.each { |_, s| s.fail(err) }
+      Engine.kill(err)
       raise err
     else
       worker.shutdown
@@ -44,7 +44,7 @@ module Abid
 
     def invoke_task(task_string) # :nodoc:
       name, args = parse_task_string(task_string)
-      self[name].async_invoke(*args).wait!
+      Engine.invoke(Job.find_by_task(self[name]), *args)
     end
 
     def standard_rake_options

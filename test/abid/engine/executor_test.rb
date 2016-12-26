@@ -3,9 +3,13 @@ require 'test_helper'
 module Abid
   module Engine
     class ExecutorTest < AbidTest
+      def empty_args
+        Rake::TaskArguments.new([], [])
+      end
+
       def test_execute_ok
         job = Job['test_ok']
-        executor = Executor.new(job)
+        executor = Executor.new(job, empty_args)
         assert executor.prepare
         assert executor.start
         job.process.wait
@@ -16,7 +20,7 @@ module Abid
 
       def test_execute_ng
         job = Job['test_ng']
-        executor = Executor.new(job)
+        executor = Executor.new(job, empty_args)
         assert executor.prepare
         assert executor.start
         job.process.wait
@@ -28,7 +32,7 @@ module Abid
 
       def test_start_before_prepare
         job = Job['test_ok']
-        executor = Executor.new(job)
+        executor = Executor.new(job, empty_args)
         refute executor.start
         assert executor.prepare
         assert executor.start
@@ -38,7 +42,7 @@ module Abid
       def test_cancel_in_prepare
         job = Job['test_ok']
         job.state.mock_fail(RuntimeError.new('test'))
-        executor = Executor.new(job)
+        executor = Executor.new(job, empty_args)
 
         refute executor.prepare
         assert job.process.cancelled?
@@ -50,7 +54,7 @@ module Abid
       def test_skip_in_prepare
         job = Job['test_ok']
         job.state.assume
-        executor = Executor.new(job)
+        executor = Executor.new(job, empty_args)
 
         refute executor.prepare
         assert job.process.skipped?
@@ -65,7 +69,7 @@ module Abid
           p.process.quit(RuntimeError.new('test'))
         end
 
-        executor = Executor.new(job)
+        executor = Executor.new(job, empty_args)
         assert executor.prepare
         refute executor.start
         assert job.process.cancelled?
@@ -74,7 +78,7 @@ module Abid
 
       def test_prepare_after_running
         job = Job['test_ok']
-        executor = Executor.new(job)
+        executor = Executor.new(job, empty_args)
         job.process.prepare
         job.process.start
         refute executor.prepare
@@ -82,20 +86,20 @@ module Abid
 
       def test_start_twice
         job = Job['test_ok']
-        executor = Executor.new(job)
+        executor = Executor.new(job, empty_args)
         assert executor.prepare
         assert executor.start
         job.process.wait
         assert job.process.successed?
 
-        executor2 = Executor.new(Job['test_ok'])
+        executor2 = Executor.new(Job['test_ok'], empty_args)
         refute executor2.prepare
         refute executor2.start
       end
 
       def test_execute_running
         job = Job['test_ok']
-        executor = Executor.new(job)
+        executor = Executor.new(job, empty_args)
 
         job.state.start
         executor.prepare

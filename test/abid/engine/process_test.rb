@@ -69,6 +69,19 @@ module Abid
         assert process.failed?
         assert_equal 'test', process.error.message
       end
+
+      def test_acitve_processes
+        process = Job['test_ok'].process
+
+        process.prepare
+        assert_includes Process.active, process
+
+        process.start
+        assert_includes Process.active, process
+
+        process.finish
+        refute_includes Process.active, process
+      end
     end
   end
 end

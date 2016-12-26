@@ -27,6 +27,7 @@ class AbidTest < Minitest::Test
       Abid::StateManager.database[:states].delete
       Abid::Job.clear_cache
       AbidTest.history.clear
+      Abid::Engine::Process.active.clear
 
       load File.expand_path('../Abidfile.rb', __FILE__)
       super

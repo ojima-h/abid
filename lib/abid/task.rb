@@ -104,21 +104,6 @@ module Abid
       play.run
     end
 
-    def concerned?
-      state = job.state.find
-
-      if !application.options.repair && state.failed? && !top_level?
-        fail "#{name} -- task has been failed"
-      end
-
-      application.options.repair || !state.successed?
-    end
-
-    def needed?
-      !job.state.successed? \
-      || prerequisite_tasks.any? { |t| t.session.successed? }
-    end
-
     def bind_play_hooks(tag, to = nil)
       to ||= tag
       hooks[to] = [proc { |*args| call_play_hooks(tag, *args) }]

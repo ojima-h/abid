@@ -129,6 +129,12 @@ module Abid
           Engine.invoke(Job['scheduler_test:c1'])
         end
       end
+
+      def test_with_args
+        Engine.invoke(Job['test_args:t1'], 'Tom', '24')
+        assert_includes AbidTest.history, ['test_args:t1', name: 'Tom', age: '24']
+        assert_includes AbidTest.history, ['test_args:t2', age: '24']
+      end
     end
   end
 end

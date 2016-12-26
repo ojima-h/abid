@@ -4,8 +4,10 @@ module Abid
 
     # Executor operates each task execution.
     class Executor
-      def initialize(job)
+      def initialize(job, args)
         @job = job
+        @args = args
+
         @process = job.process
         @state = job.state.find
         @prerequisites = job.prerequisites.map(&:process)
@@ -104,15 +106,25 @@ module Abid
       def execute
         _, error = safe_execute
 
+        call_after_hooks(error)
         @job.state.finish(error)
         @process.finish(error)
       end
 
       def safe_execute
-        @job.task.execute
+        @job.task.call_hooks(:before_execute)
+        @job.task.execute(@args)
         true
       rescue => error
         [false, error]
+      end
+
+      def call_after_hooks(error)
+        @job.task.call_hooks(:after_invoke, error)
+        true
+      rescue
+        # TODO: Error logging
+        false
       end
 
       def wait_task

@@ -69,7 +69,7 @@ module Abid
     def test_callback
       task = app[:test, date: '2016-01-01']
       play = task.play
-      task.async_invoke.wait!
+      Engine.invoke(Job.find_by_task(task))
 
       assert play.callback_called
     end

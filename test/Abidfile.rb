@@ -56,3 +56,13 @@ namespace :scheduler_test do
     setup { needs :c1 }
   end
 end
+
+namespace :test_args do
+  task :t1, [:name, :age] => :t2 do |_, args|
+    AbidTest.history << ['test_args:t1', name: args[:name], age: args[:age]]
+  end
+
+  task :t2, [:age] do |_, args|
+    AbidTest.history << ['test_args:t2', age: args[:age]]
+  end
+end
