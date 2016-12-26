@@ -2,15 +2,8 @@ require 'concurrent/atomic/atomic_fixnum'
 
 module Abid
   module Engine
-    # Scheduler builds whole job dependency graph, and execute jobs according to
-    # the dependency.
+    # Scheduler operates whole job flow execution.
     class Scheduler
-      def self.invoke(job)
-        detect_circular_dependency(job)
-        new(job).invoke
-        job.process.wait
-      end
-
       # @!visibility private
 
       # Execute given block when DependencyCounter#update is called `count`
@@ -40,18 +33,19 @@ module Abid
 
       def initialize(job)
         @job = job
+        @executor = Executor.new(job)
         @chain = nil
       end
 
       def invoke(invocation_chain = nil)
-        return unless @job.process.prepare
+        return unless @executor.prepare
 
         trace_invoke
         attach_chain(invocation_chain || Rake::InvocationChain::EMPTY)
         invoke_prerequisites
         after_prerequisites do
-          @job.process.capture_exception do
-            @job.process.start
+          @executor.capture_exception do
+            @executor.start
           end
         end
       end

@@ -5,21 +5,26 @@ module Abid
     class SchedulerTest < AbidTest
       def test_invoke_ok
         job = Job['test_ok']
-        Scheduler.invoke(job)
+        Engine.invoke(job)
         assert job.state.successed?
         assert job.process.successed?
+        assert_equal :complete, job.process.status
+        assert_includes AbidTest.history, ['test_ok']
       end
 
       def test_invoke_ng
         job = Job['test_ng']
-        Scheduler.invoke(job)
+        Engine.invoke(job)
         assert job.state.failed?
         assert job.process.failed?
+        assert_equal :complete, job.process.status
+        assert_equal 'ng', job.process.error.message
+        assert_includes AbidTest.history, ['test_ng']
       end
 
       def test_invoke
         job = Job['test_p3']
-        Scheduler.invoke(job)
+        Engine.invoke(job)
 
         assert job.state.successed?
         assert job.process.successed?
@@ -45,7 +50,7 @@ module Abid
         job_failed.state.mock_fail RuntimeError.new('test')
 
         job = Job['test_p3']
-        Scheduler.invoke(job)
+        Engine.invoke(job)
 
         assert job.state.new?
         assert job.process.cancelled?
@@ -64,7 +69,7 @@ module Abid
         job.state.mock_fail RuntimeError.new('test')
 
         job.task.stub(:top_level?, true) do
-          Scheduler.invoke(job)
+          Engine.invoke(job)
         end
 
         assert job.state.successed?
@@ -80,7 +85,7 @@ module Abid
         job_successed.state.assume
 
         job = Job['test_p3']
-        Scheduler.invoke(job)
+        Engine.invoke(job)
 
         assert job.state.successed?
         assert job.process.successed?
@@ -103,7 +108,7 @@ module Abid
           job_failed.state.mock_fail RuntimeError.new('test')
 
           job = Job['test_p3']
-          Scheduler.invoke(job)
+          Engine.invoke(job)
 
           assert job.state.successed?
           assert job.process.successed?
@@ -121,7 +126,7 @@ module Abid
 
       def test_circular_dependency
         assert_raises RuntimeError, /Circular dependency/ do
-          Scheduler.invoke(Job['scheduler_test:c1'])
+          Engine.invoke(Job['scheduler_test:c1'])
         end
       end
     end

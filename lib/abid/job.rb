@@ -57,7 +57,7 @@ module Abid
 
     def process
       Job.synchronize do
-        @process ||= Engine::Process.new(self)
+        @process ||= Engine::Process.new
       end
     end
 

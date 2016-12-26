@@ -57,11 +57,10 @@ module Abid
 
       def_delegators :@result_ivar, :add_observer, :wait, :complete?
 
-      def initialize(job)
-        @job = job
-        @prerequisites = @job.prerequisites.map(&:process)
+      def initialize
         @result_ivar = Concurrent::IVar.new
         @status = :unscheduled
+        @error = nil
       end
 
       %w(successed failed cancelled skipped).each do |meth|
@@ -76,33 +75,31 @@ module Abid
         @result_ivar.value if @result_ivar.complete?
       end
 
-      # Check if the task should be executed.
-      #
-      # If not, the status will be :complete and the result will be :skipped or
-      # :cancelled, otherwise the status will be :pending.
-      #
-      # @return [Boolean] false if the task should not be executed.
       def prepare
-        return false unless compare_and_set_status(:pending, :unscheduled)
+        compare_and_set_status(:pending, :unscheduled)
+      end
 
-        state = @job.state.find
-        return false if precheck_to_cancel(state)
-        return false if precheck_to_skip(state)
+      def start
+        compare_and_set_status(:running, :pending)
+      end
+
+      def finish(error = nil)
+        return unless compare_and_set_status(:complete, :running)
+        @error = error if error
+        @result_ivar.set(error.nil? ? :successed : :failed)
         true
       end
 
-      # Start processing the task.
-      #
-      # The task is executed asynchronously.
-      #
-      # @return [Boolean] false if the task is not executed
-      def start
-        return false unless @prerequisites.all?(&:complete?)
-        return false unless compare_and_set_status(:starting, :pending)
+      def cancel(error = nil)
+        return false unless compare_and_set_status(:complete, :pending)
+        @error = error if error
+        @result_ivar.set :cancelled
+        true
+      end
 
-        return false if check_to_cancel
-        return false if check_to_skip
-        execute_or_wait
+      def skip
+        return false unless compare_and_set_status(:complete, :pending)
+        @result_ivar.set :skipped
         true
       end
 
@@ -112,15 +109,6 @@ module Abid
         @status = :complete
         @error = error
         @result_ivar.try_set(:failed)
-      end
-
-      def capture_exception
-        yield
-      rescue StandardError, ScriptError => error
-        quit(error)
-      rescue Exception => exception
-        # TODO: exit immediately when fatal error occurs.
-        quit(exception)
       end
 
       private
@@ -139,111 +127,6 @@ module Abid
           @status = next_state
           true
         end
-      end
-
-      # Cancel the task if it should be.
-      # @return [Boolean] true if cancelled
-      def precheck_to_cancel(state)
-        return unless should_cancel_before_prerequisites?(state)
-        return unless compare_and_set_status(:complete, :pending)
-        @error = Error.new('task has been failed')
-        @result_ivar.set :cancelled
-        true
-      end
-
-      def should_cancel_before_prerequisites?(state)
-        return false if Abid.application.options.repair
-        return false unless state.failed?
-        return false if @job.task.top_level?
-        true
-      end
-
-      # Skip the task if it should be.
-      # @return [Boolean] true if skipped
-      def precheck_to_skip(state)
-        return unless should_skip_before_prerequisites?(state)
-        return unless compare_and_set_status(:complete, :pending)
-        @result_ivar.set :skipped
-        true
-      end
-
-      def should_skip_before_prerequisites?(state)
-        return true unless @job.task.concerned?
-        return false if Abid.application.options.repair \
-                        && !@prerequisites.empty?
-        return false unless state.successed?
-        true
-      end
-
-      # Cancel the task if it should be.
-      # @return [Boolean] true if cancelled
-      def check_to_cancel
-        return unless should_cancel_after_prerequisites?
-        return unless compare_and_set_status(:complete, :starting)
-        @result_ivar.set :cancelled
-        true
-      end
-
-      def should_cancel_after_prerequisites?
-        return false if @prerequisites.empty?
-        return false if @prerequisites.all? { |p| !p.failed? && !p.cancelled? }
-        true
-      end
-
-      # Skip the task if it should be.
-      # @return [Boolean] true if skipped
-      def check_to_skip
-        return unless should_skip_after_prerequisites?
-        return unless compare_and_set_status(:complete, :starting)
-        @result_ivar.set :skipped
-        true
-      end
-
-      def should_skip_after_prerequisites?
-        return true unless @job.task.needed?
-        return false if @prerequisites.empty?
-        return false unless Abid.application.options.repair
-        return false if @prerequisites.any?(&:successed?)
-        true
-      end
-
-      # Post the task if no external process executing the same task, wait the
-      # task finished otherwise.
-      def execute_or_wait
-        return unless compare_and_set_status(:running, :starting)
-        if @job.state.try_start
-          worker.post { capture_exception { execute } }
-        else
-          wait_task
-        end
-      end
-
-      def worker
-        Abid.application.worker[@job.task.worker]
-      end
-
-      def execute
-        _, error = safe_execute
-
-        return unless compare_and_set_status(:complete, :running)
-        @job.state.finish(error)
-        @error = error
-        @result_ivar.set(error.nil? ? :successed : :failed)
-      end
-
-      def safe_execute
-        @job.task.execute
-        true
-      rescue => error
-        [false, error]
-      end
-
-      def wait_task
-        return unless compare_and_set_status(:complete, :running)
-        @error = AlreadyRunningError.new('job already running')
-        @result_ivar.set(:failed)
-
-        # TODO: implement external task waiting
       end
     end
   end

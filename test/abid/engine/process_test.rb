@@ -8,90 +8,66 @@ module Abid
         assert_equal :unscheduled, Job['test_ok'].process.status
       end
 
-      def test_execute_ok
+      def test_prepare
         process = Job['test_ok'].process
         assert process.prepare
-        assert process.start
-        process.wait
-        assert process.successed?
-        assert_equal :complete, process.status
-        assert_includes AbidTest.history, ['test_ok']
-      end
-
-      def test_execute_ng
-        process = Job['test_ng'].process
-        assert process.prepare
-        assert process.start
-        process.wait
-        assert process.failed?
-        assert_equal :complete, process.status
-        assert_equal 'ng', process.error.message
-        assert_includes AbidTest.history, ['test_ng']
-      end
-
-      def test_cancel_in_prepare
-        Job['test_ok'].state.mock_fail(RuntimeError.new('test'))
-        process = Job['test_ok'].process
-
+        assert_equal :pending, process.status
         refute process.prepare
+      end
+
+      def test_start
+        process = Job['test_ok'].process
+
+        refute process.start, 'could not start before prepare'
+        assert_equal :unscheduled, process.status
+
+        assert process.prepare
+        assert process.start
+        assert_equal :running, process.status
+
+        refute process.prepare, 'could not prepare after start'
+      end
+
+      def test_cancel
+        process = Job['test_ok'].process
+
+        refute process.cancel, 'could not cancel before prepare'
+        assert_equal :unscheduled, process.status
+
+        assert process.prepare
+        assert process.cancel
+        assert_equal :complete, process.status
         assert process.cancelled?
-        assert_equal :complete, process.status
 
-        refute process.start
+        refute process.prepare, 'could not prepare after cancel'
       end
 
-      def test_skip_in_prepare
-        Job['test_ok'].state.assume
+      def test_finish
         process = Job['test_ok'].process
 
-        refute process.prepare
-        assert process.skipped?
-        assert_equal :complete, process.status
+        refute process.finish, 'could not finish before prepare'
+        assert_equal :unscheduled, process.status
 
-        refute process.start
-      end
-
-      def test_cancel_after_prerequsites
-        job = Job['test_p2', i: 0]
-        job.prerequisites.each do |p|
-          p.process.quit(RuntimeError.new('test'))
-        end
-
-        process = job.process
         assert process.prepare
-        refute process.start
-        assert process.cancelled?
-        assert_equal :complete, process.status
-      end
+        refute process.finish, 'could not finish before start'
 
-      def test_prepare_after_running
-        process = Job['test_ok'].process
-        process.send(:compare_and_set_status, :running, :unscheduled)
-        refute process.prepare
-      end
-
-      def test_start_twice
-        process = Job['test_ok'].process
-        assert process.prepare
         assert process.start
-        process.wait
+        assert process.finish
+        assert_equal :complete, process.status
         assert process.successed?
 
-        process2 = Job['test_ok'].process
-        refute process2.prepare
-        refute process2.start
+        refute process.start, 'could not start after finish'
       end
 
-      def test_execute_running
-        Job['test_ok'].state.start
-
+      def test_fail
         process = Job['test_ok'].process
-        process.prepare
-        process.start
-        process.wait
-        assert process.failed?
+
+        assert process.prepare
+        assert process.start
+        assert process.finish(RuntimeError.new('test'))
         assert_equal :complete, process.status
-        assert_kind_of AlreadyRunningError, process.error
+        assert process.failed?
+        assert_equal 'test', process.error.message
       end
     end
   end
