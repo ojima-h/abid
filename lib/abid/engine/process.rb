@@ -144,43 +144,66 @@ module Abid
       # Cancel the task if it should be.
       # @return [Boolean] true if cancelled
       def precheck_to_cancel(state)
-        return if Abid.application.options.repair
-        return unless state.failed?
-        return if @job.task.top_level?
+        return unless should_cancel_before_prerequisites?(state)
         return unless compare_and_set_status(:complete, :pending)
         @error = Error.new('task has been failed')
         @result_ivar.set :cancelled
         true
       end
 
+      def should_cancel_before_prerequisites?(state)
+        return false if Abid.application.options.repair
+        return false unless state.failed?
+        return false if @job.task.top_level?
+        true
+      end
+
       # Skip the task if it should be.
       # @return [Boolean] true if skipped
       def precheck_to_skip(state)
-        return if Abid.application.options.repair && !@prerequisites.empty?
-        return unless state.successed?
+        return unless should_skip_before_prerequisites?(state)
         return unless compare_and_set_status(:complete, :pending)
         @result_ivar.set :skipped
+        true
+      end
+
+      def should_skip_before_prerequisites?(state)
+        return true unless @job.task.concerned?
+        return false if Abid.application.options.repair \
+                        && !@prerequisites.empty?
+        return false unless state.successed?
         true
       end
 
       # Cancel the task if it should be.
       # @return [Boolean] true if cancelled
       def check_to_cancel
-        return if @prerequisites.empty?
-        return if @prerequisites.all? { |p| !p.failed? && !p.cancelled? }
+        return unless should_cancel_after_prerequisites?
         return unless compare_and_set_status(:complete, :starting)
         @result_ivar.set :cancelled
+        true
+      end
+
+      def should_cancel_after_prerequisites?
+        return false if @prerequisites.empty?
+        return false if @prerequisites.all? { |p| !p.failed? && !p.cancelled? }
         true
       end
 
       # Skip the task if it should be.
       # @return [Boolean] true if skipped
       def check_to_skip
-        return if @prerequisites.empty?
-        return unless Abid.application.options.repair
-        return if @prerequisites.any?(&:successed?)
+        return unless should_skip_after_prerequisites?
         return unless compare_and_set_status(:complete, :starting)
         @result_ivar.set :skipped
+        true
+      end
+
+      def should_skip_after_prerequisites?
+        return true unless @job.task.needed?
+        return false if @prerequisites.empty?
+        return false unless Abid.application.options.repair
+        return false if @prerequisites.any?(&:successed?)
         true
       end
 
