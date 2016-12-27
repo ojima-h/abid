@@ -1,14 +1,10 @@
-require 'monitor'
-
 module Abid
   # Job is an aggregation object of components around the task.
   class Job
-    extend MonitorMixin
-
     attr_reader :name, :params
 
     def self.[](name, params = {})
-      synchronize do
+      Abid.synchronize do
         @cache ||= {}
         key = [name, params.sort.freeze].freeze
         @cache[key] ||= new(name, params)
@@ -20,7 +16,7 @@ module Abid
     end
 
     def self.clear_cache
-      synchronize do
+      Abid.synchronize do
         @cache = {}
       end
     end
@@ -56,7 +52,7 @@ module Abid
     end
 
     def process
-      Job.synchronize do
+      Abid.synchronize do
         @process ||= Engine::Process.new
       end
     end

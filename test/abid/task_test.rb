@@ -37,12 +37,12 @@ module Abid
     end
 
     def test_unbound_task
-      task = app.lookup(:test)
+      task = Abid.application.lookup(:test)
       assert_nil task.play
     end
 
     def test_lookup
-      task = app[:test, date: '2016-01-01']
+      task = Abid.application[:test, date: '2016-01-01']
 
       assert_kind_of Abid::Task, task
       assert_equal Date.new(2016, 1, 1), task.play.date
@@ -50,24 +50,24 @@ module Abid
     end
 
     def test_relative_name
-      task_1 = app['ns:task_1']
-      task_2 = app['ns:task_2']
-      task_3 = app['ns:task_3']
+      task_1 = Abid.application['ns:task_1']
+      task_2 = Abid.application['ns:task_2']
+      task_3 = Abid.application['ns:task_3']
 
       assert_equal task_1.play_class, task_2.play_class.superclass
       assert_equal task_1.play_class, task_3.prerequisite_tasks.first.play_class
     end
 
     def test_name_with_args
-      unbound_task = app.lookup(:test)
+      unbound_task = Abid.application.lookup(:test)
       assert_equal 'test date:date', unbound_task.name_with_args
 
-      task = app[:test, date: '2016-01-01']
+      task = Abid.application[:test, date: '2016-01-01']
       assert_equal 'test date=2016-01-01', task.name_with_args
       end
 
     def test_callback
-      task = app[:test, date: '2016-01-01']
+      task = Abid.application[:test, date: '2016-01-01']
       play = task.play
       Engine.invoke(Job.find_by_task(task))
 

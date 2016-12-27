@@ -60,15 +60,15 @@ module Abid
         end
 
         def add(process)
-          Job.synchronize { @set[process.object_id] = process }
+          Abid.synchronize { @set[process.object_id] = process }
         end
 
         def delete(process)
-          Job.synchronize { @set.delete(process.object_id) }
+          Abid.synchronize { @set.delete(process.object_id) }
         end
 
         def each(&block)
-          Job.synchronize { @set.values.each(&block) }
+          Abid.synchronize { @set.values.each(&block) }
         end
 
         def include?(process)
@@ -76,7 +76,7 @@ module Abid
         end
 
         def clear
-          Job.synchronize { @set.clear }
+          Abid.synchronize { @set.clear }
         end
       end
 
@@ -159,7 +159,7 @@ module Abid
       #
       # @return [Boolean] true if state is changed, false otherwise
       def compare_and_set_status(next_state, *expected_current)
-        Job.synchronize do
+        Abid.synchronize do
           return unless expected_current.include? @status
           @status = next_state
           update_active_processes

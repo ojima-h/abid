@@ -49,7 +49,7 @@ module Abid
     end
 
     def test_mixin
-      task = app['ns0:task', param_1: 1, param_2: 2]
+      task = Abid.application['ns0:task', param_1: 1, param_2: 2]
 
       assert 'mixin_2', task.play.name
       assert -1, task.play.attr_0
@@ -60,7 +60,7 @@ module Abid
       assert 3, task.play.param_3
 
       assert_raises do
-        app['ns0:task', param_2: 2]
+        Abid.application['ns0:task', param_2: 2]
       end
     end
   end

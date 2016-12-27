@@ -1,19 +1,28 @@
+require 'monitor'
+
 module Abid
-  extend Rake
+  extend MonitorMixin
 
   class << self
     def application
-      return @application if @application
-      self.application = Abid::Application.new
+      @application ||= Abid::Application.new
     end
 
-    def application=(app)
-      @application = app
-      Rake.application = app
-    end
+    attr_writer :application
 
     def config
       @config ||= Config.new
     end
+  end
+end
+
+# Delegate Rake.application to Abid.application
+class << Rake
+  def application
+    Abid.application
+  end
+
+  def application=(app)
+    Abid.application = app
   end
 end

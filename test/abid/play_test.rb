@@ -30,11 +30,11 @@ module Abid
         set :date, Date.new(2000, 1, 1)
       end
 
-      app.options.preview = true
+      Abid.application.options.preview = true
     end
 
     def test_definition
-      task = app[:sample, date: '2000-01-01', dummy: 'foo']
+      task = Abid.application[:sample, date: '2000-01-01', dummy: 'foo']
       play = task.play
       task.execute
 
@@ -51,18 +51,18 @@ module Abid
     end
 
     def test_undef_param
-      pc1 = app.lookup_play_class(:child)
+      pc1 = Abid.application.lookup_play_class(:child)
       refute pc1.method_defined?(:dummy)
 
-      pc2 = app.lookup_play_class(:sample)
+      pc2 = Abid.application.lookup_play_class(:sample)
       assert pc2.method_defined?(:dummy)
     end
 
     def test_overwrite_param
-      task = app[:child2, dummy: 'foo']
+      task = Abid.application[:child2, dummy: 'foo']
       assert Date.new(2000, 1, 1), task.play.date
 
-      task = app[:sample, date: '2000-01-01', dummy: 'foo']
+      task = Abid.application[:sample, date: '2000-01-01', dummy: 'foo']
       assert Date.new(2000, 1, 1), task.play.date
     end
   end

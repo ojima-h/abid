@@ -10,28 +10,22 @@ class AbidTest < Minitest::Test
     @history ||= []
   end
 
-  def app
-    @app ||= Abid::Application.new.tap do |app|
-      app.init
-      app.top_level_tasks.clear
-      Abid.application = app
-    end
-  end
-
   def run(*args, &block)
-    Rake.stub(:application, app) do
-      # app.options.trace = true
-      # app.options.backtrace = true
-      # Rake.verbose(true)
+    Abid.application = Abid::Application.new
+    Abid.application.init
+    Abid.application.top_level_tasks.clear
 
-      Abid::StateManager.database[:states].delete
-      Abid::Job.clear_cache
-      AbidTest.history.clear
-      Abid::Engine::Process.active.clear
+    # Abid.application.options.trace = true
+    # Abid.application.options.backtrace = true
+    # Rake.verbose(true)
 
-      load File.expand_path('../Abidfile.rb', __FILE__)
-      super
-    end
+    Abid::StateManager.database[:states].delete
+    Abid::Job.clear_cache
+    AbidTest.history.clear
+    Abid::Engine::Process.active.clear
+
+    load File.expand_path('../Abidfile.rb', __FILE__)
+    super
   end
 
   def mock_state(*args)
