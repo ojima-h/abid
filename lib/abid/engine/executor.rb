@@ -100,7 +100,7 @@ module Abid
       end
 
       def worker
-        Abid.application.worker[@job.task.worker]
+        WorkerManager[@job.task.worker]
       end
 
       def execute

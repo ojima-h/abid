@@ -2,12 +2,9 @@ module Abid
   class Application < Rake::Application
     include Abid::TaskManager
 
-    attr_reader :worker
-
     def initialize
       super
       @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb) << abidfile
-      @worker = Worker.new(self)
 
       Abid.config.load
     end
@@ -35,11 +32,10 @@ module Abid
     def run_with_threads
       yield
     rescue Exception => err
-      worker.kill
       Engine.kill(err)
       raise err
     else
-      worker.shutdown
+      Engine.shutdown
     end
 
     def invoke_task(task_string) # :nodoc:

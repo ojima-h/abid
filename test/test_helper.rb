@@ -23,9 +23,12 @@ class AbidTest < Minitest::Test
     Abid::Job.clear_cache
     AbidTest.history.clear
     Abid::Engine::Process.active.clear
+    Abid::Engine::WorkerManager.instance = Abid::Engine::WorkerManager.new
 
     load File.expand_path('../Abidfile.rb', __FILE__)
     super
+  ensure
+    Abid::Engine::WorkerManager.shutdown
   end
 
   def mock_state(*args)
