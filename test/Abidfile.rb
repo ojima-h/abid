@@ -69,8 +69,6 @@ end
 
 define_worker :w1, 1
 define_worker :w2, 1
-define_worker :w3, 0
-
 namespace :test_worker do
   play :p1_1 do
     set :worker, :w1
@@ -90,21 +88,6 @@ namespace :test_worker do
     setup do
       needs :p1_1
       needs :p1_2
-    end
-  end
-
-  play :p2_i do
-    set :worker, :w3
-    param :i, type: :int
-    def run
-      t = Thread.current.object_id
-      AbidTest.history << ['test_worker:p2_i', i: i, thread: t]
-    end
-  end
-
-  play :p2 do
-    setup do
-      10.times { |i| needs :p2_i, i: i }
     end
   end
 end

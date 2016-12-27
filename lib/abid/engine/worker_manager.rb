@@ -97,18 +97,10 @@ module Abid
 
       def create_worker(definition)
         if definition[:num_threads] > 0
-          create_thread_pool(definition[:num_threads])
+          Concurrent::FixedThreadPool.new(definition[:num_threads])
         else
-          create_simple_executor
+          Concurrent::CachedThreadPool.new
         end
-      end
-
-      def create_thread_pool(num_threads)
-        Concurrent::FixedThreadPool.new(num_threads, idletime: FIXNUM_MAX)
-      end
-
-      def create_simple_executor
-        Concurrent::SimpleExecutorService.new
       end
 
       def create_default_worker
