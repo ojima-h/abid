@@ -32,7 +32,7 @@ module Abid
         # Use own monitor because thread operations may take long.
         @mon = Monitor.new
 
-        assign_builtin_workers
+        initialize_builtin_workers
       end
 
       # Define new worker.
@@ -91,8 +91,12 @@ module Abid
 
       private
 
-      def assign_builtin_workers
+      def initialize_builtin_workers
         @workers[:default] = Concurrent::Delay.new { create_default_worker }
+        @workers[:waiter] = Concurrent::Delay.new { Concurrent.new_io_executor }
+        @workers[:timer_set] = Concurrent::Delay.new do
+          Concurrent::TimerSet.new(executor: self[:waiter])
+        end
       end
 
       def create_worker(definition)
