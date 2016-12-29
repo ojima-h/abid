@@ -1,66 +1,82 @@
-require 'concurrent/ivar'
-
 module Abid
   module Engine
+    # Waits for a job to be finished which is running in external application,
+    # and completes the job in its own application.
+    #
+    #     Waiter.new(job).wait
+    #
+    # The `job` result gets :successed or :failed when external application
+    # finished the job execution.
     class Waiter
-      # Wait until the block returns truthy value.
-      #
-      # @param interval [Numeric]
-      # @param timeout [Numeric]
-      # @yieldparam elapsed_time [Numeric] elapsed time from started
-      # @return [Concurrent::IVar] its value is false if timeout exceeded,
-      #   otherwise true.
-      def self.wait(interval: 5, timeout: 60, &block)
-        new(interval, timeout, &block).wait
-      end
+      DEFAULT_WAIT_INTERVAL = 10
+      DEFAULT_WAIT_TIMEOUT = 3600
 
-      # @!visibility private
-
-      def initialize(interval, timeout, &block)
-        @interval = interval
-        @timeout = timeout
-        @start_time = Concurrent.monotonic_time
-        @block = block
-        @ivar = Concurrent::IVar.new
+      def initialize(job)
+        @job = job
+        @process = job.process
+        @wait_limit = Concurrent.monotonic_time + wait_timeout
       end
 
       def wait
-        wait_iter(0) # check immediately at first
-        @ivar
+        unless Abid.application.options.wait_external_task
+          @process.finish(AlreadyRunningError.new('job already running'))
+          return
+        end
+
+        wait_iter
       end
 
       private
 
-      def elapsed_time
-        Concurrent.monotonic_time - @start_time
+      def wait_interval
+        Abid.application.options.wait_external_task_interval ||
+          DEFAULT_WAIT_INTERVAL
       end
 
-      def wait_iter(delay)
-        result = WorkerManager[:timer_set].post(delay) do
+      def wait_timeout
+        Abid.application.options.wait_external_task_timeout ||
+          DEFAULT_WAIT_TIMEOUT
+      end
+
+      def wait_iter
+        WorkerManager[:timer_set].post(wait_interval) do
           capture_exception do
-            check_and_wait
+            state = @job.state.find
+
+            check_finished(state) ||
+              check_timeout ||
+              wait_iter
           end
         end
-        @ivar.fail(Concurrent::RejectedExecutionError.new) unless result
       end
 
-      def check_and_wait
-        if @block.call(elapsed_time)
-          @ivar.set true
-        elsif elapsed_time > @timeout
-          @ivar.set false
+      def check_finished(state)
+        return false if state.running?
+
+        if state.successed?
+          @process.finish
+        elsif state.failed?
+          @process.finish RuntimeError.new('task failed while waiting')
         else
-          wait_iter(@interval)
+          @process.finish RuntimeError.new('unexpected task state')
         end
+        true
+      end
+
+      def check_timeout
+        return false if Concurrent.monotonic_time < @wait_limit
+
+        @process.finish RuntimeError.new('timeout')
+        true
       end
 
       def capture_exception
         yield
-      rescue => error
-        @ivar.fail error
+      rescue StandardError, ScriptError => error
+        @process.quit(error)
       rescue Exception => exception
-        # TODO: exit immediately
-        @ivar.fail exception
+        # TODO: exit immediately when fatal error occurs.
+        @process.quit(exception)
       end
     end
   end

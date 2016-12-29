@@ -95,7 +95,7 @@ module Abid
         if @job.state.try_start
           worker.post { capture_exception { execute } }
         else
-          wait_task
+          Waiter.new(@job).wait
         end
       end
 
@@ -125,12 +125,6 @@ module Abid
       rescue
         # TODO: Error logging
         false
-      end
-
-      def wait_task
-        @process.finish(AlreadyRunningError.new('job already running'))
-
-        # TODO: implement external task waiting
       end
     end
   end

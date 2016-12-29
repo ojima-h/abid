@@ -3,10 +3,6 @@ require 'test_helper'
 module Abid
   module Engine
     class ExecutorTest < AbidTest
-      def empty_args
-        Rake::TaskArguments.new([], [])
-      end
-
       def test_execute_ok
         job = Job['test_ok']
         executor = Executor.new(job, empty_args)

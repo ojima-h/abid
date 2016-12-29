@@ -3,26 +3,86 @@ require 'test_helper'
 module Abid
   module Engine
     class WaiterTest < AbidTest
-      def test_success
-        es = []
-        ivar = Waiter.wait(interval: 0.1) { |e| es << e; e > 0.2 }
-        assert ivar.value!
-        assert 0 < es.max && es.max < 1
+      def setup
+        Abid.application.options.wait_external_task = true
+        Abid.application.options.wait_external_task_interval = 0.1
+        Abid.application.options.wait_external_task_timeout = 60
+      end
+
+      def test_wait
+        job = Job['test_ok']
+        executor = Executor.new(job, empty_args)
+
+        job.state.start
+
+        executor.prepare
+        executor.start
+
+        job.process.wait(0.5)
+        assert_equal :running, job.process.status
+
+        job.state.finish
+        job.process.wait(0.5)
+
+        assert_equal :complete, job.process.status
+        assert job.process.successed?
+      end
+
+      def test_wait_fail
+        job = Job['test_ok']
+        executor = Executor.new(job, empty_args)
+
+        job.state.start
+
+        executor.prepare
+        executor.start
+
+        job.process.wait(0.5)
+        assert_equal :running, job.process.status
+
+        job.state.finish RuntimeError.new('test')
+        job.process.wait(0.5)
+
+        assert_equal :complete, job.process.status
+        assert job.process.failed?
+        assert_equal 'task failed while waiting', job.process.error.message
+      end
+
+      def test_revoked_while_waiting
+        job = Job['test_ok']
+        executor = Executor.new(job, empty_args)
+
+        job.state.start
+
+        executor.prepare
+        executor.start
+
+        job.process.wait(0.5)
+        assert_equal :running, job.process.status
+
+        StateManager::State.revoke(job.state.id, force: true)
+        job.process.wait(0.5)
+
+        assert_equal :complete, job.process.status
+        assert job.process.failed?
+        assert_equal 'unexpected task state', job.process.error.message
       end
 
       def test_timeout
-        ivar = Waiter.wait(interval: 0.1, timeout: 0.2) { false }
-        refute ivar.value!
-      end
+        Abid.application.options.wait_external_task_timeout = 0.5
 
-      def test_error
-        ivar = Waiter.wait(interval: 0.1) { |e| raise 'test' if e > 0.2 }
-        assert_raises(RuntimeError, 'test') { ivar.value! }
-      end
+        job = Job['test_ok']
+        executor = Executor.new(job, empty_args)
 
-      def test_check_once
-        ivar = Waiter.wait(interval: FIXNUM_MAX) { true }
-        assert ivar.value!(60)
+        job.state.start
+
+        executor.prepare
+        executor.start
+
+        job.process.wait(60)
+        assert_equal :complete, job.process.status
+        assert job.process.failed?
+        assert_equal 'timeout', job.process.error.message
       end
     end
   end

@@ -48,4 +48,9 @@ class AbidTest < Minitest::Test
   ensure
     Abid.application.options.repair = original_flag
   end
+
+  # empty Rake::TaskArguments
+  def empty_args
+    Rake::TaskArguments.new([], [])
+  end
 end
