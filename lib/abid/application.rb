@@ -40,7 +40,7 @@ module Abid
 
     def invoke_task(task_string) # :nodoc:
       name, args = parse_task_string(task_string)
-      Engine.invoke(Job.find_by_task(self[name]), *args)
+      Job.find_by_task(self[name]).invoke(*args)
     end
 
     def standard_rake_options

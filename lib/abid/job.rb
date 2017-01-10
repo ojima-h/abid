@@ -19,6 +19,11 @@ module Abid
       @mon = Monitor.new
     end
 
+    def invoke(*args)
+      Engine::Scheduler.invoke(self, *args)
+      process.wait
+    end
+
     def params_str
       @params_str ||= YAML.dump(params)
     end

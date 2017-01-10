@@ -5,7 +5,7 @@ module Abid
     class SchedulerTest < AbidTest
       def test_invoke_ok
         job = Job['test_ok']
-        Engine.invoke(job)
+        job.invoke
         assert job.state.successed?
         assert job.process.successed?
         assert_equal :complete, job.process.status
@@ -14,7 +14,7 @@ module Abid
 
       def test_invoke_ng
         job = Job['test_ng']
-        Engine.invoke(job)
+        job.invoke
         assert job.state.failed?
         assert job.process.failed?
         assert_equal :complete, job.process.status
@@ -24,7 +24,7 @@ module Abid
 
       def test_invoke
         job = Job['test_p3']
-        Engine.invoke(job)
+        job.invoke
 
         assert job.state.successed?
         assert job.process.successed?
@@ -50,7 +50,7 @@ module Abid
         job_failed.state.mock_fail RuntimeError.new('test')
 
         job = Job['test_p3']
-        Engine.invoke(job)
+        job.invoke
 
         assert job.state.new?
         assert job.process.cancelled?
@@ -69,7 +69,7 @@ module Abid
         job.state.mock_fail RuntimeError.new('test')
 
         job.task.stub(:top_level?, true) do
-          Engine.invoke(job)
+          job.invoke
         end
 
         assert job.state.successed?
@@ -85,7 +85,7 @@ module Abid
         job_successed.state.assume
 
         job = Job['test_p3']
-        Engine.invoke(job)
+        job.invoke
 
         assert job.state.successed?
         assert job.process.successed?
@@ -108,7 +108,7 @@ module Abid
           job_failed.state.mock_fail RuntimeError.new('test')
 
           job = Job['test_p3']
-          Engine.invoke(job)
+          job.invoke
 
           assert job.state.successed?
           assert job.process.successed?
@@ -126,12 +126,12 @@ module Abid
 
       def test_circular_dependency
         assert_raises RuntimeError, /Circular dependency/ do
-          Engine.invoke(Job['scheduler_test:c1'])
+          Job['scheduler_test:c1'].invoke
         end
       end
 
       def test_with_args
-        Engine.invoke(Job['test_args:t1'], 'Tom', '24')
+        Job['test_args:t1'].invoke('Tom', '24')
         assert_includes AbidTest.history, ['test_args:t1', name: 'Tom', age: '24']
         assert_includes AbidTest.history, ['test_args:t2', age: '24']
       end

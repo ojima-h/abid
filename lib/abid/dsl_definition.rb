@@ -17,7 +17,7 @@ module Abid
     end
 
     def invoke(task, *args, **params)
-      Engine.invoke(Job.find_by_task(Abid.application[task, **params]), *args)
+      Job.find_by_task(Abid.application[task, **params]).invoke(*args)
     end
 
     def mixin(*args, &block)

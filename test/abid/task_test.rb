@@ -50,12 +50,12 @@ module Abid
     end
 
     def test_relative_name
-      task_1 = Abid.application['ns:task_1']
-      task_2 = Abid.application['ns:task_2']
-      task_3 = Abid.application['ns:task_3']
+      task1 = Abid.application['ns:task_1']
+      task2 = Abid.application['ns:task_2']
+      task3 = Abid.application['ns:task_3']
 
-      assert_equal task_1.play_class, task_2.play_class.superclass
-      assert_equal task_1.play_class, task_3.prerequisite_tasks.first.play_class
+      assert_equal task1.play_class, task2.play_class.superclass
+      assert_equal task1.play_class, task3.prerequisite_tasks.first.play_class
     end
 
     def test_name_with_args
@@ -64,12 +64,12 @@ module Abid
 
       task = Abid.application[:test, date: '2016-01-01']
       assert_equal 'test date=2016-01-01', task.name_with_args
-      end
+    end
 
     def test_callback
       task = Abid.application[:test, date: '2016-01-01']
       play = task.play
-      Engine.invoke(Job.find_by_task(task))
+      Job.find_by_task(task).invoke
 
       assert play.callback_called
     end

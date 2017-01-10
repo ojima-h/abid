@@ -4,13 +4,13 @@ module Abid
   module Engine
     # Scheduler operates whole job flow execution.
     class Scheduler
+      # @return [void]
       def self.invoke(job, *args, invocation_chain: nil)
         task_args = Rake::TaskArguments.new(job.task.arg_names, args)
         invocation_chain ||= Rake::InvocationChain::EMPTY
 
         detect_circular_dependency(job, invocation_chain)
         new(job, task_args, invocation_chain).invoke
-        job.process.wait
       end
 
       # @!visibility private

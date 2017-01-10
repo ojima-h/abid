@@ -74,7 +74,7 @@ module Abid
       end
 
       def test_execute_task
-        Engine.invoke(Job['test_worker:p1'])
+        Job['test_worker:p1'].invoke
 
         t1 = []
         t2 = []
