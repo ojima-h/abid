@@ -6,12 +6,13 @@ module Abid
 
     def initialize(*args)
       super(*args)
-      Abid.config.load(options[:config_file])
+      @env = Abid.global
+      @env.config.load(options[:config_file])
     end
 
     desc 'config', 'Show current config'
     def config
-      puts Abid.config.to_yaml
+      puts @env.config.to_yaml
     end
 
     desc 'migrate', 'Run database migration'

@@ -21,7 +21,7 @@ module Abid
 
     # @return [Hash] database configuration
     def database
-      self['database']
+      self['database'].each_with_object({}) { |(k, v), h| h[k.to_sym] = v }
     end
 
     # Load config file.
@@ -29,9 +29,9 @@ module Abid
     # If `config_file` is specified and does not exist, it raises an error.
     #
     # If `config_file` is not specified, it searches config file in
-    # Config.earch_path.
+    # Config.search_path.
     #
-    # When #load is called again, original cofnigurations is cleared.
+    # When #load is called again, original configurations is cleared.
     #
     # @param config_file [String] config file
     # @return [Config] self

@@ -28,7 +28,6 @@ require 'abid/job_manager'
 
 require 'abid/rake_extensions'
 require 'abid/version'
-require 'abid/abid_module'
 require 'abid/params_parser'
 require 'abid/play_core'
 require 'abid/play'
@@ -40,4 +39,15 @@ require 'abid/application'
 
 module Abid
   FIXNUM_MAX = (2**(0.size * 8 - 2) - 1) # :nodoc:
+
+  class << self
+    def global
+      @global ||= Environment.new
+    end
+    attr_writer :global
+
+    def application
+      global.application
+    end
+  end
 end

@@ -28,7 +28,7 @@ id: 2
       config.load(@config1.path)
 
       assert_equal 1, config['id']
-      assert_equal 'mysql', config.database['adapter']
+      assert_equal 'mysql', config.database[:adapter]
     end
 
     def test_default_database_config
@@ -36,8 +36,8 @@ id: 2
       config.load(@config2.path)
 
       assert_equal 2, config['id']
-      assert_equal 'sqlite', config.database['adapter']
-      assert_equal './abid.db', config.database['database']
+      assert_equal 'sqlite', config.database[:adapter]
+      assert_equal './abid.db', config.database[:database]
     end
 
     def test_search_path

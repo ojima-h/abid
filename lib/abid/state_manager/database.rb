@@ -22,10 +22,7 @@ module Abid
       #
       # @return [Sequel::Database] database object
       def self.connect!
-        # symbolize keys
-        params = {}
-        Abid.config.database.each { |k, v| params[k.to_sym] = v }
-        Sequel.connect(**params)
+        Sequel.connect(**Abid.global.config.database)
       end
 
       def self.migrations_path

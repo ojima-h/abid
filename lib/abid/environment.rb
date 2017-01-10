@@ -7,12 +7,18 @@ module Abid
     end
 
     def application
-      @application ||= Abid::Application.new
+      @application ||= Abid::Application.new(self)
     end
     attr_writer :application
 
     def options
       application.options
+    end
+
+    def config
+      @mon.synchronize do
+        @cofig ||= Config.new
+      end
     end
 
     def job_manager
