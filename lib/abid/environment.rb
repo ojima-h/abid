@@ -6,6 +6,12 @@ module Abid
       @mon = Monitor.new
     end
 
+    def job_manager
+      @mon.synchronize do
+        @job_manager ||= JobManager.new(self)
+      end
+    end
+
     def process_manager
       @mon.synchronize do
         @process_manager ||= Engine::ProcessManager.new(self)

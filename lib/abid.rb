@@ -24,6 +24,7 @@ require 'abid/engine/waiter'
 require 'abid/params_format'
 require 'abid/state_manager'
 require 'abid/job'
+require 'abid/job_manager'
 
 require 'abid/rake_extensions'
 require 'abid/version'

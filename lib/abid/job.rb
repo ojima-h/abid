@@ -1,33 +1,22 @@
+require 'forwardable'
+require 'monitor'
+
 module Abid
   # Job is an aggregation object of components around the task.
   class Job
     attr_reader :name, :params, :env
 
-    def self.[](name, params = {})
-      Abid.synchronize do
-        @cache ||= {}
-        key = [name, params.sort.freeze].freeze
-        @cache[key] ||= new(name, params)
-      end
+    class << self
+      extend Forwardable
+      def_delegators 'Abid.global.job_manager', :[], :find_by_task
     end
-
-    def self.find_by_task(task)
-      self[task.name, task.params]
-    end
-
-    def self.clear_cache
-      Abid.synchronize do
-        @cache = {}
-      end
-    end
-
-    private_class_method :new
 
     # @!visibility private
-    def initialize(name, params)
+    def initialize(env, name, params)
+      @env = env
       @name = name
       @params = params.sort.to_h.freeze
-      @env = Abid.global
+      @mon = Monitor.new
     end
 
     def params_str
@@ -48,12 +37,12 @@ module Abid
 
     def prerequisites
       task.prerequisite_tasks.map do |preq_task|
-        Job.find_by_task(preq_task)
+        env.job_manager.find_by_task(preq_task)
       end
     end
 
     def process
-      Abid.synchronize do
+      @mon.synchronize do
         @process ||= env.process_manager.create
       end
     end

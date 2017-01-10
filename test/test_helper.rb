@@ -25,13 +25,12 @@ class AbidTest < Minitest::Test
     # Rake.verbose(true)
 
     Abid::StateManager.database[:states].delete
-    Abid::Job.clear_cache
     AbidTest.history.clear
 
     load File.expand_path('../Abidfile.rb', __FILE__)
     super
   ensure
-    env.worker_manager.shutdown
+    @env.worker_manager.shutdown
   end
 
   def mock_state(*args)
