@@ -5,7 +5,7 @@ module Abid
     end
 
     def define_worker(name, thread_count)
-      Abid::Engine::WorkerManager.define(name, thread_count)
+      Abid.global.worker_manager.define(name, thread_count)
     end
 
     def play_base(&block)

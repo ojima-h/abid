@@ -6,12 +6,15 @@ require 'minitest/autorun'
 Abid::Config.search_path.unshift File.expand_path('../abid.yml', __FILE__)
 
 class AbidTest < Minitest::Test
+  attr_reader :env
+
   def self.history
     @history ||= []
   end
 
   def run(*args, &block)
-    Abid.global = Abid::Environment.new
+    @env = Abid::Environment.new
+    Abid.global = @env
 
     Abid.application = Abid::Application.new
     Abid.application.init
@@ -24,12 +27,11 @@ class AbidTest < Minitest::Test
     Abid::StateManager.database[:states].delete
     Abid::Job.clear_cache
     AbidTest.history.clear
-    Abid::Engine::WorkerManager.instance = Abid::Engine::WorkerManager.new
 
     load File.expand_path('../Abidfile.rb', __FILE__)
     super
   ensure
-    Abid::Engine::WorkerManager.shutdown
+    env.worker_manager.shutdown
   end
 
   def mock_state(*args)

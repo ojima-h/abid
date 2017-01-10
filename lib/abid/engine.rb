@@ -6,12 +6,12 @@ module Abid
     end
 
     def self.kill(error)
-      WorkerManager.kill
+      Abid.global.worker_manager.kill
       Abid.global.process_manager.kill(error)
     end
 
     def self.shutdown
-      WorkerManager.shutdown
+      Abid.global.worker_manager.shutdown
     end
   end
 end

@@ -39,7 +39,7 @@ module Abid
       end
 
       def wait_iter
-        WorkerManager[:timer_set].post(wait_interval) do
+        @job.env.worker_manager[:timer_set].post(wait_interval) do
           capture_exception do
             state = @job.state.find
 

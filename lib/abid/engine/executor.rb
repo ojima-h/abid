@@ -93,14 +93,10 @@ module Abid
       # task finished otherwise.
       def execute_or_wait
         if @job.state.try_start
-          worker.post { capture_exception { execute } }
+          @job.worker.post { capture_exception { execute } }
         else
           Waiter.new(@job).wait
         end
-      end
-
-      def worker
-        WorkerManager[@job.task.worker]
       end
 
       def execute

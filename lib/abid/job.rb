@@ -1,7 +1,7 @@
 module Abid
   # Job is an aggregation object of components around the task.
   class Job
-    attr_reader :name, :params
+    attr_reader :name, :params, :env
 
     def self.[](name, params = {})
       Abid.synchronize do
@@ -27,6 +27,7 @@ module Abid
     def initialize(name, params)
       @name = name
       @params = params.sort.to_h.freeze
+      @env = Abid.global
     end
 
     def params_str
@@ -53,8 +54,12 @@ module Abid
 
     def process
       Abid.synchronize do
-        @process ||= Abid.global.process_manager.create
+        @process ||= env.process_manager.create
       end
+    end
+
+    def worker
+      env.worker_manager[task.worker]
     end
 
     def volatile?

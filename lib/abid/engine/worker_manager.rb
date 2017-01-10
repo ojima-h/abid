@@ -7,29 +7,19 @@ module Abid
   module Engine
     # WorkerManager manges thread pools definition, creation and termination.
     #
-    #     WorkerManager.define(:main, 2)
+    #     worker_manager = Abid.global.worker_manager
     #
-    #     WorkerManager[:main].post { :do_something }
+    #     worker_manager.define(:main, 2)
     #
-    #     WorkerManager.shutdown
+    #     worker_manager[:main].post { :do_something }
+    #
+    #     worker_manager.shutdown
     #
     class WorkerManager
-      class << self
-        extend Forwardable
-
-        def instance
-          Abid.synchronize { @instance ||= new }
-        end
-        attr_writer :instance
-
-        def_delegators :instance, :define, :[], :shutdown, :kill
-      end
-
-      def initialize
+      def initialize(env)
+        @env = env
         @workers = {}
         @alive = true
-
-        # Use own monitor because thread operations may take long.
         @mon = Monitor.new
 
         initialize_builtin_workers

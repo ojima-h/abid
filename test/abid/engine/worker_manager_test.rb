@@ -7,33 +7,35 @@ require 'concurrent/atomic/count_down_latch'
 module Abid
   module Engine
     class WorkerManagerTest < AbidTest
+      def setup
+        @worker_manager = Abid::Environment.new.worker_manager
+      end
+
       def test_shutdown
-        worker_manager = WorkerManager.new
-        worker_manager.define(:test, 2)
+        @worker_manager.define(:test, 2)
 
         ivar = Concurrent::IVar.new
         ret = Concurrent::AtomicFixnum.new(0)
         10.times do
-          worker_manager[:test].post do
+          @worker_manager[:test].post do
             ret.increment
             ivar.wait # lock
           end
         end
 
-        refute worker_manager.shutdown(1)
+        refute @worker_manager.shutdown(1)
 
         ivar.set true # unlock
 
-        assert worker_manager.shutdown(1)
+        assert @worker_manager.shutdown(1)
         assert_equal 10, ret.value
       end
 
       def test_kill
-        worker_manager = WorkerManager.new
-        worker_manager.define(:test, 2)
+        @worker_manager.define(:test, 2)
 
         ivar = Concurrent::IVar.new
-        worker_manager[:test].post do
+        @worker_manager[:test].post do
           begin
             sleep
           ensure
@@ -41,22 +43,21 @@ module Abid
           end
         end
 
-        refute worker_manager.shutdown(1)
+        refute @worker_manager.shutdown(1)
         refute ivar.complete?
 
-        assert worker_manager.kill
+        assert @worker_manager.kill
         assert ivar.value(5), 'thread killed'
       end
 
       def test_cached_thraed_pool
-        worker_manager = WorkerManager.new
-        worker_manager.define(:test, 0)
+        @worker_manager.define(:test, 0)
 
         ivar = Concurrent::IVar.new
         latch1 = Concurrent::CountDownLatch.new(10)
         latch2 = Concurrent::CountDownLatch.new(10)
         10.times do
-          worker_manager[:test].post do
+          @worker_manager[:test].post do
             latch1.count_down
             ivar.wait # lock
             latch2.count_down
@@ -68,7 +69,7 @@ module Abid
 
         ivar.set true # unlock
 
-        assert worker_manager.shutdown(5)
+        assert @worker_manager.shutdown(5)
         assert latch2.wait(1), 'all tasks are finished'
       end
 
