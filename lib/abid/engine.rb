@@ -7,7 +7,7 @@ module Abid
 
     def self.kill(error)
       WorkerManager.kill
-      Process.kill(error)
+      Abid.global.process_manager.kill(error)
     end
 
     def self.shutdown

@@ -1,5 +1,6 @@
 require 'concurrent/ivar'
 require 'forwardable'
+require 'monitor'
 
 module Abid
   module Engine
@@ -53,51 +54,16 @@ module Abid
     class Process
       extend Forwardable
 
-      # ProcessSet compares processes by #object_id
-      class ProcessSet
-        def initialize
-          @set = {}
-        end
-
-        def add(process)
-          Abid.synchronize { @set[process.object_id] = process }
-        end
-
-        def delete(process)
-          Abid.synchronize { @set.delete(process.object_id) }
-        end
-
-        def each(&block)
-          Abid.synchronize { @set.values.each(&block) }
-        end
-
-        def include?(process)
-          @set.include?(process.object_id)
-        end
-
-        def clear
-          Abid.synchronize { @set.clear }
-        end
-      end
-
-      @active = ProcessSet.new
-
-      class << self
-        attr_reader :active
-      end
-
-      def self.kill(error)
-        active.each { |p| p.quit(error) }
-      end
-
       attr_reader :status, :error
 
       def_delegators :@result_ivar, :add_observer, :wait, :complete?
 
-      def initialize
+      def initialize(process_manager)
+        @process_manager = process_manager
         @result_ivar = Concurrent::IVar.new
         @status = :unscheduled
         @error = nil
+        @mon = Monitor.new
       end
 
       %w(successed failed cancelled skipped).each do |meth|
@@ -159,20 +125,11 @@ module Abid
       #
       # @return [Boolean] true if state is changed, false otherwise
       def compare_and_set_status(next_state, *expected_current)
-        Abid.synchronize do
+        @mon.synchronize do
           return unless expected_current.include? @status
           @status = next_state
-          update_active_processes
+          @process_manager.update(self)
           true
-        end
-      end
-
-      def update_active_processes
-        case @status
-        when :pending, :running
-          Process.active.add(self)
-        when :complete
-          Process.active.delete(self)
         end
       end
     end

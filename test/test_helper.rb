@@ -11,6 +11,8 @@ class AbidTest < Minitest::Test
   end
 
   def run(*args, &block)
+    Abid.global = Abid::Environment.new
+
     Abid.application = Abid::Application.new
     Abid.application.init
     Abid.application.top_level_tasks.clear
@@ -22,7 +24,6 @@ class AbidTest < Minitest::Test
     Abid::StateManager.database[:states].delete
     Abid::Job.clear_cache
     AbidTest.history.clear
-    Abid::Engine::Process.active.clear
     Abid::Engine::WorkerManager.instance = Abid::Engine::WorkerManager.new
 
     load File.expand_path('../Abidfile.rb', __FILE__)

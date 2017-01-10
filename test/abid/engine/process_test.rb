@@ -72,15 +72,16 @@ module Abid
 
       def test_acitve_processes
         process = Job['test_ok'].process
+        process_manager = Abid.global.process_manager
 
         process.prepare
-        assert_includes Process.active, process
+        assert process_manager.active?(process)
 
         process.start
-        assert_includes Process.active, process
+        assert process_manager.active?(process)
 
         process.finish
-        refute_includes Process.active, process
+        refute process_manager.active?(process)
       end
     end
   end

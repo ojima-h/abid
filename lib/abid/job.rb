@@ -53,7 +53,7 @@ module Abid
 
     def process
       Abid.synchronize do
-        @process ||= Engine::Process.new
+        @process ||= Abid.global.process_manager.create
       end
     end
 

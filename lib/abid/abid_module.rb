@@ -7,12 +7,16 @@ module Abid
     def application
       @application ||= Abid::Application.new
     end
-
     attr_writer :application
 
     def config
       @config ||= Config.new
     end
+
+    def global
+      @global ||= Environment.new
+    end
+    attr_writer :global
   end
 end
 
