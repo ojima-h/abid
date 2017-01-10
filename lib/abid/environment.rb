@@ -6,6 +6,15 @@ module Abid
       @mon = Monitor.new
     end
 
+    def application
+      @application ||= Abid::Application.new
+    end
+    attr_writer :application
+
+    def options
+      application.options
+    end
+
     def job_manager
       @mon.synchronize do
         @job_manager ||= JobManager.new(self)

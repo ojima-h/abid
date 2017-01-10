@@ -17,12 +17,12 @@ module Abid
     end
 
     def execute(_args = nil)
-      fail 'mixin is not executable'
+      raise 'mixin is not executable'
     end
 
     class <<self
       def define_mixin(*args, &block) # :nodoc:
-        Rake.application.define_mixin(self, *args, &block)
+        Abid.application.define_mixin(self, *args, &block)
       end
     end
   end

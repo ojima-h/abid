@@ -61,8 +61,8 @@ module Abid
       private
 
       def trace_invoke
-        return unless Abid.application.options.trace
-        Abid.application.trace \
+        return unless @job.env.options.trace
+        @job.env.application.trace \
           "** Invoke #{@job.task.name} #{@job.task.format_trace_flags}"
       end
 

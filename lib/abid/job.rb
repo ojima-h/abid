@@ -57,11 +57,11 @@ module Abid
     end
 
     def volatile?
-      task.volatile? || Abid.application.options.disable_state
+      task.volatile? || env.options.disable_state
     end
 
     def dryrun?
-      Abid.application.options.dryrun || Abid.application.options.preview
+      env.options.dryrun || env.options.preview
     end
   end
 end

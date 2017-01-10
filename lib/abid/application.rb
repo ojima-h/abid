@@ -10,7 +10,7 @@ module Abid
     end
 
     def run
-      Abid.application = self
+      Abid.global.application = self
       super
     end
 

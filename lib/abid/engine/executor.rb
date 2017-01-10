@@ -53,7 +53,7 @@ module Abid
       # Cancel the task if it should be.
       # @return [Boolean] true if cancelled
       def precheck_to_cancel
-        return false if Abid.application.options.repair
+        return false if @job.env.options.repair
         return false unless @state.failed?
         return false if @job.task.top_level?
         @process.cancel(Error.new('task has been failed'))
@@ -64,8 +64,7 @@ module Abid
       def precheck_to_skip
         return @process.skip unless @job.task.concerned?
 
-        return false if Abid.application.options.repair \
-                        && !@prerequisites.empty?
+        return false if @job.env.options.repair && !@prerequisites.empty?
         return false unless @state.successed?
         @process.skip
       end
@@ -84,7 +83,7 @@ module Abid
         return @process.skip unless @job.task.needed?
 
         return false if @prerequisites.empty?
-        return false unless Abid.application.options.repair
+        return false unless @job.env.options.repair
         return false if @prerequisites.any?(&:successed?)
         @process.skip
       end

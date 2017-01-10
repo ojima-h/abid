@@ -9,7 +9,7 @@ module Abid
     end
 
     def play_base(&block)
-      Rake.application.play_base(&block)
+      Abid.application.play_base(&block)
     end
 
     def helpers(*extensions, &block)

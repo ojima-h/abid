@@ -116,7 +116,7 @@ module Abid
 
     class <<self
       def define_play(*args, &block) # :nodoc:
-        Rake.application.define_play(self, *args, &block)
+        Abid.application.define_play(self, *args, &block)
       end
     end
   end

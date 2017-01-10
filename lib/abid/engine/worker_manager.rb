@@ -102,8 +102,8 @@ module Abid
       end
 
       def default_num_threads
-        if Abid.application.options.always_multitask
-          Abid.application.options.thread_pool_size ||
+        if @env.options.always_multitask
+          @env.options.thread_pool_size ||
             Rake.suggested_num_threads - 1
         else
           1

@@ -18,7 +18,7 @@ module Abid
       end
 
       def wait
-        unless Abid.application.options.wait_external_task
+        unless @job.env.options.wait_external_task
           @process.finish(AlreadyRunningError.new('job already running'))
           return
         end
@@ -29,12 +29,12 @@ module Abid
       private
 
       def wait_interval
-        Abid.application.options.wait_external_task_interval ||
+        @job.env.options.wait_external_task_interval ||
           DEFAULT_WAIT_INTERVAL
       end
 
       def wait_timeout
-        Abid.application.options.wait_external_task_timeout ||
+        @job.env.options.wait_external_task_timeout ||
           DEFAULT_WAIT_TIMEOUT
       end
 

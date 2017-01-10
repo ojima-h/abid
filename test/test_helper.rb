@@ -14,11 +14,10 @@ class AbidTest < Minitest::Test
 
   def run(*args, &block)
     @env = Abid::Environment.new
-    Abid.global = @env
 
-    Abid.application = Abid::Application.new
-    Abid.application.init
-    Abid.application.top_level_tasks.clear
+    Abid.global = @env
+    @env.application.init
+    @env.application.top_level_tasks.clear
 
     # Abid.application.options.trace = true
     # Abid.application.options.backtrace = true

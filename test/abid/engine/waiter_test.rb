@@ -4,9 +4,9 @@ module Abid
   module Engine
     class WaiterTest < AbidTest
       def setup
-        Abid.application.options.wait_external_task = true
-        Abid.application.options.wait_external_task_interval = 0.1
-        Abid.application.options.wait_external_task_timeout = 60
+        env.options.wait_external_task = true
+        env.options.wait_external_task_interval = 0.1
+        env.options.wait_external_task_timeout = 60
       end
 
       def test_wait
@@ -69,7 +69,7 @@ module Abid
       end
 
       def test_timeout
-        Abid.application.options.wait_external_task_timeout = 0.5
+        env.options.wait_external_task_timeout = 0.5
 
         job = Job['test_ok']
         executor = Executor.new(job, empty_args)

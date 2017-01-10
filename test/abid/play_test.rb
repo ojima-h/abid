@@ -30,7 +30,7 @@ module Abid
         set :date, Date.new(2000, 1, 1)
       end
 
-      Abid.application.options.preview = true
+      env.options.preview = true
     end
 
     def test_definition
