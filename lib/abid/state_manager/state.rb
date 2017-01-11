@@ -1,7 +1,11 @@
 module Abid
   module StateManager
+    State = Class.new(Sequel::Model)
+
     # O/R Mapper for `states` table.
-    class State < Sequel::Model(StateManager.database)
+    #
+    # Use #init_by_job to initialize a state object.
+    class State
       RUNNING = 1
       SUCCESSED = 2
       FAILED = 3
@@ -42,9 +46,55 @@ module Abid
         ).first
       end
 
-      def self.find_or_initialize_by_job(job)
-        find_by_job(job) || \
-          new(name: job.name, params: job.params_str, digest: job.digest)
+      # Initialize a state by a job.
+      #
+      # @param job [Job] job
+      # @return [State] state object
+      def self.init_by_job(job)
+        new(
+          name: job.name,
+          params: job.params_str,
+          digest: job.digest
+        )
+      end
+
+      # Find or initialize a state by a job.
+      #
+      # @param job [Job] job
+      # @return [State] state object
+      def self.find_or_init_by_job(job)
+        find_by_job(job) || init_by_job(job)
+      end
+
+      # Update the state to RUNNING.
+      #
+      # @param job [Job] job
+      def self.start(job)
+        db.transaction do
+          state = find_or_init_by_job(job)
+          state.check_running!
+          state.state = RUNNING
+          state.start_time = Time.now
+          state.end_time = nil
+          state.save
+        end
+      end
+
+      # Update the state to SUCCESSED or FAILED.
+      #
+      # If error is given, the state will be FAILED.
+      #
+      # @param job [Job] job
+      # @param error [Error] error object
+      def self.finish(job, error = nil)
+        db.transaction do
+          state = find_or_init_by_job(job)
+          return unless state.running?
+
+          state.state = error ? FAILED : SUCCESSED
+          state.end_time = Time.now
+          state.save
+        end
       end
 
       # Assume the job to be successed
@@ -54,11 +104,10 @@ module Abid
       #
       # @param job [Job] job
       # @param force [Boolean] force update the state
-      # @return [State] state object
+      # @return [void]
       def self.assume(job, force: false)
-        StateManager.database.transaction do
-          state = find_or_initialize_by_job(job)
-
+        db.transaction do
+          state = find_or_init_by_job(job)
           return state if state.successed?
           state.check_running! unless force
 
@@ -72,15 +121,16 @@ module Abid
 
       # Delete the state.
       #
+      # @param state_id [Integer] State ID
       # @param force [Boolean] If true, delete the state even if running
       # @return [void]
-      def revoke(force: false)
-        StateManager.database.transaction do
-          unless force
-            refresh
-            check_running!
-          end
-          delete
+      def self.revoke(state_id, force: false)
+        db.transaction do
+          state = self[state_id]
+          return false if state.nil?
+          state.check_running! unless force
+          state.delete
+          true
         end
       end
 

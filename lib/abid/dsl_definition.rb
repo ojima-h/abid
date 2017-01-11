@@ -5,11 +5,11 @@ module Abid
     end
 
     def define_worker(name, thread_count)
-      Rake.application.worker.define(name, thread_count)
+      Abid.global.worker_manager.define(name, thread_count)
     end
 
     def play_base(&block)
-      Rake.application.play_base(&block)
+      Abid.application.play_base(&block)
     end
 
     def helpers(*extensions, &block)
@@ -17,7 +17,7 @@ module Abid
     end
 
     def invoke(task, *args, **params)
-      Rake.application[task, **params].async_invoke(*args).wait!
+      Job.find_by_task(Abid.application[task, **params]).invoke(*args)
     end
 
     def mixin(*args, &block)

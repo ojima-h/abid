@@ -2,55 +2,36 @@ module Abid
   class Application < Rake::Application
     include Abid::TaskManager
 
-    attr_reader :worker
-
-    def initialize
-      super
-      @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb) << abidfile
-      @worker = Worker.new(self)
-
-      Abid.config.load
+    def initialize(env)
+      super()
+      @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb)
+      @env = env
     end
 
-    def run
-      Abid.application = self
+    def init
       super
-    end
-
-    # allows the built-in tasks to load without a abidfile
-    def abidfile
-      File.expand_path(File.join(File.dirname(__FILE__), '..', 'Abidfile.rb'))
-    end
-
-    # load built-in tasks
-    def load_rakefile
-      standard_exception_handling do
-        glob(File.expand_path('../tasks/*.rake', __FILE__)) do |name|
-          Rake.load_rakefile name
-        end
-      end
-      super
+      @env.config.load(options.config_file)
     end
 
     def run_with_threads
       yield
     rescue Exception => err
-      worker.kill
+      Engine.kill(err)
       raise err
     else
-      worker.shutdown
+      Engine.shutdown
     end
 
     def invoke_task(task_string) # :nodoc:
       name, args = parse_task_string(task_string)
-      self[name].async_invoke(*args).wait!
+      Job.find_by_task(self[name]).invoke(*args)
     end
 
     def standard_rake_options
       super.each do |opt|
         case opt.first
         when '--execute-print'
-          # disable short option
+          # disable short option (-p)
           opt.delete_at(1)
         when '--version'
           opt[-1] = lambda do |_value|
@@ -61,25 +42,21 @@ module Abid
       end
     end
 
-    def abid_options # :nodoc:
+    def abid_options
       sort_options(
         [
+          ['--config-file', '-C CONFIG_FILE',
+           'Config file path',
+           proc { |v| options.config_file = v }],
           ['--repair',
            'Run the task in repair mode.',
-           proc { options.repair = true }
-          ],
+           proc { options.repair = true }],
           ['--preview', '-p',
            'Run tasks in preview mode.',
-           proc do
-             options.preview = true
-           end
-          ],
+           proc { options.preview = true }],
           ['--wait-external-task',
            'Wait a task finished if it is running in externl process',
-           proc do
-             options.wait_external_task_interval = true
-           end
-          ]
+           proc { options.wait_external_task = true }]
         ]
       )
     end

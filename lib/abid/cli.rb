@@ -6,18 +6,19 @@ module Abid
 
     def initialize(*args)
       super(*args)
-      Abid.config.load(options[:config_file])
+      @env = Abid.global
+      @env.config.load(options[:config_file])
     end
 
     desc 'config', 'Show current config'
     def config
-      puts Abid.config.to_yaml
+      puts @env.config.to_yaml
     end
 
     desc 'migrate', 'Run database migration'
     def migrate
       require 'abid/cli/migrate'
-      Migrate.new(options).run
+      Migrate.new(@env, options).run
     end
 
     desc 'assume TASK [TASKS..] [PARAMS]', 'Assume the job to be SUCCESSED'
@@ -25,9 +26,9 @@ module Abid
                    desc: 'set the state even if the job is running'
     def assume(task, *rest_args)
       require 'abid/cli/assume'
-      Assume.new(options, [task, *rest_args]).run
+      Assume.new(@env, options, [task, *rest_args]).run
     rescue AlreadyRunningError
-      exit 1
+      $stderr.puts '[WARN] task alread running.'
     end
 
     desc 'list [PREFIX]', 'List jobs'
@@ -35,7 +36,7 @@ module Abid
     option :before, type: :string, aliases: '-b', desc: 'start time filter'
     def list(prefix = nil)
       require 'abid/cli/list'
-      List.new(options, prefix).run
+      List.new(@env, options, prefix).run
     end
     map ls: :list
 
@@ -46,7 +47,7 @@ module Abid
                    desc: 'no prompt before removal'
     def revoke(job_id, *rest_args)
       require 'abid/cli/revoke'
-      Revoke.new(options, [job_id, *rest_args]).run
+      Revoke.new(@env, options, [job_id, *rest_args]).run
     end
     map rm: :revoke
   end

@@ -104,20 +104,6 @@ module Abid
       play.run
     end
 
-    def concerned?
-      state.reload
-
-      if !application.options.repair && state.failed? && !top_level?
-        fail "#{name} -- task has been failed"
-      end
-
-      application.options.repair || !state.successed?
-    end
-
-    def needed?
-      !state.successed? || prerequisite_tasks.any? { |t| t.session.successed? }
-    end
-
     def bind_play_hooks(tag, to = nil)
       to ||= tag
       hooks[to] = [proc { |*args| call_play_hooks(tag, *args) }]
@@ -130,7 +116,7 @@ module Abid
 
     class <<self
       def define_play(*args, &block) # :nodoc:
-        Rake.application.define_play(self, *args, &block)
+        Abid.application.define_play(self, *args, &block)
       end
     end
   end

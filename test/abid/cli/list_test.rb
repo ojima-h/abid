@@ -6,15 +6,14 @@ module Abid
     class ListTest < AbidTest
       def test_build_table
         states = Array.new(10) do |i|
-          s = StateManager::State.assume(Job.new("job#{i % 2}:foo#{i}", i: i))
-          s.update(
-            start_time: Time.new(2000, 1, 1, i),
-            end_time: Time.new(2000, 1, 1, i + 1)
-          )
-          s
+          mock_state("job#{i % 2}:foo#{i}", i: i) do |s|
+            s.start_time = Time.new(2000, 1, 1, i)
+            s.end_time = Time.new(2000, 1, 1, i + 1)
+          end
         end
 
         command = List.new(
+          env,
           { after: '2000-01-01 03:00:00', before: '2000-01-01 06:00:00' },
           'job0:'
         )

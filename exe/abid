@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 require 'abid'
 
-Abid::Application.new.run
+Abid.global.application.run

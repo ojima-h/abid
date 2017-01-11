@@ -3,7 +3,8 @@ require 'abid/cli/table_formatter'
 module Abid
   class CLI
     class List
-      def initialize(options, prefix)
+      def initialize(env, options, prefix)
+        @env = env
         @options = options
         @prefix = prefix
 
@@ -16,9 +17,9 @@ module Abid
       end
 
       def build_table
-        states = StateManager::State
-                 .filter_by_prefix(@prefix)
-                 .filter_by_start_time(after: @after, before: @before)
+        states = @env.db.states
+                     .filter_by_prefix(@prefix)
+                     .filter_by_start_time(after: @after, before: @before)
         table = states.map { |state| format_state(state) }
         TableFormatter.new(table).format
       end

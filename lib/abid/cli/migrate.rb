@@ -1,15 +1,14 @@
-require 'abid/state_manager'
-
 module Abid
   class CLI
     class Migrate
-      def initialize(options)
+      def initialize(env, options)
+        @env = env
         @options = options
       end
 
       def run
-        db = StateManager::Database.connect!
-        dir = StateManager::Database.migrations_path
+        db = Sequel.connect(@env.config.database)
+        dir = StateManager::Database::MIGRATIONS_PATH
 
         if Sequel::Migrator.is_current?(db, dir)
           puts 'Schema is latest.'

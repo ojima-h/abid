@@ -1,7 +1,8 @@
 module Abid
   class CLI
     class Assume
-      def initialize(options, args)
+      def initialize(env, options, args)
+        @env = env
         @options = options
         @args = args
 
@@ -17,8 +18,8 @@ module Abid
       def assume(task, params)
         params_str = ParamsFormat.format(params)
 
-        job = Job.new(task, params)
-        state = StateManager::State.assume(job, force: @force)
+        job = @env.job_manager[task, params]
+        state = job.state.assume(force: @force)
 
         puts "#{task} #{params_str} (id: #{state.id})" \
              ' is assumed to be SUCCESSED.'
