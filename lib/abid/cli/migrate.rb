@@ -1,5 +1,3 @@
-require 'abid/state_manager'
-
 module Abid
   class CLI
     class Migrate
