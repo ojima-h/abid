@@ -16,7 +16,7 @@ module Abid
         @job_ids.each do |job_id|
           state = @env.db.states[job_id]
           if state.nil?
-            $stderr.puts "state_id #{job_id} not found"
+            $stderr.puts "#{job_id} is not found"
             next
           end
 
