@@ -1,32 +1,39 @@
 require 'sequel/plugins/serialization'
+require 'abid/state_manager/state'
+require 'abid/state_manager/state_proxy'
 
 module Abid
   module StateManager
-    module Database
+    class Database
       Sequel.extension :migration
 
-      # Create a new database object.
-      #
-      # Abid.config['database'] is used Sequel.connect params.
+      MIGRATIONS_PATH = File.expand_path('../../../../migrations', __FILE__)
+
+      # Creates a new database object and checks schema version.
       #
       # @return [Sequel::Database] database object
-      def self.connect
-        db = connect!
-        Sequel::Migrator.check_current(db, migrations_path)
+      # @see Sequel.connect
+      def self.connect(*args)
+        db = Sequel.connect(*args)
+        Sequel::Migrator.check_current(db, MIGRATIONS_PATH)
         db
       rescue Sequel::Migrator::NotCurrentError
         raise Error, 'current schema is out of date'
       end
 
-      # Connect to database without schema version check
-      #
-      # @return [Sequel::Database] database object
-      def self.connect!
-        Sequel.connect(**Abid.global.config.database)
+      def initialize(env)
+        @env = env
+        @mon = Monitor.new
       end
 
-      def self.migrations_path
-        File.expand_path('../../../../migrations', __FILE__)
+      def connection
+        @connection ||= self.class.connect(@env.config.database)
+      end
+
+      def states
+        @mon.synchronize do
+          @states ||= Class.new(State.Model(connection[:states]))
+        end
       end
     end
   end

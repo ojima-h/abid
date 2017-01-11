@@ -23,7 +23,7 @@ class AbidTest < Minitest::Test
     # Abid.application.options.backtrace = true
     # Rake.verbose(true)
 
-    Abid::StateManager.database[:states].delete
+    env.db.states.dataset.delete
     AbidTest.history.clear
 
     load File.expand_path('../Abidfile.rb', __FILE__)
@@ -33,8 +33,8 @@ class AbidTest < Minitest::Test
   end
 
   def mock_state(*args)
-    job = Abid::Job[*args]
-    state = Abid::StateManager::State.init_by_job(job)
+    job = env.job_manager[*args]
+    state = env.db.states.init_by_job(job)
     yield state if block_given?
     state.state ||= Abid::StateManager::State::SUCCESSED
     state.start_time ||= Time.now

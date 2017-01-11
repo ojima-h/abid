@@ -22,7 +22,7 @@ require 'abid/engine/scheduler'
 require 'abid/engine/worker_manager'
 require 'abid/engine/waiter'
 require 'abid/params_format'
-require 'abid/state_manager'
+require 'abid/state_manager/database'
 require 'abid/job'
 require 'abid/job_manager'
 

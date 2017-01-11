@@ -13,6 +13,7 @@ module Abid
         end
 
         command = List.new(
+          env,
           { after: '2000-01-01 03:00:00', before: '2000-01-01 06:00:00' },
           'job0:'
         )

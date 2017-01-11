@@ -3,7 +3,8 @@ require 'abid/cli/table_formatter'
 module Abid
   class CLI
     class Revoke
-      def initialize(options, job_ids)
+      def initialize(env, options, job_ids)
+        @env = env
         @options = options
         @job_ids = job_ids.map(&:to_i)
 
@@ -13,7 +14,7 @@ module Abid
 
       def run
         @job_ids.each do |job_id|
-          state = StateManager::State[job_id]
+          state = @env.db.states[job_id]
           if state.nil?
             $stderr.puts "state_id #{job_id} not found"
             next
@@ -26,7 +27,7 @@ module Abid
       end
 
       def revoke(state)
-        StateManager::State.revoke(state.id, force: @force)
+        @env.db.states.revoke(state.id, force: @force)
         puts "revoked #{state.id}"
       rescue AlreadyRunningError
         params = ParamsFormat.format(YAML.load(state.params))

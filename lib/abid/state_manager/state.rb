@@ -1,9 +1,11 @@
 module Abid
   module StateManager
+    State = Class.new(Sequel::Model)
+
     # O/R Mapper for `states` table.
     #
     # Use #init_by_job to initialize a state object.
-    class State < Sequel::Model(StateManager.database)
+    class State
       RUNNING = 1
       SUCCESSED = 2
       FAILED = 3
@@ -68,7 +70,7 @@ module Abid
       #
       # @param job [Job] job
       def self.start(job)
-        StateManager.database.transaction do
+        db.transaction do
           state = find_or_init_by_job(job)
           state.check_running!
           state.state = RUNNING
@@ -85,7 +87,7 @@ module Abid
       # @param job [Job] job
       # @param error [Error] error object
       def self.finish(job, error = nil)
-        StateManager.database.transaction do
+        db.transaction do
           state = find_or_init_by_job(job)
           return unless state.running?
 
@@ -104,7 +106,7 @@ module Abid
       # @param force [Boolean] force update the state
       # @return [void]
       def self.assume(job, force: false)
-        StateManager.database.transaction do
+        db.transaction do
           state = find_or_init_by_job(job)
           return state if state.successed?
           state.check_running! unless force
@@ -123,7 +125,7 @@ module Abid
       # @param force [Boolean] If true, delete the state even if running
       # @return [void]
       def self.revoke(state_id, force: false)
-        StateManager.database.transaction do
+        db.transaction do
           state = self[state_id]
           return false if state.nil?
           state.check_running! unless force

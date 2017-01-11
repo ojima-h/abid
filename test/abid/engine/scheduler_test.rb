@@ -6,7 +6,7 @@ module Abid
       def test_invoke_ok
         job = Job['test_ok']
         job.invoke
-        assert job.state.successed?
+        assert job.state.find.successed?
         assert job.process.successed?
         assert_equal :complete, job.process.status
         assert_includes AbidTest.history, ['test_ok']
@@ -15,7 +15,7 @@ module Abid
       def test_invoke_ng
         job = Job['test_ng']
         job.invoke
-        assert job.state.failed?
+        assert job.state.find.failed?
         assert job.process.failed?
         assert_equal :complete, job.process.status
         assert_equal 'ng', job.process.error.message
@@ -26,7 +26,7 @@ module Abid
         job = Job['test_p3']
         job.invoke
 
-        assert job.state.successed?
+        assert job.state.find.successed?
         assert job.process.successed?
 
         assert_includes AbidTest.history, ['test_p1', i: 0]
@@ -52,7 +52,7 @@ module Abid
         job = Job['test_p3']
         job.invoke
 
-        assert job.state.new?
+        assert job.state.find.new?
         assert job.process.cancelled?
         assert 'task has been failed', job_failed.process.error.message
 
@@ -72,7 +72,7 @@ module Abid
           job.invoke
         end
 
-        assert job.state.successed?
+        assert job.state.find.successed?
         assert job.process.successed?
 
         assert_equal 2, AbidTest.history.length
@@ -87,7 +87,7 @@ module Abid
         job = Job['test_p3']
         job.invoke
 
-        assert job.state.successed?
+        assert job.state.find.successed?
         assert job.process.successed?
         assert job_successed.process.skipped?
 
@@ -110,7 +110,7 @@ module Abid
           job = Job['test_p3']
           job.invoke
 
-          assert job.state.successed?
+          assert job.state.find.successed?
           assert job.process.successed?
           assert job_successed.process.skipped?
           assert job_failed.process.successed?

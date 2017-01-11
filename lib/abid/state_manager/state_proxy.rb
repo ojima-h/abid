@@ -10,24 +10,19 @@ module Abid
     # Use StateProxy#find if you have to access the undergrounding State object
     # many times.
     class StateProxy
-      extend Forwardable
-
-      def_delegators :instance,
-                     :new?, :running?, :successed?, :failed?,
-                     *State.columns
-
       def initialize(job)
         @job = job
+        @states = job.env.db.states
       end
 
-      # Find undergrounding State object
+      # Find underlying State object
       #
       # @return [State] state corresponding the job.
       def find
         if @job.volatile?
-          State.init_by_job(@job).tap(&:freeze)
+          @states.init_by_job(@job).tap(&:freeze)
         else
-          State.find_or_init_by_job(@job).tap(&:freeze)
+          @states.find_or_init_by_job(@job).tap(&:freeze)
         end
       end
       alias instance find
@@ -36,7 +31,7 @@ module Abid
       # @see State.start
       def start
         return if @job.dryrun? || @job.volatile?
-        State.start(@job)
+        @states.start(@job)
       end
 
       # Try to update the state to started unless volatile.
@@ -53,11 +48,11 @@ module Abid
       # @see State.finish
       def finish(error = nil)
         return if @job.dryrun? || @job.volatile?
-        State.finish(@job, error)
+        @states.finish(@job, error)
       end
 
       def assume(force: false)
-        State.assume(@job, force: force)
+        @states.assume(@job, force: force)
       end
 
       # for testing

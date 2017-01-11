@@ -38,5 +38,11 @@ module Abid
         @worker_manager ||= Engine::WorkerManager.new(self)
       end
     end
+
+    def db
+      @mon.synchronize do
+        @db ||= StateManager::Database.new(self)
+      end
+    end
   end
 end
