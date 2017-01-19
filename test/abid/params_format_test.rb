@@ -28,7 +28,7 @@ module Abid
         'a=1', 'b=0.1', 'c=false', 'd=2000-01-01', 'e=2000-01-01 12:00:00',
         'f=some text', 'g=123abc???'
       ]
-      tasks, params = ParamsFormat.parse_args(args)
+      params, tasks = ParamsFormat.collect_params(args)
 
       assert_equal %w(task1 task2), tasks
       assert_equal(

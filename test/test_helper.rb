@@ -17,7 +17,6 @@ class AbidTest < Minitest::Test
 
     Abid.global = @env
     @env.application.init
-    @env.application.top_level_tasks.clear
 
     # Abid.application.options.trace = true
     # Abid.application.options.backtrace = true
