@@ -9,16 +9,21 @@ module Abid
     #     end
     #
     module Mixin
+      # Create new Mixin object.
+      # @param task [Rake::Task] owner task
       def self.create(task)
+        mod = self
         Module.new do
-          include Mixin
+          include mod
           extend Mixin::ClassMethods
           include task.application.global_mixin
           extend helpers
-          @task = task
+          self.task = task
         end
       end
 
+      # Create new global mixin.
+      # `global_mixin` does not include Application#global_mixin.
       def self.create_global_mixin
         Module.new do
           include Mixin

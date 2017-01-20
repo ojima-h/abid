@@ -3,6 +3,7 @@ require 'abid/dsl/task_instance'
 
 module Abid
   module DSL
+    # Abid::DSL::Task wrapper
     class AbidTaskInstance < TaskInstance
       extend Forwardable
 

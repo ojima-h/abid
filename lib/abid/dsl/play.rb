@@ -13,7 +13,7 @@ module Abid
         Class.new(self) do
           include task.application.global_mixin
           extend helpers
-          @task = task
+          self.task = task
         end
       end
 
