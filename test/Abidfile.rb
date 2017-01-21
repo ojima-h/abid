@@ -91,3 +91,134 @@ namespace :test_worker do
     end
   end
 end
+
+namespace :test_dsl do
+  namespace :ns do
+    task(:m1_1) { AbidTest.history << ['test_dsl:ns:m1_1'] }
+
+    mixin :m1 do
+      helpers do
+        def set_sx(n, v)
+          set :"s#{n}", v
+        end
+      end
+
+      param :j
+      setup { needs :m1_1 } # relative task name
+    end
+
+    mixin :m2_0 do
+      helpers do
+        def h1
+          :m2_0
+        end
+
+        def h2
+          :m2_0
+        end
+      end
+      param :p1, default: 0
+      param :p2, default: 1
+      param :p3
+      set :s1, :m2_0
+      set :s2, :m2_0
+      set :s3, :m2_0
+      setup { AbidTest.history << ['test_dsl:ns:m2_0.setup'] }
+      after { AbidTest.history << ['test_dsl:ns:m2_0.after'] }
+    end
+
+    mixin :m2_1 do
+      helpers do
+        def h1 # overwrite helper
+          :m2_1
+        end
+      end
+      param :p1, default: 1 # overwrite default value
+      param :s3, default: :m2_1 # overwrite setting by param
+      set :s1, :m2_1 # overwrite settings
+      setup { AbidTest.history << ['test_dsl:ns:m2_1.setup'] }
+      after { AbidTest.history << ['test_dsl:ns:m2_1.after'] }
+
+      include :m2_0
+    end
+
+    mixin :m2_2 do
+      param :p2 # overwrite param by no default
+      set :p3, -2 # overwrite param
+      set :s2, -> { :m2_2 } # overwrite setting by proc
+      setup { AbidTest.history << ['test_dsl:ns:m2_2.setup'] }
+      after { AbidTest.history << ['test_dsl:ns:m2_2.after'] }
+
+      include :m2_0
+    end
+
+    mixin :m3_1 do
+      param :p1, default: :m3_1
+      set :s1, :m3_1
+    end
+
+    mixin :m3_2 do
+      param :p2, default: :m3_2
+      set :s2, :m3_2
+    end
+  end
+
+  play p1: [:p1_1, :p1_2] do
+    include 'ns:m1'
+
+    param :i
+    set :s1
+    set :s2, 0
+    set :s3, -> { i + 1 }
+    set(:s4) { i + 2 }
+    set_sx 5, -> { i + 3 }
+
+    setup do
+      needs :p1_3
+      needs :p1_3, i: i + 1
+    end
+
+    after do
+      AbidTest.history << ['test_dsl:p1.after']
+    end
+
+    def run
+      AbidTest.history << ['test_dsl:p1', i]
+    end
+  end
+
+  play :p1_1
+  play :p1_2 do
+    param :i
+    def run
+      AbidTest.history << ['test_dsl:p1_2', i]
+    end
+  end
+  play :p1_3 do
+    param :i
+    def run
+      AbidTest.history << ['test_dsl:p1_3', i]
+    end
+  end
+
+  play :p2 do
+    include 'ns:m2_1'
+    include 'ns:m2_2'
+  end
+
+  play :p3 do
+    include 'ns:m3_1'
+
+    undef_param :p1
+    undef_param :p2
+
+    undef_param :s1
+
+    param :p3
+    set :s3
+    undef_param :p3
+    undef_param :s3
+
+    include 'ns:m3_2'
+  end
+end

@@ -55,7 +55,7 @@ module Abid
       def precheck_to_cancel
         return false if @job.env.options.repair
         return false unless @state.failed?
-        return false if @job.task.top_level?
+        return false if @job.root?
         @process.cancel(Error.new('task has been failed'))
       end
 
@@ -101,21 +101,20 @@ module Abid
       def execute
         _, error = safe_execute
 
-        call_after_hooks(error)
+        call_after_actions(error)
         @job.state.finish(error)
         @process.finish(error)
       end
 
       def safe_execute
-        @job.task.call_hooks(:before_execute)
         @job.task.execute(@args)
         true
       rescue => error
         [false, error]
       end
 
-      def call_after_hooks(error)
-        @job.task.call_hooks(:after_invoke, error)
+      def call_after_actions(error)
+        @job.task.call_action(:after, error)
         true
       rescue
         # TODO: Error logging

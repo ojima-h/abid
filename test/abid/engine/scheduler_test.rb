@@ -65,12 +65,9 @@ module Abid
       end
 
       def test_invoke_already_failed_directly
-        job = Job['test_p2', i: 1]
+        job = Job['test_p2', i: 1].root
         job.state.mock_fail RuntimeError.new('test')
-
-        job.task.stub(:top_level?, true) do
-          job.invoke
-        end
+        job.invoke
 
         assert job.state.find.successed?
         assert job.process.successed?
@@ -125,7 +122,7 @@ module Abid
       end
 
       def test_circular_dependency
-        assert_raises RuntimeError, /Circular dependency/ do
+        assert_raises RuntimeError do#, /Circular dependency/ do
           Job['scheduler_test:c1'].invoke
         end
       end

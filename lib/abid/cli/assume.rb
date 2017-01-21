@@ -10,7 +10,7 @@ module Abid
       end
 
       def run
-        tasks, params = ParamsFormat.parse_args(@args)
+        params, tasks = ParamsFormat.collect_params(@args)
 
         tasks.each { |task| assume(task, params) }
       end

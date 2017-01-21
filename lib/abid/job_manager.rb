@@ -15,8 +15,9 @@ module Abid
       end
     end
 
-    def find_by_task(task)
-      self[task.name, task.params]
+    def find_by_task(task, params = {})
+      params = task.resolve_params(params)
+      self[task.name, params]
     end
   end
 end

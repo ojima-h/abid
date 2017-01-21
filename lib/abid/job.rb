@@ -17,6 +17,16 @@ module Abid
       @name = name
       @params = params.sort.to_h.freeze
       @mon = Monitor.new
+      @root = false
+    end
+
+    def root?
+      @root
+    end
+
+    def root
+      @root = true
+      self
     end
 
     def invoke(*args)
@@ -33,7 +43,7 @@ module Abid
     end
 
     def task
-      @task ||= Abid.application[name, nil, params]
+      @task ||= Abid.application[name].bind(params)
     end
 
     def state
@@ -41,8 +51,8 @@ module Abid
     end
 
     def prerequisites
-      task.prerequisite_tasks.map do |preq_task|
-        env.job_manager.find_by_task(preq_task)
+      task.prerequisite_tasks.map do |preq_task, params|
+        env.job_manager.find_by_task(preq_task, params)
       end
     end
 

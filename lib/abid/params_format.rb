@@ -25,20 +25,17 @@ module Abid
       end
     end
 
-    def self.parse_args(args)
-      tasks = []
-      params = {}
-
-      args.each do |arg|
-        m = arg.match(/^(\w+)=(.*)$/m)
-        if m
-          params.store(m[1].to_sym, parse_value(m[2]))
-        else
-          tasks << arg unless arg =~ /^-/
-        end
+    def self.collect_params(args)
+      args.each_with_object([{}, []]) do |arg, (params, extras)|
+        key, val = parse_pair(arg)
+        key.nil? ? extras << arg : params[key] = val
       end
+    end
 
-      [tasks, params]
+    def self.parse_pair(str)
+      m = str.match(/^(\w+)=(.*)$/)
+      return unless m
+      [m[1].to_sym, parse_value(m[2])]
     end
 
     def self.parse_value(value)
@@ -53,6 +50,8 @@ module Abid
         Date.parse(value)
       when /\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}( \d{4})?\z/
         Time.parse(value)
+      when /\A(["']).*\1\z/
+        value[1..-2]
       else
         value
       end

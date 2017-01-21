@@ -1,11 +1,14 @@
 module Abid
   class Application < Rake::Application
-    include Abid::TaskManager
+    attr_reader :global_params
+    attr_reader :global_mixin
 
     def initialize(env)
       super()
       @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb)
       @env = env
+      @global_params = {}
+      @global_mixin = DSL::Mixin.create_global_mixin
     end
 
     def init
@@ -24,7 +27,7 @@ module Abid
 
     def invoke_task(task_string) # :nodoc:
       name, args = parse_task_string(task_string)
-      Job.find_by_task(self[name]).invoke(*args)
+      Job.find_by_task(self[name]).root.invoke(*args)
     end
 
     def standard_rake_options
@@ -87,6 +90,12 @@ module Abid
 
         opts.environment('RAKEOPT')
       end.parse!
+    end
+
+    def collect_command_line_tasks(args)
+      params, = ParamsFormat.collect_params(args)
+      @global_params.update(params)
+      super
     end
   end
 end

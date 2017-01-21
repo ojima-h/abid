@@ -1,5 +1,3 @@
-require 'abid/rake_extensions/task'
-
 # Delegate Rake.application to Abid.global.application
 class << Rake
   def application
@@ -11,4 +9,14 @@ class << Rake
   end
 end
 
-Rake::Task.include Abid::RakeExtensions::Task
+module Rake
+  class Task
+    def bind(params = {})
+      Abid::DSL::RakeTaskInstance.new(self, params)
+    end
+
+    def resolve_params(_params)
+      {}
+    end
+  end
+end
