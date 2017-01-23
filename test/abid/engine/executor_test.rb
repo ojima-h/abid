@@ -37,7 +37,7 @@ module Abid
 
       def test_cancel_in_prepare
         job = Job['test_ok']
-        job.state.mock_fail(RuntimeError.new('test'))
+        mock_fail_state('test_ok')
         executor = Executor.new(job, empty_args)
 
         refute executor.prepare

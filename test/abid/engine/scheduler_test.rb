@@ -47,7 +47,7 @@ module Abid
 
       def test_invoke_already_failed
         job_failed = Job['test_p2', i: 1]
-        job_failed.state.mock_fail RuntimeError.new('test')
+        mock_fail_state('test_p2', i: 1)
 
         job = Job['test_p3']
         job.invoke
@@ -66,7 +66,7 @@ module Abid
 
       def test_invoke_already_failed_directly
         job = Job['test_p2', i: 1].root
-        job.state.mock_fail RuntimeError.new('test')
+        mock_fail_state('test_p2', i: 1)
         job.invoke
 
         assert job.state.find.successed?
@@ -102,7 +102,7 @@ module Abid
           job_successed.state.assume
 
           job_failed = Job['test_p1', i: 1]
-          job_failed.state.mock_fail RuntimeError.new('test')
+          mock_fail_state('test_p1', i: 1)
 
           job = Job['test_p3']
           job.invoke
@@ -122,7 +122,7 @@ module Abid
       end
 
       def test_circular_dependency
-        assert_raises RuntimeError do#, /Circular dependency/ do
+        assert_raises RuntimeError, /Circular dependency/ do
           Job['scheduler_test:c1'].invoke
         end
       end

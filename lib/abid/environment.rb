@@ -39,9 +39,9 @@ module Abid
       end
     end
 
-    def db
+    def state_manager
       @mon.synchronize do
-        @db ||= StateManager::Database.new(self)
+        @state_manager ||= StateManager.new(self)
       end
     end
   end

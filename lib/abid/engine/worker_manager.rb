@@ -15,6 +15,9 @@ module Abid
     #
     #     worker_manager.shutdown
     #
+    # @todo Remove `@mon.synchronize`
+    # @todo Remove Delay
+    # @todo Remove #each_active
     class WorkerManager
       def initialize(env)
         @env = env

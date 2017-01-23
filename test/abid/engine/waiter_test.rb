@@ -60,7 +60,7 @@ module Abid
         job.process.wait(0.5)
         assert_equal :running, job.process.status
 
-        env.db.states.revoke(job.state.find.id, force: true)
+        env.state_manager.states[job.state.find.id].revoke(force: true)
         job.process.wait(0.5)
 
         assert_equal :complete, job.process.status
