@@ -1,7 +1,18 @@
+require 'abid/dsl/abid_task_instance'
+require 'abid/dsl/actions'
+require 'abid/dsl/mixin'
+require 'abid/dsl/params_spec'
+require 'abid/dsl/play_core'
+require 'abid/dsl/play'
+require 'abid/dsl/rake_task_instance'
+require 'abid/dsl/syntax'
+require 'abid/dsl/task_instance'
+require 'abid/dsl/task_manager'
+require 'abid/dsl/task'
+
 module Abid
   class Application < Rake::Application
-    attr_reader :global_params
-    attr_reader :global_mixin
+    attr_reader :global_params, :global_mixin, :abid_task_manager
 
     def initialize(env)
       super()
@@ -9,6 +20,7 @@ module Abid
       @env = env
       @global_params = {}
       @global_mixin = DSL::Mixin.create_global_mixin
+      @abid_task_manager = DSL::TaskManager.new(self)
     end
 
     def init

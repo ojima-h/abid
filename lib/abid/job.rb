@@ -43,7 +43,7 @@ module Abid
     end
 
     def task
-      @task ||= Abid.application[name].bind(params)
+      @task ||= Abid.application.abid_task_manager[name, params]
     end
 
     def state
@@ -52,8 +52,8 @@ module Abid
     end
 
     def prerequisites
-      task.prerequisite_tasks.map do |preq_task, params|
-        env.job_manager.find_by_task(preq_task, params)
+      task.prerequisite_tasks.map do |preq|
+        env.job_manager[preq.name, preq.params]
       end
     end
 

@@ -33,17 +33,8 @@ module Abid
         AbidTaskInstance.new(self, params)
       end
 
-      def resolve_params(params)
-        params = application.global_params.merge(params)
-        internal.params_spec.each_with_object({}) do |(key, spec), h|
-          if params.include?(key)
-            h[key] = params[key]
-          elsif spec.include?(:default)
-            h[key] = spec[:default]
-          else
-            raise "#{name}: param #{key} is not specified"
-          end
-        end
+      def params_spec
+        internal.params_spec
       end
     end
 

@@ -16,7 +16,7 @@ module Abid
     end
 
     def find_by_task(task, params = {})
-      params = task.resolve_params(params)
+      params = @env.application.abid_task_manager.resolve_params(task, params)
       self[task.name, params]
     end
   end

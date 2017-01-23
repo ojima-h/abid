@@ -15,7 +15,7 @@ module Rake
       Abid::DSL::RakeTaskInstance.new(self, params)
     end
 
-    def resolve_params(_params)
+    def params_spec
       {}
     end
   end

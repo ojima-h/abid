@@ -34,8 +34,12 @@ module Abid
       end
 
       def prerequisite_tasks
-        @task.prerequisite_tasks.map { |preq| [preq, params] } \
-          + @play.prerequisite_tasks
+        ps = @task.prerequisite_tasks.map { |preq| [preq, params] } \
+           + @play.prerequisite_tasks
+
+        ps.map do |preq, params|
+          @task.application.abid_task_manager.resolve(preq.name, params)
+        end
       end
     end
   end

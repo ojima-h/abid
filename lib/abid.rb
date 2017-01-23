@@ -29,18 +29,6 @@ require 'abid/job_manager'
 require 'abid/rake_extensions'
 require 'abid/version'
 require 'abid/params_parser'
-
-require 'abid/dsl/abid_task_instance'
-require 'abid/dsl/actions'
-require 'abid/dsl/mixin'
-require 'abid/dsl/params_spec'
-require 'abid/dsl/play_core'
-require 'abid/dsl/play'
-require 'abid/dsl/rake_task_instance'
-require 'abid/dsl/syntax'
-require 'abid/dsl/task_instance'
-require 'abid/dsl/task'
-
 require 'abid/application'
 
 module Abid
