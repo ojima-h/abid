@@ -42,7 +42,11 @@ module Abid
       end
 
       def transaction(&block)
-        @model.db.transaction(isolation: :serializable, &block)
+        @model.db.transaction(
+          isolation: :serializable,
+          retry_on: Sequel::SerializationFailure,
+          &block
+        )
       end
       private :transaction
     end
