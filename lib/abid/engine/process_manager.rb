@@ -1,7 +1,7 @@
 require 'monitor'
 
 module Abid
-  module Engine
+  class Engine
     class ProcessManager
       attr_reader :active_processes
 

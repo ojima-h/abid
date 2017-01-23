@@ -4,9 +4,7 @@ module Abid
   module DSL
     class TaskInstanceTest < AbidTest
       def test_after_hook
-        t = env.application['test_dsl:p4']
-        j = env.job_manager.find_by_task(t)
-        j.invoke
+        invoke('test_dsl:p4')
 
         tag, err = AbidTest.history.first
 

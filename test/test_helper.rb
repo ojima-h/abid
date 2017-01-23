@@ -24,7 +24,7 @@ class AbidTest < Minitest::Test
     @env.state_manager.db[:states].delete
     super
   ensure
-    @env.worker_manager.shutdown
+    @env.engine.shutdown
   end
 
   def mock_state(name, params = {})
@@ -50,12 +50,20 @@ class AbidTest < Minitest::Test
     end
   end
 
+  def invoke(name, params = {}, args = [])
+    env.engine.invoke(name, params, args)
+  end
+
+  def find_job(name, params = {})
+    env.engine.job(name, params)
+  end
+
   def in_repair_mode
-    original_flag = Abid.application.options.repair
-    Abid.application.options.repair = true
+    original_flag = env.application.options.repair
+    env.application.options.repair = true
     yield
   ensure
-    Abid.application.options.repair = original_flag
+    env.application.options.repair = original_flag
   end
 
   # empty Rake::TaskArguments

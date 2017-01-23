@@ -1,10 +1,10 @@
 require 'test_helper'
 
 module Abid
-  module Engine
+  class Engine
     class ExecutorTest < AbidTest
       def test_execute_ok
-        job = Job['test_ok']
+        job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
         assert executor.prepare
         assert executor.start
@@ -15,7 +15,7 @@ module Abid
       end
 
       def test_execute_ng
-        job = Job['test_ng']
+        job = find_job('test_ng')
         executor = Executor.new(job, empty_args)
         assert executor.prepare
         assert executor.start
@@ -27,7 +27,7 @@ module Abid
       end
 
       def test_start_before_prepare
-        job = Job['test_ok']
+        job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
         refute executor.start
         assert executor.prepare
@@ -36,7 +36,7 @@ module Abid
       end
 
       def test_cancel_in_prepare
-        job = Job['test_ok']
+        job = find_job('test_ok')
         mock_fail_state('test_ok')
         executor = Executor.new(job, empty_args)
 
@@ -48,7 +48,7 @@ module Abid
       end
 
       def test_skip_in_prepare
-        job = Job['test_ok']
+        job = find_job('test_ok')
         job.state.assume
         executor = Executor.new(job, empty_args)
 
@@ -60,7 +60,7 @@ module Abid
       end
 
       def test_cancel_after_prerequsites
-        job = Job['test_p2', i: 0]
+        job = find_job('test_p2', i: 0)
         job.prerequisites.each do |p|
           p.process.quit(RuntimeError.new('test'))
         end
@@ -73,7 +73,7 @@ module Abid
       end
 
       def test_prepare_after_running
-        job = Job['test_ok']
+        job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
         job.process.prepare
         job.process.start
@@ -81,20 +81,20 @@ module Abid
       end
 
       def test_start_twice
-        job = Job['test_ok']
+        job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
         assert executor.prepare
         assert executor.start
         job.process.wait
         assert job.process.successed?
 
-        executor2 = Executor.new(Job['test_ok'], empty_args)
+        executor2 = Executor.new(find_job('test_ok'), empty_args)
         refute executor2.prepare
         refute executor2.start
       end
 
       def test_execute_running
-        job = Job['test_ok']
+        job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
         job.state.start

@@ -1,22 +1,22 @@
 require 'test_helper'
 
 module Abid
-  module Engine
+  class Engine
     class ProcessTest < AbidTest
       def test_new
-        refute Job['test_ok'].process.complete?
-        assert_equal :unscheduled, Job['test_ok'].process.status
+        refute find_job('test_ok').process.complete?
+        assert_equal :unscheduled, find_job('test_ok').process.status
       end
 
       def test_prepare
-        process = Job['test_ok'].process
+        process = find_job('test_ok').process
         assert process.prepare
         assert_equal :pending, process.status
         refute process.prepare
       end
 
       def test_start
-        process = Job['test_ok'].process
+        process = find_job('test_ok').process
 
         refute process.start, 'could not start before prepare'
         assert_equal :unscheduled, process.status
@@ -29,7 +29,7 @@ module Abid
       end
 
       def test_cancel
-        process = Job['test_ok'].process
+        process = find_job('test_ok').process
 
         refute process.cancel, 'could not cancel before prepare'
         assert_equal :unscheduled, process.status
@@ -43,7 +43,7 @@ module Abid
       end
 
       def test_finish
-        process = Job['test_ok'].process
+        process = find_job('test_ok').process
 
         refute process.finish, 'could not finish before prepare'
         assert_equal :unscheduled, process.status
@@ -60,7 +60,7 @@ module Abid
       end
 
       def test_fail
-        process = Job['test_ok'].process
+        process = find_job('test_ok').process
 
         assert process.prepare
         assert process.start
@@ -71,8 +71,8 @@ module Abid
       end
 
       def test_acitve_processes
-        process = Job['test_ok'].process
-        process_manager = Abid.global.process_manager
+        process = find_job('test_ok').process
+        process_manager = env.engine.process_manager
 
         process.prepare
         assert process_manager.active?(process)

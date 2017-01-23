@@ -9,10 +9,6 @@ module Abid
 
       def_delegators :@task, :name, :execute, :arg_names
 
-      def initialize(task, _params)
-        @task = task
-      end
-
       def volatile?
         true
       end
@@ -30,12 +26,12 @@ module Abid
       end
 
       def needed?
-        @task.needed?
+        task.needed?
       end
 
       def prerequisite_tasks
-        @task.prerequisite_tasks.map do |preq|
-          @task.application.abid_task_manager[preq.name, {}]
+        task.prerequisite_tasks.map do |preq|
+          task.application.abid_task_manager[preq.name, {}]
         end
       end
     end

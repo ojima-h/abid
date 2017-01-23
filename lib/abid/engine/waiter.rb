@@ -1,5 +1,5 @@
 module Abid
-  module Engine
+  class Engine
     # Waits for a job to be finished which is running in external application,
     # and completes the job in its own application.
     #
@@ -18,7 +18,7 @@ module Abid
       end
 
       def wait
-        unless @job.env.options.wait_external_task
+        unless @job.options.wait_external_task
           @process.finish(AlreadyRunningError.new('job already running'))
           return
         end
@@ -29,17 +29,17 @@ module Abid
       private
 
       def wait_interval
-        @job.env.options.wait_external_task_interval ||
+        @job.options.wait_external_task_interval ||
           DEFAULT_WAIT_INTERVAL
       end
 
       def wait_timeout
-        @job.env.options.wait_external_task_timeout ||
+        @job.options.wait_external_task_timeout ||
           DEFAULT_WAIT_TIMEOUT
       end
 
       def wait_iter
-        @job.env.worker_manager[:timer_set].post(wait_interval) do
+        @job.engine.worker_manager[:timer_set].post(wait_interval) do
           capture_exception do
             state = @job.state.find
 

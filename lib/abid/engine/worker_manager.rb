@@ -4,7 +4,7 @@ require 'monitor'
 require 'concurrent/delay'
 
 module Abid
-  module Engine
+  class Engine
     # WorkerManager manges thread pools definition, creation and termination.
     #
     #     worker_manager = Abid.global.worker_manager

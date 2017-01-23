@@ -16,30 +16,21 @@ module Abid
     end
 
     def config
+      return @config if @config
       @mon.synchronize do
         @cofig ||= Config.new
       end
     end
 
-    def job_manager
+    def engine
+      return @engine if @engine
       @mon.synchronize do
-        @job_manager ||= JobManager.new(self)
-      end
-    end
-
-    def process_manager
-      @mon.synchronize do
-        @process_manager ||= Engine::ProcessManager.new(self)
-      end
-    end
-
-    def worker_manager
-      @mon.synchronize do
-        @worker_manager ||= Engine::WorkerManager.new(self)
+        @engine ||= Engine.new(self)
       end
     end
 
     def state_manager
+      return @state_manager if @state_manager
       @mon.synchronize do
         @state_manager ||= StateManager.new(self)
       end

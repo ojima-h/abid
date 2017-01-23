@@ -1,7 +1,7 @@
 require 'test_helper'
 
 module Abid
-  module Engine
+  class Engine
     class WaiterTest < AbidTest
       def setup
         env.options.wait_external_task = true
@@ -10,7 +10,7 @@ module Abid
       end
 
       def test_wait
-        job = Job['test_ok']
+        job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
         job.state.start
@@ -29,7 +29,7 @@ module Abid
       end
 
       def test_wait_fail
-        job = Job['test_ok']
+        job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
         job.state.start
@@ -49,7 +49,7 @@ module Abid
       end
 
       def test_revoked_while_waiting
-        job = Job['test_ok']
+        job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
         job.state.start
@@ -71,7 +71,7 @@ module Abid
       def test_timeout
         env.options.wait_external_task_timeout = 0.5
 
-        job = Job['test_ok']
+        job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
         job.state.start

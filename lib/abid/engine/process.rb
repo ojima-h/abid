@@ -3,7 +3,7 @@ require 'forwardable'
 require 'monitor'
 
 module Abid
-  module Engine
+  class Engine
     # @!visibility private
 
     # Process object manages the task execution status.

@@ -1,7 +1,7 @@
 require 'concurrent/atomic/atomic_fixnum'
 
 module Abid
-  module Engine
+  class Engine
     # Scheduler operates whole job flow execution.
     class Scheduler
       # @return [void]
@@ -48,7 +48,7 @@ module Abid
       def invoke
         return unless @executor.prepare
 
-        trace_invoke
+        @job.task.trace_invoke
         attach_chain
         invoke_prerequisites
         after_prerequisites do
@@ -59,12 +59,6 @@ module Abid
       end
 
       private
-
-      def trace_invoke
-        return unless @job.env.options.trace
-        @job.env.application.trace \
-          "** Invoke #{@job.task.name} #{@job.task.format_trace_flags}"
-      end
 
       def attach_chain
         @job.process.add_observer do

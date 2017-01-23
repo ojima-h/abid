@@ -10,7 +10,7 @@ module Abid
       end
 
       def define_worker(name, thread_count)
-        Abid.global.worker_manager.define(name, thread_count)
+        Abid.global.engine.worker_manager.define(name, thread_count)
       end
 
       def global_mixin(&block)
@@ -18,7 +18,7 @@ module Abid
       end
 
       def invoke(task, *args, **params)
-        Abid.global.job_manager.fetch(task, params).invoke(*args)
+        Abid.global.engine.invoke(task, params, args)
       end
     end
   end

@@ -21,6 +21,19 @@ module Abid
       interface :volatile?
       interface :concerned?
       interface :needed?
+
+      def initialize(task, params)
+        @task = task
+        @params = params
+      end
+      attr_reader :task, :params
+      private :task, :params
+
+      def trace_invoke
+        return unless @task.application.options.trace
+        @task.application.trace \
+          "** Invoke #{@task.name} #{@task.format_trace_flags}"
+      end
     end
   end
 end
