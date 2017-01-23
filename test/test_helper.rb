@@ -1,6 +1,5 @@
-$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'abid'
-
+require 'concurrent/configuration'
 require 'minitest/autorun'
 
 Abid::Config.search_path.unshift File.expand_path('../abid.yml', __FILE__)

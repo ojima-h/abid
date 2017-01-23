@@ -31,10 +31,10 @@ module Abid
     def run_with_threads
       yield
     rescue Exception => err
-      Engine.kill(err)
+      @env.engine.kill(err)
       raise err
     else
-      Engine.shutdown
+      @env.engine.shutdown
     end
 
     def invoke_task(task_string) # :nodoc:

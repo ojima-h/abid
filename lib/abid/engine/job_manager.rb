@@ -35,7 +35,7 @@ module Abid
       end
 
       def actives
-        @actives.value
+        @actives.values
       end
 
       def active?(job)

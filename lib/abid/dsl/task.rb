@@ -1,5 +1,3 @@
-require 'rake/task'
-
 module Abid
   module DSL
     # `play` task is defined as an instance of Abid::DSL::Task.

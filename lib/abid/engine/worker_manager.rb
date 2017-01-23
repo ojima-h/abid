@@ -1,4 +1,8 @@
-require 'forwardable'
+require 'concurrent/configuration'
+require 'concurrent/executor/cached_thread_pool'
+require 'concurrent/executor/fixed_thread_pool'
+require 'concurrent/executor/safe_task_executor'
+require 'concurrent/executor/timer_set'
 
 module Abid
   class Engine

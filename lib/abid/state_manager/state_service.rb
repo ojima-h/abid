@@ -1,4 +1,4 @@
-require 'forwardable'
+require 'yaml'
 
 module Abid
   class StateManager

@@ -1,6 +1,5 @@
 require 'forwardable'
 
-require 'abid/engine'
 require 'abid/engine/executor'
 require 'abid/engine/job'
 require 'abid/engine/job_manager'

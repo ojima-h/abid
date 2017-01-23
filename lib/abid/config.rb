@@ -1,3 +1,5 @@
+require 'yaml'
+
 module Abid
   class Config < Hash
     DEFAULT_DATABASE_CONFIG = {

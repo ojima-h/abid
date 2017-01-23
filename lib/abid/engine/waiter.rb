@@ -1,3 +1,5 @@
+require 'concurrent/utility/monotonic_time'
+
 module Abid
   class Engine
     # Waits for a job to be finished which is running in external application,

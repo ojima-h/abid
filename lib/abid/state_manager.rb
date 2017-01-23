@@ -1,4 +1,4 @@
-require 'sequel/plugins/serialization'
+require 'sequel'
 require 'abid/state_manager/state'
 require 'abid/state_manager/state_service'
 
