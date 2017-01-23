@@ -23,7 +23,6 @@ module Abid
       def initialize(params)
         @params = params
         @prerequisite_tasks = []
-        call_action(:setup)
       end
 
       # default settings

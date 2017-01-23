@@ -101,7 +101,6 @@ module Abid
       def execute
         _, error = safe_execute
 
-        call_after_actions(error)
         @job.state.finish(error)
         @process.finish(error)
       end
@@ -111,14 +110,6 @@ module Abid
         true
       rescue => error
         [false, error]
-      end
-
-      def call_after_actions(error)
-        @job.task.call_action(:after, error)
-        true
-      rescue
-        # TODO: Error logging
-        false
       end
     end
   end

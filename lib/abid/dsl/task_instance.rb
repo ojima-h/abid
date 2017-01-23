@@ -17,7 +17,6 @@ module Abid
       interface :worker
       interface :prerequisite_tasks
       interface :execute, %w(args)
-      interface :call_action, %w(tag *args)
 
       interface :volatile?
       interface :concerned?

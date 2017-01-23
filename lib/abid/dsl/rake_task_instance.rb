@@ -36,8 +36,6 @@ module Abid
       def prerequisite_tasks
         @task.prerequisite_tasks.map { |preq| [preq, {}] }
       end
-
-      def call_action(tag, *args); end
     end
   end
 end

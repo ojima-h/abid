@@ -8,7 +8,7 @@ module Abid
       extend Forwardable
 
       def_delegators :@task, :name, :arg_names
-      def_delegators :@play, :params, :worker, :call_action
+      def_delegators :@play, :params, :worker
       def_delegator :@play, :volatile,  :volatile?
       def_delegator :@play, :concerned, :concerned?
       def_delegator :@play, :needed,    :needed?
@@ -16,9 +16,16 @@ module Abid
       def initialize(task, params)
         @task = task
         @play = @task.internal.new(params)
+        @play.call_action(:setup)
       end
 
       def execute(args)
+        run(args)
+      ensure
+        @play.call_action(:after, $ERROR_INFO)
+      end
+
+      def run(args)
         if @play.method(:run).arity.zero?
           @play.run
         else

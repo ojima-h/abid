@@ -221,4 +221,14 @@ namespace :test_dsl do
 
     include 'ns:m3_2'
   end
+
+  play :p4 do
+    def run
+      raise 'test'
+    end
+
+    after do |error|
+      AbidTest.history << ['test_dsl:p4.after', error]
+    end
+  end
 end
