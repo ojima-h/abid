@@ -2,21 +2,21 @@ require 'yaml'
 
 module Abid
   class StateManager
-    # O/R Mapper for `states` table.
-    module State
+    State = Class.new(Sequel::Model) do # delay Sequel::Model.set_dataset
       def self.connect(database)
-        mod = self
-        Class.new(Sequel::Model(database[:states])) do
-          include mod
-          dataset_module mod.const_get(:DatasetMethods)
-        end
+        Class.new(self.Model(database[:states]))
       end
+    end
 
+    # O/R Mapper for `states` table.
+    class State
       RUNNING = 1
       SUCCESSED = 2
       FAILED = 3
 
-      module DatasetMethods
+      @dataset = nil
+
+      dataset_module do
         #   @param after [Time] lower bound of start_time
         #   @param before [Time] upper bound of start_time
         #   @return [Sequel::Dataset<State>] a set of states started between
