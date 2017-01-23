@@ -8,7 +8,7 @@ module Abid
 
       def run
         db = Sequel.connect(@env.config.database)
-        dir = StateManager::Database::MIGRATIONS_PATH
+        dir = StateManager::MIGRATIONS_PATH
 
         if Sequel::Migrator.is_current?(db, dir)
           puts 'Schema is latest.'
