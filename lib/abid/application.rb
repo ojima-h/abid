@@ -12,8 +12,6 @@ require 'abid/dsl/task'
 
 module Abid
   class Application < Rake::Application
-    attr_reader :global_params, :global_mixin, :abid_task_manager
-
     def initialize(env)
       super()
       @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb)
@@ -22,6 +20,8 @@ module Abid
       @global_mixin = DSL::Mixin.create_global_mixin
       @abid_task_manager = DSL::TaskManager.new(self)
     end
+    attr_reader :global_params, :global_mixin, :abid_task_manager
+    alias abid_tasks abid_task_manager
 
     def init
       super

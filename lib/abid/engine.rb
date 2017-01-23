@@ -23,7 +23,7 @@ module Abid
     def_delegators :@env, :options, :state_manager
 
     def job(name, params)
-      t = @env.application.abid_task_manager.resolve(name, params)
+      t = @env.application.abid_tasks[name, params]
       jobs[t]
     end
 

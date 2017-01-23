@@ -40,7 +40,7 @@ module Abid
            + play.prerequisite_tasks
 
         ps.map do |preq, params|
-          task.application.abid_task_manager.resolve(preq.name, params)
+          task.application.abid_tasks[preq.name, params]
         end
       end
 

@@ -31,7 +31,7 @@ module Abid
 
       def prerequisite_tasks
         task.prerequisite_tasks.map do |preq|
-          task.application.abid_task_manager[preq.name, {}]
+          task.application.abid_tasks.bind(preq.name, {})
         end
       end
     end
