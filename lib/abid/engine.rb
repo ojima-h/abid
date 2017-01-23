@@ -5,7 +5,6 @@ require 'abid/engine/executor'
 require 'abid/engine/job'
 require 'abid/engine/job_manager'
 require 'abid/engine/process'
-require 'abid/engine/process_manager'
 require 'abid/engine/scheduler'
 require 'abid/engine/worker_manager'
 require 'abid/engine/waiter'
@@ -18,10 +17,9 @@ module Abid
     def initialize(env)
       @env = env
       @job_manager = JobManager.new(self)
-      @process_manager = ProcessManager.new(self)
       @worker_manager = WorkerManager.new(self)
     end
-    attr_reader :job_manager, :process_manager, :worker_manager
+    attr_reader :job_manager, :worker_manager
     alias jobs job_manager
     def_delegators :@env, :options, :state_manager
 
@@ -36,7 +34,7 @@ module Abid
 
     def kill(error)
       worker_manager.kill
-      process_manager.kill(error)
+      job_manager.kill(error)
     end
 
     def shutdown

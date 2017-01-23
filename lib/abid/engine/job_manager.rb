@@ -6,6 +6,7 @@ module Abid
       def initialize(engine)
         @engine = engine
         @jobs = {}.compare_by_identity
+        @actives = {}.compare_by_identity
         @mon = Monitor.new
       end
 
@@ -15,6 +16,30 @@ module Abid
         @mon.synchronize do
           @jobs[task] ||= Job.new(@engine, task)
         end
+      end
+
+      # Update active jobs list
+      def update(job)
+        case job.process.status
+        when :pending, :running
+          @actives[job] = job
+        when :complete
+          @actives.delete(job)
+        end
+      end
+
+      # Kill all active jobs
+      # @param error [Exception] error reason
+      def kill(error)
+        actives.each { |j| j.process.quit(error) }
+      end
+
+      def actives
+        @actives.value
+      end
+
+      def active?(job)
+        @actives.include?(job)
       end
     end
   end

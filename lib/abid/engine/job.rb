@@ -5,7 +5,7 @@ module Abid
         @engine = engine
         @task = task
 
-        @process = engine.process_manager.create
+        @process = Process.new(self)
         @state = find_state
         @options = engine.options
         @root = false
@@ -13,7 +13,7 @@ module Abid
       attr_reader :engine, :process, :state, :task, :options
 
       def find_state
-        @engine.state_manager.state(@task.name, @task.params,
+        @engine.state_manager.state(task.name, task.params,
                                     dryrun: dryrun?, volatile: task.volatile?)
       end
       private :find_state
@@ -46,6 +46,11 @@ module Abid
 
       def repair?
         @engine.options.repair
+      end
+
+      # notified when process status is updated.
+      def update_status
+        @engine.job_manager.update(self)
       end
     end
   end

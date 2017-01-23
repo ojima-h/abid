@@ -58,8 +58,8 @@ module Abid
 
       def_delegators :@result_ivar, :add_observer, :wait, :complete?
 
-      def initialize(process_manager)
-        @process_manager = process_manager
+      def initialize(job)
+        @job = job
         @result_ivar = Concurrent::IVar.new
         @status = :unscheduled
         @error = nil
@@ -128,7 +128,7 @@ module Abid
         @mon.synchronize do
           return unless expected_current.include? @status
           @status = next_state
-          @process_manager.update(self)
+          @job.update_status
           true
         end
       end

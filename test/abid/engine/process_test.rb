@@ -70,18 +70,16 @@ module Abid
         assert_equal 'test', process.error.message
       end
 
-      def test_acitve_processes
+      def test_quit_after_finish
         process = find_job('test_ok').process
-        process_manager = env.engine.process_manager
-
         process.prepare
-        assert process_manager.active?(process)
-
         process.start
-        assert process_manager.active?(process)
+        process.finish(RuntimeError.new('test'))
+        process.quit(RuntimeError.new('quit'))
 
-        process.finish
-        refute process_manager.active?(process)
+        assert_equal :complete, process.status
+        assert process.failed?
+        assert_equal 'quit', process.error.message
       end
     end
   end
