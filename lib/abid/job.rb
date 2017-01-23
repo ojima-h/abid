@@ -46,13 +46,9 @@ module Abid
       @task ||= Abid.application[name].bind(params)
     end
 
-    def signature
-      @signature ||= Signature.new(name, params)
-    end
-
     def state
-      @state ||= @env.state_manager.state(
-        signature,dryrun: dryrun?, volatile: volatile?)
+      @state ||= @env.state_manager.state(@name, @params,
+                                          dryrun: dryrun?, volatile: volatile?)
     end
 
     def prerequisites

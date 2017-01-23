@@ -23,7 +23,6 @@ require 'abid/engine/worker_manager'
 require 'abid/engine/waiter'
 require 'abid/params_format'
 require 'abid/state_manager'
-require 'abid/signature'
 require 'abid/job'
 require 'abid/job_manager'
 

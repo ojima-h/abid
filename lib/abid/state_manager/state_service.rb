@@ -4,14 +4,17 @@ module Abid
   class StateManager
     # StateService updates the job status in a transaction.
     class StateService
-      def initialize(model, signature)
+      def initialize(model, name, params)
         @model = model
-        @signature = signature
+        @name = name
+        @params = params
       end
+      attr_reader :name, :params
 
       # @return [State] state
       def find
-        @model.find_or_init_by_signature(@signature)
+        cond = { name: name, params: params_text, digest: digest }
+        @model.where(cond).first || @model.new(cond)
       end
 
       # @see State#start
@@ -41,6 +44,8 @@ module Abid
         self
       end
 
+      private
+
       def transaction(&block)
         @model.db.transaction(
           isolation: :serializable,
@@ -48,7 +53,14 @@ module Abid
           &block
         )
       end
-      private :transaction
+
+      def params_text
+        @params_text ||= YAML.dump(params.sort.to_h)
+      end
+
+      def digest
+        @digest ||= Digest::MD5.hexdigest(name + "\n" + params_text)
+      end
     end
 
     # NullStateService does not update job status.
@@ -69,7 +81,7 @@ module Abid
     # VolatileStateService never access to database.
     class VolatileStateService < NullStateService
       def find
-        @model.init_by_signature(@signature).tap(&:freeze)
+        @model.new(name: name, params: params_text, digest: digest)
       end
     end
   end

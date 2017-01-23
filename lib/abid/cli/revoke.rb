@@ -20,23 +20,23 @@ module Abid
             next
           end
 
-          signature = Signature.new(state.name, state.params_hash)
-          next if !@quiet && !ask(signature)
+          text = ParamsFormat.format_with_name(state.name, state.params_hash)
+          next if !@quiet && !ask(text)
 
-          revoke(state, signature)
+          revoke(state, text)
         end
       end
 
-      def revoke(state, signature)
+      def revoke(state, text)
         state.revoke(force: @force)
         puts "revoked #{state.id}"
       rescue AlreadyRunningError
-        $stderr.puts "#{signature} already running.\n" \
+        $stderr.puts "#{text} already running.\n" \
                      'Use -f option if you want to force assume.'
       end
 
-      def ask(signature)
-        print "revoke task \`#{signature}'? "
+      def ask(text)
+        print "revoke task \`#{text}'? "
         $stdout.flush
         ret = $stdin.gets
         ret.match(/y(es)?/i)

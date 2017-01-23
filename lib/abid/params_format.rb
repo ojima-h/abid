@@ -10,6 +10,10 @@ module Abid
       end.join(' ')
     end
 
+    def self.format_with_name(name, params)
+      name + ' ' + format(params)
+    end
+
     def self.format_value(value)
       case value
       when Numeric, TrueClass, FalseClass

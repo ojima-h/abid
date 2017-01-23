@@ -8,10 +8,7 @@ module Abid
         mod = self
         Class.new(Sequel::Model(database[:states])) do
           include mod
-          extend mod.const_get(:ClassMethods) \
-            if mod.const_defined?(:ClassMethods)
-          dataset_module mod.const_get(:DatasetMethods) \
-            if mod.const_defined?(:DatasetMethods)
+          dataset_module mod.const_get(:DatasetMethods)
         end
       end
 
@@ -37,40 +34,6 @@ module Abid
         def filter_by_prefix(prefix)
           return self if prefix.nil?
           where { Sequel.like(:name, prefix + '%') }
-        end
-      end
-
-      module ClassMethods
-        # Find a state by the signature
-        #
-        # @param signature [Signature]
-        # @return [JobStatus]
-        def find_by_signature(signature)
-          where(
-            name: signature.name,
-            params: signature.params_text,
-            digest: signature.digest
-          ).first
-        end
-
-        # Initialize a state by a signature.
-        #
-        # @param signature [Signature]
-        # @return [JobStatus]
-        def init_by_signature(signature)
-          new(
-            name: signature.name,
-            params: signature.params_text,
-            digest: signature.digest
-          )
-        end
-
-        # Find or initialize a state by a signature.
-        #
-        # @param signature [Signature]
-        # @return [JobStatus]
-        def find_or_init_by_signature(signature)
-          find_by_signature(signature) || init_by_signature(signature)
         end
       end
 

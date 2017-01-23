@@ -28,8 +28,7 @@ class AbidTest < Minitest::Test
   end
 
   def mock_state(name, params = {})
-    signature = Abid::Signature.new(name, params)
-    s = env.state_manager.states.init_by_signature(signature)
+    s = env.state_manager.state(name, params).find
     t = Time.now
     s.set(state: Abid::StateManager::State::SUCCESSED,
           start_time: t, end_time: t)

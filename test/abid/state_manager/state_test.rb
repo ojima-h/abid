@@ -7,6 +7,10 @@ module Abid
         env.state_manager.states
       end
 
+      def find_state(name, params)
+        env.state_manager.state(name, params).find
+      end
+
       def test_state
         s = states.create(name: 'name', params: '', digest: '')
 
@@ -33,113 +37,109 @@ module Abid
         end
       end
 
-      def test_find_by_signature
+      def test_find
         s1 = mock_state('name', a: 1)
         mock_state('name', a: 2)
-        signature = Signature.new('name', a: 1)
 
-        found = states.find_by_signature(signature)
+        found = env.state_manager.state('name', a: 1).find
         assert_equal s1.id, found.id
       end
 
       def test_start
         # Non-existing job
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
-        states.init_by_signature(sig).start
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        find_state(*args).start
 
-        state = states.find_by_signature(sig)
+        state = find_state(*args)
         assert_equal 'name', state.name
         assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state.params
-        assert_equal sig.digest, state.digest
         assert state.running?
       end
 
       def test_start_failed
         # Failed job
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
-        mock_fail_state(sig.name, sig.params)
-        states.find_by_signature(sig).start
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_fail_state(*args)
+        find_state(*args).start
 
-        assert states.find_by_signature(sig).running?
+        assert find_state(*args).running?
       end
 
       def test_start_running
         # Running job
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
-        mock_running_state(sig.name, sig.params)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_running_state(*args)
 
         assert_raises AlreadyRunningError do
-          states.find_by_signature(sig).start
+          find_state(*args).start
         end
       end
 
       def test_finish
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
-
         # Non-existing job
-        states.init_by_signature(sig).finish
-        assert_nil states.find_by_signature(sig)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        find_state(*args).finish
+        assert find_state(*args).new?
       end
 
       def test_finish_failed
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
-        mock_fail_state(sig.name, sig.params)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_fail_state(*args)
 
         # Failed job
-        states.find_by_signature(sig).finish
-        assert states.find_by_signature(sig).failed? # do nothing
+        find_state(*args).finish
+        assert find_state(*args).failed? # do nothing
       end
 
       def test_finish_running
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
-        mock_running_state(sig.name, sig.params)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_running_state(*args)
 
         # Running job
-        states.find_by_signature(sig).finish
-        assert states.find_by_signature(sig).successed?
+        find_state(*args).finish
+        assert find_state(*args).successed?
       end
 
       def test_finish_running_with_error
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
-        mock_running_state(sig.name, sig.params)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_running_state(*args)
 
         # With an error
-        states.find_by_signature(sig).finish(StandardError.new)
-        assert states.find_by_signature(sig).failed?
+        find_state(*args).finish(StandardError.new)
+        assert find_state(*args).failed?
       end
 
       def test_assume
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
 
         # Non-existing job
-        states.init_by_signature(sig).assume
-        state = states.find_by_signature(sig)
+        find_state(*args).assume
+        state = find_state(*args)
         assert_equal 'name', state.name
         assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state.params
-        assert_equal sig.digest, state.digest
         assert state.successed?
       end
 
       def test_assume_failed
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
-        mock_fail_state(sig.name, sig.params)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_fail_state(*args)
 
         # Failed job
-        states.find_by_signature(sig).assume
-        assert states.find_by_signature(sig).successed?
+        find_state(*args).assume
+        assert find_state(*args).successed?
       end
 
       def test_assume_running
-        sig = Signature.new('name', b: 1, a: Date.new(2000, 1, 1))
-        mock_running_state(sig.name, sig.params)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_running_state(*args)
 
         # Running job
         assert_raises AlreadyRunningError do
-          states.find_by_signature(sig).assume
+          find_state(*args).assume
         end
 
-        states.find_by_signature(sig).assume(force: true)
-        assert states.find_by_signature(sig).successed?
+        find_state(*args).assume(force: true)
+        assert find_state(*args).successed?
       end
 
       def test_filter

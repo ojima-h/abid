@@ -31,7 +31,7 @@ module Abid
           t,
           state.state_label,
           format_exec_time(state.exec_time),
-          state.name + ' ' + ParamsFormat.format(YAML.load(state.params))
+          ParamsFormat.format_with_name(state.name, state.params_hash)
         ]
       end
 

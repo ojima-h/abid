@@ -27,13 +27,14 @@ module Abid
     end
     attr_reader :db, :states
 
-    # Returns StateService object from signature.
-    # @param signature [Signature]
+    # Returns StateService object from name and params.
+    # @param name [String] task name
+    # @param params [Hash]
     # @return [StateManager::StateService]
-    def state(signature, dryrun: false, volatile: false)
-      return VolatileStateService.new(@states, signature) if volatile
-      return NullStateService.new(@states, signature) if dryrun
-      StateService.new(@states, signature)
+    def state(name, params, dryrun: false, volatile: false)
+      return VolatileStateService.new(@states, name, params) if volatile
+      return NullStateService.new(@states, name, params) if dryrun
+      StateService.new(@states, name, params)
     end
   end
 end
