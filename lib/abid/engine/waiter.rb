@@ -40,12 +40,10 @@ module Abid
 
       def wait_iter
         @job.engine.worker_manager[:timer_set].post(wait_interval) do
-          capture_exception do
+          @process.capture_exception do
             state = @job.state.find
 
-            check_finished(state) ||
-              check_timeout ||
-              wait_iter
+            check_finished(state) || check_timeout || wait_iter
           end
         end
       end
@@ -68,15 +66,6 @@ module Abid
 
         @process.finish RuntimeError.new('timeout')
         true
-      end
-
-      def capture_exception
-        yield
-      rescue StandardError, ScriptError => error
-        @process.quit(error)
-      rescue Exception => exception
-        # TODO: exit immediately when fatal error occurs.
-        @process.quit(exception)
       end
     end
   end

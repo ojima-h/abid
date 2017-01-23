@@ -114,6 +114,15 @@ module Abid
         @result_ivar.try_set(:failed)
       end
 
+      def capture_exception
+        yield
+      rescue StandardError, ScriptError => error
+        quit(error)
+      rescue Exception => exception
+        # TODO: exit immediately when fatal error occurs.
+        quit(exception)
+      end
+
       private
 
       # Atomic compare and set operation.

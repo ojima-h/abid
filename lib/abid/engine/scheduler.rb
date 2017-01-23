@@ -52,7 +52,7 @@ module Abid
         attach_chain
         invoke_prerequisites
         after_prerequisites do
-          @executor.capture_exception do
+          @job.process.capture_exception do
             @executor.start
           end
         end

@@ -39,15 +39,6 @@ module Abid
         true
       end
 
-      def capture_exception
-        yield
-      rescue StandardError, ScriptError => error
-        @process.quit(error)
-      rescue Exception => exception
-        # TODO: exit immediately when fatal error occurs.
-        @process.quit(exception)
-      end
-
       private
 
       # Cancel the task if it should be.
@@ -92,7 +83,7 @@ module Abid
       # task finished otherwise.
       def execute_or_wait
         if @job.state.try_start
-          @job.worker.post { capture_exception { execute } }
+          @job.worker.post { @process.capture_exception { execute } }
         else
           Waiter.new(@job).wait
         end
