@@ -17,23 +17,17 @@ module Abid
 
     def config
       return @config if @config
-      @mon.synchronize do
-        @cofig ||= Config.new
-      end
+      @mon.synchronize { @cofig ||= Config.new }
     end
 
     def engine
       return @engine if @engine
-      @mon.synchronize do
-        @engine ||= Engine.new(self)
-      end
+      @mon.synchronize { @engine ||= Engine.new(self) }
     end
 
     def state_manager
       return @state_manager if @state_manager
-      @mon.synchronize do
-        @state_manager ||= StateManager.new(self)
-      end
+      @mon.synchronize { @state_manager ||= StateManager.new(self) }
     end
   end
 end

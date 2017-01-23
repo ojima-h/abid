@@ -1,13 +1,10 @@
-require 'forwardable'
 require 'abid/dsl/task_instance'
 
 module Abid
   module DSL
     # Rake::Task wrapper.
     class RakeTaskInstance < TaskInstance
-      extend Forwardable
-
-      def_delegators :@task, :name, :execute, :arg_names
+      def_delegators :task, :execute
 
       def volatile?
         true

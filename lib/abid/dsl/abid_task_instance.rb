@@ -1,14 +1,10 @@
-require 'forwardable'
 require 'abid/dsl/task_instance'
 
 module Abid
   module DSL
     # Abid::DSL::Task wrapper
     class AbidTaskInstance < TaskInstance
-      extend Forwardable
-
-      def_delegators :task, :name, :arg_names
-      def_delegators :play, :params, :worker
+      def_delegators :play, :worker
       def_delegator :play, :concerned, :concerned?
       def_delegator :play, :needed,    :needed?
 

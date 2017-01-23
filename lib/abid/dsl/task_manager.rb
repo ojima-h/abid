@@ -18,7 +18,7 @@ module Abid
       def [](name, params = {}, scope = nil)
         task = @app[name, scope]
         resolved = resolve_params(task, params)
-        fetch(task.name, resolved)
+        bind(task.name, resolved)
       end
 
       # Binds the task and params.
