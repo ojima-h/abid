@@ -21,6 +21,7 @@ module Abid
       private :play
 
       def execute(args)
+        play.call_action(:action, args)
         run(args)
       ensure
         play.call_action(:after, $ERROR_INFO)

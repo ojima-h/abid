@@ -219,6 +219,21 @@ module Abid
         #       Running!
         define_action :setup
 
+        # @!method action(&block)
+        #   Register main action.
+        #
+        #   Main actions are alternative to #run method.
+        #
+        #       play :foo do
+        #         action { |args| ... }
+        #       end
+        #
+        #   Main actions of mixis are inherited to play, while `run` method is
+        #   overwritten.
+        #
+        #   @yieldparam args [Rake::TaskArguments]
+        define_action :action
+
         # @!method after(&block)
         #   Register _after_ action.
         #

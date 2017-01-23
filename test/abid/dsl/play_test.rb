@@ -79,6 +79,14 @@ module Abid
         assert_respond_to play, :s2
         assert_respond_to play, :s3
       end
+
+      def test_action
+        invoke('test_dsl:p5')
+        assert_equal [
+          ['test_dsl:ns:m5'],
+          ['test_dsl:p5']
+        ], AbidTest.history
+      end
     end
   end
 end

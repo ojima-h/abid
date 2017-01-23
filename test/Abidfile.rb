@@ -161,6 +161,10 @@ namespace :test_dsl do
       param :p2, default: :m3_2
       set :s2, :m3_2
     end
+
+    mixin :m5 do
+      action { AbidTest.history << ['test_dsl:ns:m5'] }
+    end
   end
 
   play p1: [:p1_1, :p1_2] do
@@ -230,5 +234,10 @@ namespace :test_dsl do
     after do |error|
       AbidTest.history << ['test_dsl:p4.after', error]
     end
+  end
+
+  play :p5 do
+    include 'ns:m5'
+    action { AbidTest.history << ['test_dsl:p5'] }
   end
 end
