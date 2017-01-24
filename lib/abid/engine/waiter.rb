@@ -31,13 +31,11 @@ module Abid
       private
 
       def wait_interval
-        @job.options.wait_external_task_interval ||
-          DEFAULT_WAIT_INTERVAL
+        @job.options.wait_external_task_interval || DEFAULT_WAIT_INTERVAL
       end
 
       def wait_timeout
-        @job.options.wait_external_task_timeout ||
-          DEFAULT_WAIT_TIMEOUT
+        @job.options.wait_external_task_timeout || DEFAULT_WAIT_TIMEOUT
       end
 
       def wait_iter
