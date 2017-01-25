@@ -81,6 +81,18 @@ module Abid
         assert process.failed?
         assert_equal 'quit', process.error.message
       end
+
+      def test_exception
+        invoke('test_exception:p2')
+
+        assert env.engine.worker_manager.each_worker.all?(&:shutdown?)
+        %w(p1_1 p1_2 p2).each do |name|
+          process = env.engine.job("test_exception:#{name}", {}).process
+          assert process.failed?
+          assert_kind_of Exception, process.error
+          assert_equal 'test', process.error.message
+        end
+      end
     end
   end
 end

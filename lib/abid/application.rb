@@ -32,18 +32,30 @@ module Abid
     end
 
     def top_level
-      super
+      if options.show_tasks || options.show_prereqs
+        super
+        return
+      end
 
+      invoke_top_level_tasks
       display_jobs_summary
+      check_errors!
     end
 
-    def run_with_threads
-      yield
-    rescue Exception => err
-      @env.engine.kill(err)
-      raise err
-    else
+    def invoke_top_level_tasks
+      top_level_tasks.each do |task_name|
+        result, = invoke_task(task_name)
+        break if result == :failed || result == :cancelled
+      end
+
       @env.engine.shutdown
+    rescue Exception => exception
+      @env.engine.kill(exception)
+    end
+
+    def check_errors!
+      err = @env.engine.errors.first
+      raise err if err
     end
 
     def invoke_task(task_string) # :nodoc:

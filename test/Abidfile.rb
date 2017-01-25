@@ -1,3 +1,6 @@
+define_worker :w1, 1
+define_worker :w2, 1
+
 play :test_ok do
   def run
     AbidTest.history << ['test_ok']
@@ -67,8 +70,26 @@ namespace :test_args do
   end
 end
 
-define_worker :w1, 1
-define_worker :w2, 1
+namespace :test_exception do
+  play :p1_1 do
+    set :worker, :w1
+    action { sleep }
+  end
+
+  play :p1_2 do
+    set :worker, :w2
+    action { raise Exception, 'test' }
+  end
+
+  play :p2 do
+    setup do
+      needs :p1_1
+      needs :p1_2
+    end
+    action { AbidTest.history << ['test_exception:p2'] }
+  end
+end
+
 namespace :test_worker do
   play :p1_1 do
     set :worker, :w1

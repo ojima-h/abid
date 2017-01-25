@@ -25,10 +25,9 @@ module Abid
       end
 
       def execute(args)
-        if dryrun? || preview?
-          task.application.trace "** Execute (dry run) #{task.name}"
-          return
-        end
+        task.application.trace "** Execute (dry run) #{task.name}" if dryrun?
+        return if dryrun? || preview?
+
         task.execute(args)
       end
 

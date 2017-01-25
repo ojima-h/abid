@@ -6,9 +6,10 @@ module Abid
         @jobs = {}.compare_by_identity
         @actives = {}.compare_by_identity
         @summary = Hash.new { |h, k| h[k] = 0 }
+        @errors = []
         @mon = Monitor.new
       end
-      attr_reader :summary
+      attr_reader :summary, :errors
 
       def [](task)
         return @jobs[task] if @jobs.include?(task)
@@ -63,6 +64,7 @@ module Abid
       def update_summary(job)
         return unless job.process.status == :complete
         @mon.synchronize { @summary[job.process.result] += 1 }
+        @errors << job.process.error if job.process.failed?
       end
 
       def log(job)

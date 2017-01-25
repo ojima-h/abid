@@ -122,8 +122,7 @@ module Abid
       rescue StandardError, ScriptError => error
         quit(error)
       rescue Exception => exception
-        # TODO: exit immediately when fatal error occurs.
-        quit(exception)
+        @job.engine.post_kill(exception)
       end
 
       private
