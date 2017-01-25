@@ -26,8 +26,8 @@ module Abid
       end
 
       # default settings
-      set :worker,    :default
-      set :volatile,  false
+      worker :default
+      volatile false
       set :concerned, true
       set :needed,    true
     end

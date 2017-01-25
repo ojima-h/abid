@@ -131,7 +131,7 @@ Abid plays can also be volatile.
 
 ```
 play :voaltile_play do
-  set :volatile, true
+  volatile
   def run
     ...
   end
@@ -164,14 +164,14 @@ define_worker :copy, 2
 define_worker :hive, 4
 
 play :copy_source_1 do
-  set :worker, :copy
+  worker :copy
   def run
     ...
   end
 end
 
 play :hive_query_1 do
-  set :worker, :hive
+  worker :hive
   def run
     ...
   end

@@ -175,6 +175,41 @@ module Abid
           params_spec[name] = spec
         end
 
+        #
+        # Setting Helpers
+        #
+
+        # @!visibility private
+        def self.def_setting_helper(name)
+          class_eval <<-RUBY, __FILE__, __LINE__ + 1
+          def #{name}(val = nil, &block)
+            set :#{name}, val, &block
+          end
+          RUBY
+        end
+
+        # @!method worker(val = nil, &block)
+        #   Set :worker name.
+        #
+        #       play :foo do
+        #         worker :my_worker
+        #         action { ... }
+        #       end
+        #
+        #   This is short-hand style of `set :worker, :my_worker`
+        def_setting_helper :worker
+
+        # @!method volatile(val = nil, &block)
+        #   Set :volatile flag.
+        #
+        #       play :foo do
+        #         volatile
+        #         action { ... }
+        #       end
+        #
+        #   This is short-hand style of `set :volatile, true`
+        def_setting_helper :volatile
+
         # Delete the param from params_spec.
         #
         #     mixin :bar do

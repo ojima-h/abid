@@ -72,12 +72,12 @@ end
 
 namespace :test_exception do
   play :p1_1 do
-    set :worker, :w1
+    worker :w1
     action { sleep }
   end
 
   play :p1_2 do
-    set :worker, :w2
+    worker :w2
     action { raise Exception, 'test' }
   end
 
@@ -92,14 +92,14 @@ end
 
 namespace :test_worker do
   play :p1_1 do
-    set :worker, :w1
+    worker :w1
     def run
       AbidTest.history << ['test_worker:p1_1', thread: Thread.current.object_id]
     end
   end
 
   play :p1_2 do
-    set :worker, :w2
+    worker :w2
     def run
       AbidTest.history << ['test_worker:p1_2', thread: Thread.current.object_id]
     end
