@@ -33,6 +33,13 @@ module Abid
         ], AbidTest.history
       end
 
+      def test_dryrun
+        in_options(dryrun: true) do
+          invoke('test_dsl:p1', i: 0, j: 1)
+        end
+        assert_empty AbidTest.history
+      end
+
       def test_overwrite
         err = assert_raises RuntimeError do
           env.application.abid_tasks['test_dsl:p2']

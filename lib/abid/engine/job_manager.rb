@@ -78,7 +78,7 @@ module Abid
       def log_start(job)
         task = job.task
         sig = ParamsFormat.format_with_name(task.name, task.params)
-        @engine.logger.error("#{sig} start.")
+        @engine.logger.info("#{sig} start.")
       end
 
       def log_finish(job)

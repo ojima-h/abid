@@ -63,12 +63,12 @@ class AbidTest < Minitest::Test
     env.engine.job(name, params)
   end
 
-  def in_repair_mode
-    original_flag = env.application.options.repair
-    env.application.options.repair = true
+  def in_options(opts)
+    orig = opts.map { |k, _| [k, env.application.options[k]] }
+    opts.each { |k, v| env.application.options[k] = v }
     yield
   ensure
-    env.application.options.repair = original_flag
+    orig.each { |k, v| env.application.options[k] = v }
   end
 
   # empty Rake::TaskArguments

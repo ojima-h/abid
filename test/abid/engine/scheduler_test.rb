@@ -97,7 +97,7 @@ module Abid
       end
 
       def test_invoke_in_repair_mode
-        in_repair_mode do
+        in_options(repair: true) do
           job_successed = find_job('test_p1', i: 0)
           job_successed.state.assume
 

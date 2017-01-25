@@ -17,18 +17,23 @@ module Abid
       private :play
 
       def execute(args)
-        play.call_action(:action, args)
+        if task.application.options.dryrun
+          task.application.trace "** Execute (dry run) #{task.name}"
+          return
+        end
         run(args)
-      ensure
-        play.call_action(:after, $ERROR_INFO)
       end
 
       def run(args)
+        play.call_action(:action, args)
+
         if play.method(:run).arity.zero?
           play.run
         else
           play.run(args)
         end
+      ensure
+        play.call_action(:after, $ERROR_INFO)
       end
 
       def prerequisite_tasks

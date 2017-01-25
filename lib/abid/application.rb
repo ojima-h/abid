@@ -148,7 +148,7 @@ module Abid
     attr_writer :logger
 
     def display_jobs_summary
-      return unless options.summary
+      return if !options.summary || options.dryrun || options.preview
       return if @env.engine.summary.empty?
       puts "Summary:\n"
       @env.engine.pretty_summary.lines.each do |line|
