@@ -1,7 +1,10 @@
+require 'forwardable'
 require 'monitor'
 
 module Abid
   class Environment
+    extend Forwardable
+
     def initialize
       @mon = Monitor.new
     end
@@ -10,10 +13,7 @@ module Abid
       @application ||= Abid::Application.new(self)
     end
     attr_writer :application
-
-    def options
-      application.options
-    end
+    def_delegators :application, :options, :logger
 
     def config
       return @config if @config

@@ -54,8 +54,6 @@ module Abid
     class Process
       extend Forwardable
 
-      attr_reader :status, :error
-
       def_delegators :@result_ivar, :add_observer, :wait, :complete?
 
       def initialize(job)
@@ -64,7 +62,10 @@ module Abid
         @status = :unscheduled
         @error = nil
         @mon = Monitor.new
+
+        @result_ivar.add_observer { notify_job }
       end
+      attr_reader :status, :error
 
       %w(successed failed cancelled skipped).each do |meth|
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
@@ -111,7 +112,9 @@ module Abid
       def quit(error)
         @status = :complete
         @error = error
-        @result_ivar.try_set(:failed)
+        @result_ivar.try_set(:failed).tap do |changed|
+          notify_job unless changed
+        end
       end
 
       def capture_exception
@@ -137,9 +140,13 @@ module Abid
         @mon.synchronize do
           return unless expected_current.include? @status
           @status = next_state
-          @job.update_status
+          notify_job unless @status == :complete
           true
         end
+      end
+
+      def notify_job
+        @job.update_status
       end
     end
   end

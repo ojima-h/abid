@@ -15,15 +15,21 @@ class AbidTest < Minitest::Test
   def run(*args, &block)
     Abid.global = Abid::Environment.new
     @env = Abid.global
-    @env.application.init
+    init_app
 
     AbidTest.history.clear
-    load File.expand_path('../Abidfile.rb', __FILE__)
-
     @env.state_manager.db[:states].delete
+
+    load File.expand_path('../Abidfile.rb', __FILE__)
     super
   ensure
     @env.engine.shutdown
+  end
+
+  def init_app
+    @env.application.init
+    @env.application.options.logging = false
+    @env.application.options.summary = false
   end
 
   def mock_state(name, params = {})

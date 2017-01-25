@@ -34,8 +34,7 @@ module Abid
 
       def trace_invoke
         return unless @task.application.options.trace
-        @task.application.trace \
-          "** Invoke #{@task.name} #{@task.format_trace_flags}"
+        @task.application.trace "** Invoke #{@task.name}"
       end
     end
   end

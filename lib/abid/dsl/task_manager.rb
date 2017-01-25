@@ -34,18 +34,20 @@ module Abid
       end
 
       def resolve_params(task, params)
-        params = @app.global_params.merge(params)
-
-        task.params_spec.each_with_object({}) do |(key, spec), h|
-          if params.include?(key)
-            h[key] = params[key]
-          elsif spec.include?(:default)
-            h[key] = spec[:default]
-          else
-            raise "#{task.name}: param #{key} is not specified"
-          end
+        ret = task.params_spec.each_with_object({}) do |(key, spec), h|
+          h[key] = fetch_param(task, key, spec, params, @app.global_params)
         end
+        ParamsFormat.validate_params!(ret)
+        ret
       end
+
+      def fetch_param(task, key, spec, *params_list)
+        found = params_list.find { |params| params.include?(key) }
+        return found[key] if found
+        return spec[:default] if spec.include?(:default)
+        raise "#{task.name}: param #{key} is not specified"
+      end
+      private :fetch_param
     end
   end
 end

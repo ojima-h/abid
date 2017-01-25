@@ -47,7 +47,7 @@ module Abid
         assert_equal(-2, play.p3)
         assert_equal :m2_1, play.s1
         assert_equal :m2_2, play.s2
-        assert_equal :m2_1, play.s3
+        assert_equal 'm2_1', play.s3
         refute_includes play.class.params_spec.to_h, :p3
       end
 

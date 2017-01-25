@@ -1,3 +1,4 @@
+require 'logger'
 require 'abid/dsl/abid_task_instance'
 require 'abid/dsl/actions'
 require 'abid/dsl/mixin'
@@ -19,13 +20,21 @@ module Abid
       @global_params = {}
       @global_mixin = DSL::Mixin.create_global_mixin
       @abid_task_manager = DSL::TaskManager.new(self)
+      @after_all_actions = []
     end
-    attr_reader :global_params, :global_mixin, :abid_task_manager
+    attr_reader :global_params, :global_mixin, :abid_task_manager,
+                :after_all_actions
     alias abid_tasks abid_task_manager
 
     def init
       super
       @env.config.load(options.config_file)
+    end
+
+    def top_level
+      super
+
+      display_jobs_summary
     end
 
     def run_with_threads
@@ -71,7 +80,19 @@ module Abid
            proc { options.preview = true }],
           ['--wait-external-task',
            'Wait a task finished if it is running in externl process',
-           proc { options.wait_external_task = true }]
+           proc { options.wait_external_task = true }],
+          ['--log-level LEVEL',
+           'Specifies the log level. LEVEL can be error, warn, info or debug.' \
+           ' (default: info)',
+           proc do |v|
+             options.log_level = Logger::Severity.const_get(v.upcase)
+           end],
+          ['--[no-]logging',
+           'Enable logging. (default: on)',
+           proc { |v| options.logging = v }],
+          ['--[no-]summary',
+           'Display jobs summary. (default: on)',
+           proc { |v| options.summary = v }]
         ]
       )
     end
@@ -79,6 +100,9 @@ module Abid
     def handle_options
       options.rakelib = %w(rakelib tasks)
       options.trace_output = $stderr
+      options.log_level = Logger::Severity::INFO
+      options.logging = true
+      options.summary = true
 
       OptionParser.new do |opts|
         opts.banner = 'See full documentation at https://github.com/ojima-h/abid.'
@@ -108,6 +132,28 @@ module Abid
       params, = ParamsFormat.collect_params(args)
       @global_params.update(params)
       super
+    end
+
+    #
+    # Abid Extentions
+    #
+    def logger
+      return @logger if @logger
+      logdev = options.logging ? $stderr : nil
+      @logger = Logger.new(logdev).tap do |l|
+        l.progname = 'abid'
+        l.level = options.log_level || Logger::Severity::INFO
+      end
+    end
+    attr_writer :logger
+
+    def display_jobs_summary
+      return unless options.summary
+      return if @env.engine.summary.empty?
+      puts "Summary:\n"
+      @env.engine.pretty_summary.lines.each do |line|
+        puts '  ' + line
+      end
     end
   end
 end

@@ -20,6 +20,10 @@ module Abid
       def invoke(task, *args, **params)
         Abid.global.engine.invoke(task, params, args)
       end
+
+      def after_all(&block)
+        Abid.application.after_all_actions << block
+      end
     end
   end
 end

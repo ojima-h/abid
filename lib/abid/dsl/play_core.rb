@@ -49,6 +49,10 @@ module Abid
       end
       private :eval_setting
 
+      def logger
+        task.application.logger
+      end
+
       # Play definition's body is extended by ClassMethods.
       #
       module ClassMethods

@@ -62,5 +62,17 @@ module Abid
         value
       end
     end
+
+    SUPPORTED_TYPES = [
+      Numeric, TrueClass, FalseClass, Date, Time, DateTime, String
+    ].freeze
+
+    def self.validate_params!(params)
+      params.values.each do |value|
+        valid = SUPPORTED_TYPES.any? { |t| value.is_a? t }
+        raise Error, "#{value.class} class is not supported" unless valid
+      end
+      params
+    end
   end
 end

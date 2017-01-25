@@ -20,7 +20,9 @@ module Abid
     end
     attr_reader :job_manager, :worker_manager
     alias jobs job_manager
-    def_delegators :@env, :options, :state_manager
+    def_delegators :@env, :options, :state_manager, :logger
+    def_delegators :job_manager, :summary, :pretty_summary
+    def_delegators :worker_manager, :shutdown
 
     def job(name, params)
       t = @env.application.abid_tasks[name, params]
@@ -34,10 +36,6 @@ module Abid
     def kill(error)
       worker_manager.kill
       job_manager.kill(error)
-    end
-
-    def shutdown
-      worker_manager.shutdown
     end
   end
 end

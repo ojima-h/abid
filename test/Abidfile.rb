@@ -134,7 +134,7 @@ namespace :test_dsl do
         end
       end
       param :p1, default: 1 # overwrite default value
-      param :s3, default: :m2_1 # overwrite setting by param
+      param :s3, default: 'm2_1' # overwrite setting by param
       set :s1, :m2_1 # overwrite settings
       setup { AbidTest.history << ['test_dsl:ns:m2_1.setup'] }
       after { AbidTest.history << ['test_dsl:ns:m2_1.after'] }
