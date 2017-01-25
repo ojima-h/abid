@@ -36,8 +36,22 @@ module Abid
       def test_dryrun
         in_options(dryrun: true) do
           invoke('test_dsl:p1', i: 0, j: 1)
+          invoke('test_dsl:test_preview')
+          invoke('test_dsl:test_preview2')
         end
         assert_empty AbidTest.history
+      end
+
+      def test_preview
+        in_options(preview: true) do
+          invoke('test_dsl:test_preview')
+          invoke('test_dsl:test_preview2')
+          invoke('test_dsl:test_preview3')
+        end
+        assert_equal [
+          ['test_dsl:test_preview'],
+          ['test_dsl:test_preview3']
+        ], AbidTest.history
       end
 
       def test_overwrite

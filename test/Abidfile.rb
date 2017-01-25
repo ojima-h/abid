@@ -240,4 +240,18 @@ namespace :test_dsl do
     include 'ns:m5'
     action { AbidTest.history << ['test_dsl:p5'] }
   end
+
+  play :test_preview do
+    safe_action { AbidTest.history << ['test_dsl:test_preview'] }
+  end
+
+  play :test_preview2 do
+    action { AbidTest.history << ['test_dsl:test_preview2'] }
+  end
+
+  play :test_preview3 do
+    def run
+      AbidTest.history << ['test_dsl:test_preview3']
+    end
+  end
 end

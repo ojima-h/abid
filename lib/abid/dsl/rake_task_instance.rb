@@ -4,8 +4,6 @@ module Abid
   module DSL
     # Rake::Task wrapper.
     class RakeTaskInstance < TaskInstance
-      def_delegators :task, :execute
-
       def volatile?
         true
       end
@@ -24,6 +22,14 @@ module Abid
 
       def needed?
         task.needed?
+      end
+
+      def execute(args)
+        if dryrun? || preview?
+          task.application.trace "** Execute (dry run) #{task.name}"
+          return
+        end
+        task.execute(args)
       end
 
       def prerequisite_tasks

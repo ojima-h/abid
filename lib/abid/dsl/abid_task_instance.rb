@@ -17,23 +17,23 @@ module Abid
       private :play
 
       def execute(args)
-        if task.application.options.dryrun
-          task.application.trace "** Execute (dry run) #{task.name}"
+        if dryrun?
+          trace_execute
           return
         end
+        play.call_action(:safe_action)
+        play.call_action(:action, args) unless preview?
         run(args)
+      ensure
+        play.call_action(:after, $ERROR_INFO) unless dryrun? || preview?
       end
 
       def run(args)
-        play.call_action(:action, args)
-
         if play.method(:run).arity.zero?
           play.run
         else
           play.run(args)
         end
-      ensure
-        play.call_action(:after, $ERROR_INFO)
       end
 
       def prerequisite_tasks
@@ -48,6 +48,11 @@ module Abid
       def volatile?
         play.volatile || task.application.options.disable_state
       end
+
+      def trace_execute
+        task.application.trace "** Execute (dry run) #{task.name}"
+      end
+      private :trace_execute
     end
   end
 end

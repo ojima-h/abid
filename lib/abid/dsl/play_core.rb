@@ -53,6 +53,10 @@ module Abid
         task.application.logger
       end
 
+      def preview?
+        task.application.options.dryrun || task.application.options.preview
+      end
+
       # Play definition's body is extended by ClassMethods.
       #
       module ClassMethods
@@ -226,17 +230,28 @@ module Abid
         # @!method action(&block)
         #   Register main action.
         #
-        #   Main actions are alternative to #run method.
-        #
         #       play :foo do
         #         action { |args| ... }
         #       end
+        #
+        #   `action` block is not executed in dryrun mode nor preview mode.
         #
         #   Main actions of mixis are inherited to play, while `run` method is
         #   overwritten.
         #
         #   @yieldparam args [Rake::TaskArguments]
         define_action :action
+
+        # @!method safe_action(&block)
+        #   Register safe action.
+        #   `safe_action` is similar to `action`, but this block is executed
+        #   in preview mode.
+        #
+        #   You should guard dangerous operations in a safe_action block.
+        #   This is useful to preview detail behavior of play.
+        #
+        #   @yieldparam args [Rake::TaskArguments]
+        define_action :safe_action
 
         # @!method after(&block)
         #   Register _after_ action.
@@ -254,6 +269,8 @@ module Abid
         #           $syserr.puts "[ERROR]   #{error}"
         #         end
         #       end
+        #
+        #   `after` block is not executed in dryrun mode nor preview mode.
         #
         #   @yieldparam error [StandardError, nil] if run method failed,
         #     otherwise nil.

@@ -36,6 +36,16 @@ module Abid
         return unless @task.application.options.trace
         @task.application.trace "** Invoke #{@task.name}"
       end
+
+      private
+
+      def dryrun?
+        task.application.options.dryrun
+      end
+
+      def preview?
+        task.application.options.preview
+      end
     end
   end
 end
