@@ -2,20 +2,19 @@ require 'test_helper'
 
 module Abid
   class Engine
-    class JobManagerTest < AbidTest
+    class ProcessManagerTest < AbidTest
       def test_acitves
-        job = find_job('test_ok')
-        process = job.process
-        job_manager = env.engine.job_manager
+        process = find_process('test_ok')
+        process_manager = env.engine.process_manager
 
         process.prepare
-        assert job_manager.active?(job)
+        assert process_manager.active?(process)
 
         process.start
-        assert job_manager.active?(job)
+        assert process_manager.active?(process)
 
         process.finish
-        refute job_manager.active?(job)
+        refute process_manager.active?(process)
       end
 
       def test_summary

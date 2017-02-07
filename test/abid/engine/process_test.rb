@@ -4,19 +4,19 @@ module Abid
   class Engine
     class ProcessTest < AbidTest
       def test_new
-        refute find_job('test_ok').process.complete?
-        assert_equal :unscheduled, find_job('test_ok').process.status
+        refute find_process('test_ok').complete?
+        assert_equal :unscheduled, find_process('test_ok').status
       end
 
       def test_prepare
-        process = find_job('test_ok').process
+        process = find_process('test_ok')
         assert process.prepare
         assert_equal :pending, process.status
         refute process.prepare
       end
 
       def test_start
-        process = find_job('test_ok').process
+        process = find_process('test_ok')
 
         refute process.start, 'could not start before prepare'
         assert_equal :unscheduled, process.status
@@ -29,7 +29,7 @@ module Abid
       end
 
       def test_cancel
-        process = find_job('test_ok').process
+        process = find_process('test_ok')
 
         refute process.cancel, 'could not cancel before prepare'
         assert_equal :unscheduled, process.status
@@ -42,7 +42,7 @@ module Abid
       end
 
       def test_finish
-        process = find_job('test_ok').process
+        process = find_process('test_ok')
 
         refute process.finish, 'could not finish before prepare'
         assert_equal :unscheduled, process.status
@@ -58,7 +58,7 @@ module Abid
       end
 
       def test_fail
-        process = find_job('test_ok').process
+        process = find_process('test_ok')
 
         assert process.prepare
         assert process.start
@@ -68,7 +68,7 @@ module Abid
       end
 
       def test_quit_after_finish
-        process = find_job('test_ok').process
+        process = find_process('test_ok')
         process.prepare
         process.start
         process.finish(RuntimeError.new('test'))
@@ -83,7 +83,7 @@ module Abid
 
         assert env.engine.worker_manager.each_worker.all?(&:shutdown?)
         %w(p1_1 p1_2 p2).each do |name|
-          process = find_job("test_exception:#{name}", {}).process
+          process = find_process("test_exception:#{name}", {})
           assert process.failed?
           assert_kind_of Exception, process.error
           assert_equal 'test', process.error.message

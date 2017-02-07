@@ -59,9 +59,9 @@ class AbidTest < Minitest::Test
     env.engine.invoke(*args)
   end
 
-  def find_job(name, params = {})
-    task = env.application.abid_tasks[name, params]
-    env.engine.jobs[task]
+  def find_process(name, params = {})
+    job = env.application.abid_tasks[name, params]
+    env.engine.process_manager[job]
   end
 
   def in_options(opts)

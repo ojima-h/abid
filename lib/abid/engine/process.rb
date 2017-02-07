@@ -4,20 +4,20 @@ module Abid
   class Engine
     # @!visibility private
 
-    # Process object manages the task execution status.
+    # Process object manages the job execution status.
     #
     # You should retrive a process object via Job#process.
     # Do not create a process object by Process.new constructor.
     #
-    # A process object has an internal status of the task execution.
+    # A process object has an internal status of the job execution.
     #
     # An initial status is :unscheduled.
     # When Process#prepare is called, the status gets :pending.
-    # When Process#execute is called and the task is posted to a thread pool,
-    # the status gets :running. When the task is finished, the status gets
+    # When Process#execute is called and the job is posted to a thread pool,
+    # the status gets :running. When the job is finished, the status gets
     # :successed or :failed.
     #
-    #     process = Job['task_name'].process
+    #     process = Job['job_name'].process
     #     process.prepare
     #     process.start
     #     process.wait
@@ -27,26 +27,26 @@ module Abid
     #
     # <dl>
     #   <dt>:unscheduled</dt>
-    #   <dd>The task is not invoked yet.</dd>
+    #   <dd>The job is not invoked yet.</dd>
     #   <dt>:pending</dt>
-    #   <dd>The task is waiting for prerequisites complete.</dd>
+    #   <dd>The job is waiting for prerequisites complete.</dd>
     #   <dt>:running</dt>
-    #   <dd>The task is running.</dd>
+    #   <dd>The job is running.</dd>
     #   <dt>:successed</dt>
-    #   <dd>The task is successed.</dd>
+    #   <dd>The job is successed.</dd>
     #   <dt>:failed</dt>
-    #   <dd>The task is failed.</dd>
+    #   <dd>The job is failed.</dd>
     #   <dt>:cancelled</dt>
-    #   <dd>The task is not executed because of some problems.</dd>
+    #   <dd>The job is not executed because of some problems.</dd>
     #   <dt>:skipped</dt>
-    #   <dd>The task is not executed because already successed.</dd>
+    #   <dd>The job is not executed because already successed.</dd>
     # </dl>
     class Process
       extend Forwardable
 
-      def initialize(job)
+      def initialize(engine, job)
+        @engine = engine
         @job = job
-        @engine = job.engine
         @status = Status.new(:unscheduled)
         @error = nil
         initialize_logger(job)
@@ -58,21 +58,24 @@ module Abid
       def initialize_logger(job)
         @logger = @engine.logger.clone
         pn = @logger.progname
-        @logger.progname = pn ? "#{pn}: #{job.task}" : job.task.to_s
+        @logger.progname = pn ? "#{pn}: #{job}" : job.to_s
       end
       private :initialize_logger
       attr_reader :logger
 
       def initialize_state_service(job)
-        task = job.task
         @state_service = @engine.state_manager.state(
-          task.name, task.params,
-          dryrun: job.dryrun?,
-          volatile: task.volatile?
+          job.name, job.params,
+          dryrun: job.dryrun? || job.preview?,
+          volatile: job.volatile?
         )
       end
       private :initialize_state_service
       attr_reader :state_service
+
+      def prerequisites
+        @job.prerequisites.map { |preq| @engine.process_manager[preq] }
+      end
 
       #
       # State predicates
@@ -84,6 +87,10 @@ module Abid
           @status.get == :#{meth}
         end
         RUBY
+      end
+
+      def root?
+        @engine.process_manager.root?(self)
       end
 
       def status
@@ -125,7 +132,7 @@ module Abid
         @logger.info('skipped')
       end
 
-      # Force fail the task.
+      # Force fail the job.
       # @return [void]
       def quit(error)
         log_error(error)
@@ -138,7 +145,7 @@ module Abid
         quit(error)
       rescue Exception => exception
         # kill from independent thread
-        Thread.start { @job.engine.kill(exception) }
+        Thread.start { @engine.kill(exception) }
       end
 
       private

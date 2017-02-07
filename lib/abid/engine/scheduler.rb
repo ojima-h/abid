@@ -5,12 +5,12 @@ module Abid
     # Scheduler operates whole job flow execution.
     class Scheduler
       # @return [void]
-      def self.invoke(job, *args, invocation_chain: nil)
-        task_args = Rake::TaskArguments.new(job.task.arg_names, args)
+      def self.invoke(process, *args, invocation_chain: nil)
+        task_args = Rake::TaskArguments.new(process.job.arg_names, args)
         invocation_chain ||= Rake::InvocationChain::EMPTY
 
-        detect_circular_dependency(job, invocation_chain)
-        new(job, task_args, invocation_chain).invoke
+        detect_circular_dependency(process, invocation_chain)
+        new(process, task_args, invocation_chain).invoke
       end
 
       # @!visibility private
@@ -29,30 +29,30 @@ module Abid
         end
       end
 
-      def self.detect_circular_dependency(job, chain)
-        # raise error if job.task is a member of the chain
-        new_chain = Rake::InvocationChain.append(job.task, chain)
+      def self.detect_circular_dependency(process, chain)
+        # raise error if process.job is a member of the chain
+        new_chain = Rake::InvocationChain.append(process.job, chain)
 
-        job.prerequisites.each do |preq_job|
-          detect_circular_dependency(preq_job, new_chain)
+        process.prerequisites.each do |preq_process|
+          detect_circular_dependency(preq_process, new_chain)
         end
       end
 
-      def initialize(job, args, invocation_chain)
-        @job = job
+      def initialize(process, args, invocation_chain)
+        @process = process
         @args = args
-        @chain = invocation_chain.conj(@job.task)
-        @executor = Executor.new(job, args)
+        @chain = invocation_chain.conj(@process.job)
+        @executor = Executor.new(process, args)
       end
 
       def invoke
         return unless @executor.prepare
 
-        @job.task.trace_invoke
+        @process.job.trace_invoke
         attach_chain
         invoke_prerequisites
         after_prerequisites do
-          @job.process.capture_exception do
+          @process.capture_exception do
             @executor.start
           end
         end
@@ -61,8 +61,8 @@ module Abid
       private
 
       def attach_chain
-        @job.process.on_complete do
-          error = @job.process.error
+        @process.on_complete do
+          error = @process.error
           next if error.nil?
           next if @chain.nil?
 
@@ -73,16 +73,16 @@ module Abid
       end
 
       def invoke_prerequisites
-        @job.prerequisites.each do |preq_job|
-          preq_args = @args.new_scope(@job.task.arg_names)
-          Scheduler.new(preq_job, preq_args, @chain).invoke
+        @process.prerequisites.each do |preq|
+          preq_args = @args.new_scope(@process.job.arg_names)
+          Scheduler.new(preq, preq_args, @chain).invoke
         end
       end
 
       def after_prerequisites(&block)
-        counter = DependencyCounter.new(@job.prerequisites.size, &block)
-        @job.prerequisites.each do |preq_job|
-          preq_job.process.on_complete { counter.update }
+        counter = DependencyCounter.new(@process.prerequisites.size, &block)
+        @process.prerequisites.each do |preq|
+          preq.on_complete { counter.update }
         end
       end
     end

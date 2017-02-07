@@ -14,8 +14,8 @@ module Abid
       env.application.top_level
 
       assert after_all_called
-      assert @env.engine.job_manager.shutdown?
-      assert_equal({ successed: 1 }, @env.engine.job_manager.summary)
+      assert @env.engine.process_manager.shutdown?
+      assert_equal({ successed: 1 }, @env.engine.process_manager.summary)
     end
   end
 end

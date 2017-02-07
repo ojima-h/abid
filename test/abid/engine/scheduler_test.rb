@@ -4,25 +4,25 @@ module Abid
   class Engine
     class SchedulerTest < AbidTest
       def test_invoke_ok
-        job = invoke('test_ok')
-        assert job.process.state_service.find.successed?
-        assert job.process.successed?
+        process = invoke('test_ok')
+        assert process.state_service.find.successed?
+        assert process.successed?
         assert_includes AbidTest.history, ['test_ok']
       end
 
       def test_invoke_ng
-        job = invoke('test_ng')
-        assert job.process.state_service.find.failed?
-        assert job.process.failed?
-        assert_equal 'ng', job.process.error.message
+        process = invoke('test_ng')
+        assert process.state_service.find.failed?
+        assert process.failed?
+        assert_equal 'ng', process.error.message
         assert_includes AbidTest.history, ['test_ng']
       end
 
       def test_invoke
-        job = invoke('test_p3')
+        process = invoke('test_p3')
 
-        assert job.process.state_service.find.successed?
-        assert job.process.successed?
+        assert process.state_service.find.successed?
+        assert process.successed?
 
         assert_includes AbidTest.history, ['test_p1', i: 0]
         assert_includes AbidTest.history, ['test_p1', i: 1]
@@ -41,14 +41,14 @@ module Abid
       end
 
       def test_invoke_already_failed
-        job_failed = find_job('test_p2', i: 1)
+        process_failed = find_process('test_p2', i: 1)
         mock_fail_state('test_p2', i: 1)
 
-        job = invoke('test_p3')
+        process = invoke('test_p3')
 
-        assert job.process.state_service.find.new?
-        assert job.process.cancelled?
-        assert 'task has been failed', job_failed.process.error.message
+        assert process.state_service.find.new?
+        assert process.cancelled?
+        assert 'task has been failed', process_failed.error.message
 
         assert_includes AbidTest.history, ['test_p1', i: 0]
         refute_includes AbidTest.history, ['test_p1', i: 1]
@@ -60,10 +60,10 @@ module Abid
 
       def test_invoke_already_failed_directly
         mock_fail_state('test_p2', i: 1)
-        job = invoke('test_p2', i: 1)
+        process = invoke('test_p2', i: 1)
 
-        assert job.process.state_service.find.successed?
-        assert job.process.successed?
+        assert process.state_service.find.successed?
+        assert process.successed?
 
         assert_equal 2, AbidTest.history.length
         assert_includes AbidTest.history, ['test_p1', i: 1]
@@ -71,13 +71,13 @@ module Abid
       end
 
       def test_invoke_already_successed
-        job_successed = find_job('test_p2', i: 1)
-        job_successed.process.state_service.assume
+        process_successed = find_process('test_p2', i: 1)
+        process_successed.state_service.assume
 
-        job = invoke('test_p3')
-        assert job.process.state_service.find.successed?
-        assert job.process.successed?
-        assert job_successed.process.skipped?
+        process = invoke('test_p3')
+        assert process.state_service.find.successed?
+        assert process.successed?
+        assert process_successed.skipped?
 
         assert_includes AbidTest.history, ['test_p1', i: 0]
         refute_includes AbidTest.history, ['test_p1', i: 1]
@@ -89,18 +89,18 @@ module Abid
 
       def test_invoke_in_repair_mode
         in_options(repair: true) do
-          job_successed = find_job('test_p1', i: 0)
-          job_successed.process.state_service.assume
+          process_successed = find_process('test_p1', i: 0)
+          process_successed.state_service.assume
 
-          job_failed = find_job('test_p1', i: 1)
+          process_failed = find_process('test_p1', i: 1)
           mock_fail_state('test_p1', i: 1)
 
-          job = invoke('test_p3')
+          process = invoke('test_p3')
 
-          assert job.process.state_service.find.successed?
-          assert job.process.successed?
-          assert job_successed.process.skipped?
-          assert job_failed.process.successed?
+          assert process.state_service.find.successed?
+          assert process.successed?
+          assert process_successed.skipped?
+          assert process_failed.successed?
 
           refute_includes AbidTest.history, ['test_p1', i: 0]
           assert_includes AbidTest.history, ['test_p1', i: 1]

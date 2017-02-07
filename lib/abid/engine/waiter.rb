@@ -2,26 +2,26 @@ require 'concurrent/utility/monotonic_time'
 
 module Abid
   class Engine
-    # Waits for a job to be finished which is running in external application,
-    # and completes the job in its own application.
+    # Waits for a process to be finished which is running in external
+    # application, and completes the process in its own application.
     #
-    #     Waiter.new(job).wait
+    #     Waiter.new(process).wait
     #
-    # The `job` result gets :successed or :failed when external application
-    # finished the job execution.
+    # The `process` result gets :successed or :failed when external application
+    # finished the process execution.
     class Waiter
       DEFAULT_WAIT_INTERVAL = 10
       DEFAULT_WAIT_TIMEOUT = 3600
 
-      def initialize(job)
-        @job = job
-        @process = job.process
+      def initialize(process)
+        @process = process
+        @job = process.job
         @wait_limit = Concurrent.monotonic_time + wait_timeout
       end
 
       def wait
         unless @job.options.wait_external_task
-          @process.finish(AlreadyRunningError.new('job already running'))
+          @process.finish(AlreadyRunningError.new('process already running'))
           return
         end
 

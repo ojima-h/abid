@@ -18,7 +18,7 @@ module Abid
       interface :name
       interface :arg_names
       interface :worker
-      interface :prerequisite_tasks
+      interface :prerequisites
       interface :execute, %w(args)
 
       interface :volatile?
@@ -28,8 +28,9 @@ module Abid
       def initialize(task, params)
         @task = task
         @params = params
+        @options = task.application.options
       end
-      attr_reader :task, :params
+      attr_reader :task, :params, :options
       def_delegators :task, :name, :arg_names
 
       def trace_invoke
@@ -41,14 +42,16 @@ module Abid
         ParamsFormat.format_with_name(name, params)
       end
 
-      private
+      def repair?
+        @options.repair
+      end
 
       def dryrun?
-        task.application.options.dryrun
+        @options.dryrun
       end
 
       def preview?
-        task.application.options.preview
+        @options.preview
       end
     end
   end

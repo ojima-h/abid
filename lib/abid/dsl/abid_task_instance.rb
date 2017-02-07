@@ -36,7 +36,7 @@ module Abid
         end
       end
 
-      def prerequisite_tasks
+      def prerequisites
         ps = task.prerequisite_tasks.map { |preq| [preq, params] } \
            + play.prerequisite_tasks
 
