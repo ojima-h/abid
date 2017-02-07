@@ -26,7 +26,7 @@ Abid is a simple Workflow Engine based on Rake.
 
 2. Setup a database.
 
-        $ bundle exec abidsc migrate
+        $ bundle exec abidsc init
 
 ## Usage
 
@@ -352,7 +352,8 @@ $ abidsc list --after='2000-01-01 00:00:00" --before="2000=01-02 00:00:00"  # Di
 $ abidsc revoke STATE_ID # remove the job history  # Remove the play recored from DB.
 $ abidsc assume TASK_NAME date=2000-01-01  # Insert a record that the play successed into DB.
 
-$ abidsc migrate  # Initialize or upgrade DB schema.
+$ abidsc init  # Initialize DB schema.
+$ abidsc upgrade  # Upgrade DB schema.
 ```
 
 ## Development

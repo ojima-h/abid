@@ -15,10 +15,14 @@ module Abid
       puts @env.config.to_yaml
     end
 
-    desc 'migrate', 'Run database migration'
-    def migrate
-      require 'abid/cli/migrate'
-      Migrate.new(@env, options).run
+    desc 'init', 'Create new abid project'
+    def init
+      migrate
+    end
+
+    desc 'upgrade', 'Upgrade current abid project'
+    def upgrade
+      migrate
     end
 
     desc 'assume TASK [TASKS..] [PARAMS]', 'Assume the job to be SUCCESSED'
@@ -50,5 +54,12 @@ module Abid
       Revoke.new(@env, options, [job_id, *rest_args]).run
     end
     map rm: :revoke
+
+    private
+
+    def migrate
+      require 'abid/cli/migrate'
+      Migrate.new(@env, options).run
+    end
   end
 end
