@@ -1,10 +1,11 @@
-require 'forwardable'
-require 'monitor'
-
-require 'concurrent/delay'
+require 'concurrent/configuration'
+require 'concurrent/executor/cached_thread_pool'
+require 'concurrent/executor/fixed_thread_pool'
+require 'concurrent/executor/safe_task_executor'
+require 'concurrent/executor/timer_set'
 
 module Abid
-  module Engine
+  class Engine
     # WorkerManager manges thread pools definition, creation and termination.
     #
     #     worker_manager = Abid.global.worker_manager
@@ -14,32 +15,21 @@ module Abid
     #     worker_manager[:main].post { :do_something }
     #
     #     worker_manager.shutdown
-    #
     class WorkerManager
       def initialize(env)
         @env = env
         @workers = {}
-        @alive = true
-        @mon = Monitor.new
 
         initialize_builtin_workers
       end
 
       # Define new worker.
-      #
-      # An actual worker is created when needed.
       def define(name, num_threads)
-        @mon.synchronize do
-          check_alive!
-
-          if @workers.include?(name)
-            raise Error, "worker #{name} is already defined"
-          end
-
-          @workers[name] = Concurrent::Delay.new do
-            create_worker(num_threads: num_threads)
-          end
+        if @workers.include?(name)
+          raise Error, "worker #{name} is already defined"
         end
+
+        @workers[name] = create_worker(num_threads: num_threads)
       end
 
       # Find or create worker
@@ -47,46 +37,35 @@ module Abid
       # @param name [String, Symbol] worker name
       # @return [Concurrent::ExecutorService]
       def [](name)
-        @mon.synchronize do
-          check_alive!
-
-          unless @workers.include?(name)
-            raise Error, "worker #{name} is not defined"
-          end
-
-          @workers[name].value!
+        unless @workers.include?(name)
+          raise Error, "worker #{name} is not defined"
         end
+
+        @workers[name]
       end
 
       def shutdown(timeout = nil)
-        @mon.synchronize do
-          check_alive!
-          each_active(&:shutdown)
-          each_active { |worker| worker.wait_for_termination(timeout) }
-
-          result = each_active.all?(&:shutdown?)
-          @alive = false if result
-          result
-        end
+        each_worker(&:shutdown)
+        each_worker { |worker| worker.wait_for_termination(timeout) }
+        each_worker.all?(&:shutdown?)
       end
 
       def kill
-        @mon.synchronize do
-          check_alive!
-          @alive = false
-          each_active(&:kill)
-        end
+        each_worker(&:kill)
         true
+      end
+
+      def each_worker(&block)
+        @workers.values.each(&block)
       end
 
       private
 
       def initialize_builtin_workers
-        @workers[:default] = Concurrent::Delay.new { create_default_worker }
-        @workers[:waiter] = Concurrent::Delay.new { Concurrent.new_io_executor }
-        @workers[:timer_set] = Concurrent::Delay.new do
-          Concurrent::TimerSet.new(executor: self[:waiter])
-        end
+        @workers[:default] = create_worker(num_threads: default_num_threads)
+        @workers[:waiter] = Concurrent.new_io_executor
+        @workers[:timer_set] =
+          Concurrent::TimerSet.new(executor: @workers[:waiter])
       end
 
       def create_worker(definition)
@@ -97,10 +76,6 @@ module Abid
         end
       end
 
-      def create_default_worker
-        create_worker(num_threads: default_num_threads)
-      end
-
       def default_num_threads
         if @env.options.always_multitask
           @env.options.thread_pool_size ||
@@ -108,15 +83,6 @@ module Abid
         else
           1
         end
-      end
-
-      def check_alive!
-        raise Error, 'already terminated' unless @alive
-      end
-
-      # Iterate on active workers
-      def each_active(&block)
-        @workers.values.select(&:fulfilled?).map(&:value).each(&block)
       end
     end
   end

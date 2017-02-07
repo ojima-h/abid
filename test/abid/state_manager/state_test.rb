@@ -1,120 +1,145 @@
 require 'test_helper'
 
 module Abid
-  module StateManager
+  class StateManager
     class StateTest < AbidTest
       def states
-        env.db.states
+        env.state_manager.states
+      end
+
+      def find_state(name, params)
+        env.state_manager.state(name, params).find
       end
 
       def test_state
-        state = states.create(name: 'name', params: '', digest: '')
+        s = states.create(name: 'name', params: '', digest: '')
 
-        refute state.running? || state.successed? || state.failed?
+        refute s.running? || s.successed? || s.failed?
 
-        state.update(state: State::RUNNING)
-        assert state.running?
+        s.update(state: State::RUNNING)
+        assert s.running?
 
-        state.update(state: State::SUCCESSED)
-        assert state.successed?
+        s.update(state: State::SUCCESSED)
+        assert s.successed?
 
-        state.update(state: State::FAILED)
-        assert state.failed?
+        s.update(state: State::FAILED)
+        assert s.failed?
       end
 
       def test_check_running
-        state = states.create(name: 'name', params: '', digest: '')
+        s = states.create(name: 'name', params: '', digest: '')
 
-        state.check_running!
+        s.check_running!
 
-        state.update(state: State::RUNNING)
+        s.update(state: State::RUNNING)
         assert_raises AlreadyRunningError do
-          state.check_running!
+          s.check_running!
         end
       end
 
-      def test_find_by_job
-        job1 = Job['name', a: 1]
-        state1 = states.create(name: job1.name, params: job1.params_str, digest: job1.digest)
+      def test_find
+        s1 = mock_state('name', a: 1)
+        mock_state('name', a: 2)
 
-        job2 = Job['name', a: 2]
-        states.create(name: job2.name, params: job2.params_str, digest: job2.digest)
-
-        found = states.find_by_job(job1)
-        assert_equal state1.id, found.id
+        found = env.state_manager.state('name', a: 1).find
+        assert_equal s1.id, found.id
       end
 
       def test_start
-        job = Job['name', b: 1, a: Date.new(2000, 1, 1)]
-
         # Non-existing job
-        states.start(job)
-        state = states.find_by_job(job)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        find_state(*args).start
+
+        state = find_state(*args)
         assert_equal 'name', state.name
         assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state.params
-        assert_equal job.digest, state.digest
         assert state.running?
+      end
 
+      def test_start_failed
         # Failed job
-        states[state.id].update(state: State::FAILED)
-        states.start(job)
-        assert states.find_by_job(job).running?
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_fail_state(*args)
+        find_state(*args).start
 
+        assert find_state(*args).running?
+      end
+
+      def test_start_running
         # Running job
-        states[state.id].update(state: State::RUNNING)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_running_state(*args)
+
         assert_raises AlreadyRunningError do
-          states.start(job)
+          find_state(*args).start
         end
       end
 
       def test_finish
-        job = Job['name', b: 1, a: Date.new(2000, 1, 1)]
-
         # Non-existing job
-        states.finish(job)
-        assert_nil states.find_by_job(job)
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        find_state(*args).finish
+        assert find_state(*args).new?
+      end
+
+      def test_finish_failed
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_fail_state(*args)
 
         # Failed job
-        mock_state(job.name, job.params) { |s| s.state = State::FAILED }
-        states.finish(job)
-        assert states.find_by_job(job).failed? # do nothing
+        find_state(*args).finish
+        assert find_state(*args).failed? # do nothing
+      end
+
+      def test_finish_running
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_running_state(*args)
 
         # Running job
-        states.start(job)
-        states.finish(job)
-        assert states.find_by_job(job).successed?
+        find_state(*args).finish
+        assert find_state(*args).successed?
+      end
+
+      def test_finish_running_with_error
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_running_state(*args)
 
         # With an error
-        states.start(job)
-        states.finish(job, StandardError.new)
-        assert states.find_by_job(job).failed?
+        find_state(*args).finish(StandardError.new)
+        assert find_state(*args).failed?
       end
 
       def test_assume
-        job = Job['name', b: 1, a: Date.new(2000, 1, 1)]
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
 
         # Non-existing job
-        states.assume(job)
-        state = states.find_by_job(job)
+        find_state(*args).assume
+        state = find_state(*args)
         assert_equal 'name', state.name
         assert_equal "---\n:a: 2000-01-01\n:b: 1\n", state.params
-        assert_equal job.digest, state.digest
         assert state.successed?
+      end
+
+      def test_assume_failed
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_fail_state(*args)
 
         # Failed job
-        states.find_by_job(job).update(state: State::FAILED)
-        states.assume(job)
-        assert_equal 1, states.where(digest: job.digest).count
-        assert states.find_by_job(job).successed?
+        find_state(*args).assume
+        assert find_state(*args).successed?
+      end
+
+      def test_assume_running
+        args = ['name', b: 1, a: Date.new(2000, 1, 1)]
+        mock_running_state(*args)
 
         # Running job
-        states.find_by_job(job).update(state: State::RUNNING)
         assert_raises AlreadyRunningError do
-          states.assume(job)
+          find_state(*args).assume
         end
-        states.assume(job, force: true)
-        assert_equal 1, states.where(digest: job.digest).count
-        assert states.find_by_job(job).successed?
+
+        find_state(*args).assume(force: true)
+        assert find_state(*args).successed?
       end
 
       def test_filter
@@ -139,14 +164,14 @@ module Abid
       def test_revoke
         ss = Array.new(10) { |i| mock_state('job', i: i) }
 
-        states.revoke(ss[0].id)
+        ss[0].revoke
         assert_nil states[ss[0].id]
 
         ss[1].update(state: State::RUNNING)
         assert_raises AlreadyRunningError do
-          states.revoke(ss[1].id)
+          ss[1].revoke
         end
-        states.revoke(ss[1].id, force: true)
+        ss[1].revoke(force: true)
         assert_nil states[ss[1].id]
 
         assert_equal 8, states.count

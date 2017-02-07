@@ -1,9 +1,9 @@
-$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'abid'
-
+require 'concurrent/configuration'
 require 'minitest/autorun'
 
 Abid::Config.search_path.unshift File.expand_path('../abid.yml', __FILE__)
+Concurrent.use_stdlib_logger(Logger::DEBUG)
 
 class AbidTest < Minitest::Test
   attr_reader :env
@@ -13,40 +13,63 @@ class AbidTest < Minitest::Test
   end
 
   def run(*args, &block)
-    @env = Abid::Environment.new
+    Abid.global = Abid::Environment.new
+    @env = Abid.global
+    init_app
 
-    Abid.global = @env
-    @env.application.init
-
-    # Abid.application.options.trace = true
-    # Abid.application.options.backtrace = true
-    # Rake.verbose(true)
-
-    env.db.states.dataset.delete
     AbidTest.history.clear
+    @env.state_manager.db[:states].delete
 
     load File.expand_path('../Abidfile.rb', __FILE__)
     super
   ensure
-    @env.worker_manager.shutdown
+    @env.engine.kill(RuntimeError.new('premature end of test'))
   end
 
-  def mock_state(*args)
-    job = env.job_manager[*args]
-    state = env.db.states.init_by_job(job)
-    yield state if block_given?
-    state.state ||= Abid::StateManager::State::SUCCESSED
-    state.start_time ||= Time.now
-    state.end_time ||= Time.now
-    state.tap(&:save)
+  def init_app
+    @env.application.init
+    @env.application.options.logging = false
+    @env.application.options.summary = false
   end
 
-  def in_repair_mode
-    original_flag = Abid.application.options.repair
-    Abid.application.options.repair = true
+  def mock_state(name, params = {})
+    s = env.state_manager.state(name, params).find
+    t = Time.now
+    s.set(state: Abid::StateManager::State::SUCCESSED,
+          start_time: t, end_time: t)
+    yield s if block_given?
+    s.tap(&:save)
+  end
+
+  def mock_fail_state(name, params = {})
+    mock_state(name, params) do |s|
+      s.state = Abid::StateManager::State::FAILED
+      yield s if block_given?
+    end
+  end
+
+  def mock_running_state(name, params = {})
+    mock_state(name, params) do |s|
+      s.state = Abid::StateManager::State::RUNNING
+      yield s if block_given?
+    end
+  end
+
+  def invoke(*args)
+    env.engine.invoke(*args)
+  end
+
+  def find_process(name, params = {})
+    job = env.application.job_manager[name, params]
+    env.engine.process_manager[job]
+  end
+
+  def in_options(opts)
+    orig = opts.map { |k, _| [k, env.application.options[k]] }
+    opts.each { |k, v| env.application.options[k] = v }
     yield
   ensure
-    Abid.application.options.repair = original_flag
+    orig.each { |k, v| env.application.options[k] = v }
   end
 
   # empty Rake::TaskArguments

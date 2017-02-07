@@ -1,21 +1,22 @@
 module Abid
-  module Engine
+  class Engine
     # @!visibility private
 
-    # Executor operates each task execution.
+    # Executor operates each job execution.
     class Executor
-      def initialize(job, args)
-        @job = job
+      def initialize(process, args)
+        @process = process
+        @job = process.job
         @args = args
 
-        @process = job.process
-        @state = job.state.find
-        @prerequisites = job.prerequisites.map(&:process)
+        @state = @process.state_service.find
+        @prerequisites = process.prerequisites
+        @worker = @process.engine.worker_manager[@job.worker]
       end
 
-      # Check if the task should be executed.
+      # Check if the job should be executed.
       #
-      # @return [Boolean] false if the task should not be executed.
+      # @return [Boolean] false if the job should not be executed.
       def prepare
         return unless @process.prepare
         return false if precheck_to_cancel
@@ -23,11 +24,11 @@ module Abid
         true
       end
 
-      # Start processing the task.
+      # Start processing the job.
       #
-      # The task is executed asynchronously.
+      # The job is executed asynchronously.
       #
-      # @return [Boolean] false if the task is not executed
+      # @return [Boolean] false if the job is not executed
       def start
         return false unless @prerequisites.all?(&:complete?)
 
@@ -39,37 +40,28 @@ module Abid
         true
       end
 
-      def capture_exception
-        yield
-      rescue StandardError, ScriptError => error
-        @process.quit(error)
-      rescue Exception => exception
-        # TODO: exit immediately when fatal error occurs.
-        @process.quit(exception)
-      end
-
       private
 
-      # Cancel the task if it should be.
+      # Cancel the job if it should be.
       # @return [Boolean] true if cancelled
       def precheck_to_cancel
-        return false if @job.env.options.repair
+        return false if @job.repair?
         return false unless @state.failed?
-        return false if @job.root?
+        return false if @process.root?
         @process.cancel(Error.new('task has been failed'))
       end
 
-      # Skip the task if it should be.
+      # Skip the job if it should be.
       # @return [Boolean] true if skipped
       def precheck_to_skip
-        return @process.skip unless @job.task.concerned?
+        return @process.skip unless @job.concerned?
 
-        return false if @job.env.options.repair && !@prerequisites.empty?
+        return false if @job.repair? && !@prerequisites.empty?
         return false unless @state.successed?
         @process.skip
       end
 
-      # Cancel the task if it should be.
+      # Cancel the job if it should be.
       # @return [Boolean] true if cancelled
       def check_to_cancel
         return false if @prerequisites.empty?
@@ -77,48 +69,39 @@ module Abid
         @process.cancel
       end
 
-      # Skip the task if it should be.
+      # Skip the job if it should be.
       # @return [Boolean] true if skipped
       def check_to_skip
-        return @process.skip unless @job.task.needed?
+        return @process.skip unless @job.needed?
 
         return false if @prerequisites.empty?
-        return false unless @job.env.options.repair
+        return false unless @job.repair?
         return false if @prerequisites.any?(&:successed?)
         @process.skip
       end
 
-      # Post the task if no external process executing the same task, wait the
-      # task finished otherwise.
+      # Post the job if no external process executing the same job, wait the
+      # job finished otherwise.
       def execute_or_wait
-        if @job.state.try_start
-          @job.worker.post { capture_exception { execute } }
+        if @process.state_service.try_start
+          @worker.post { @process.capture_exception { execute } }
         else
-          Waiter.new(@job).wait
+          Waiter.new(@process).wait
         end
       end
 
       def execute
         _, error = safe_execute
 
-        call_after_actions(error)
-        @job.state.finish(error)
+        @process.state_service.finish(error)
         @process.finish(error)
       end
 
       def safe_execute
-        @job.task.execute(@args)
+        @job.execute(@args)
         true
       rescue => error
         [false, error]
-      end
-
-      def call_after_actions(error)
-        @job.task.call_action(:after, error)
-        true
-      rescue
-        # TODO: Error logging
-        false
       end
     end
   end

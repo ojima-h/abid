@@ -1,33 +1,60 @@
+require 'logger'
+require 'abid/dsl/abid_job'
+require 'abid/dsl/actions'
+require 'abid/dsl/mixin'
+require 'abid/dsl/params_spec'
+require 'abid/dsl/play_core'
+require 'abid/dsl/play'
+require 'abid/dsl/rake_job'
+require 'abid/dsl/syntax'
+require 'abid/dsl/job'
+require 'abid/dsl/job_manager'
+require 'abid/dsl/task'
+
 module Abid
   class Application < Rake::Application
-    attr_reader :global_params
-    attr_reader :global_mixin
-
     def initialize(env)
       super()
       @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb)
       @env = env
       @global_params = {}
       @global_mixin = DSL::Mixin.create_global_mixin
+      @job_manager = DSL::JobManager.new(self)
+      @after_all_actions = []
     end
+    attr_reader :global_params, :global_mixin, :job_manager, :after_all_actions
 
     def init
       super
       @env.config.load(options.config_file)
     end
 
-    def run_with_threads
-      yield
-    rescue Exception => err
-      Engine.kill(err)
-      raise err
-    else
-      Engine.shutdown
+    def top_level
+      if options.show_tasks || options.show_prereqs
+        super
+      else
+        run_with_engine { invoke_top_level_tasks }
+      end
     end
 
-    def invoke_task(task_string) # :nodoc:
-      name, args = parse_task_string(task_string)
-      Job.find_by_task(self[name]).root.invoke(*args)
+    def invoke_top_level_tasks
+      top_level_tasks.each do |task_string|
+        name, args = parse_task_string(task_string)
+        @env.engine.invoke(name, *args)
+        break unless @env.engine.errors.empty?
+      end
+    end
+
+    def run_with_engine
+      yield
+      @env.engine.shutdown
+    rescue Exception => exception
+      @env.engine.kill(exception)
+      raise
+    else
+      raise @env.engine.errors.first unless @env.engine.errors.empty?
+    ensure
+      call_after_all_actions
     end
 
     def standard_rake_options
@@ -59,7 +86,16 @@ module Abid
            proc { options.preview = true }],
           ['--wait-external-task',
            'Wait a task finished if it is running in externl process',
-           proc { options.wait_external_task = true }]
+           proc { options.wait_external_task = true }],
+          ['--log-level LEVEL',
+           'Specifies the log level. LEVEL can be error, warn, info or debug.' \
+           ' (default: info)',
+           proc do |v|
+             options.log_level = Logger::Severity.const_get(v.upcase)
+           end],
+          ['--[no-]logging',
+           'Enable logging. (default: on)',
+           proc { |v| options.logging = v }]
         ]
       )
     end
@@ -67,6 +103,8 @@ module Abid
     def handle_options
       options.rakelib = %w(rakelib tasks)
       options.trace_output = $stderr
+      options.log_level = Logger::Severity::INFO
+      options.logging = true
 
       OptionParser.new do |opts|
         opts.banner = 'See full documentation at https://github.com/ojima-h/abid.'
@@ -96,6 +134,29 @@ module Abid
       params, = ParamsFormat.collect_params(args)
       @global_params.update(params)
       super
+    end
+
+    #
+    # Abid Extentions
+    #
+    def logger
+      return @logger if @logger
+      logdev = options.logging ? $stderr : nil
+      @logger = Logger.new(logdev).tap do |l|
+        l.progname = 'abid'
+        l.level = options.log_level || Logger::Severity::INFO
+      end
+    end
+    attr_writer :logger
+
+    def call_after_all_actions
+      @after_all_actions.each do |block|
+        block.call(
+          top_level_tasks,
+          @env.engine.summary,
+          @env.engine.errors
+        )
+      end
     end
   end
 end

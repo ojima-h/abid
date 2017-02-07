@@ -1,22 +1,22 @@
 require 'test_helper'
 
 module Abid
-  module Engine
+  class Engine
     class ProcessTest < AbidTest
       def test_new
-        refute Job['test_ok'].process.complete?
-        assert_equal :unscheduled, Job['test_ok'].process.status
+        refute find_process('test_ok').complete?
+        assert_equal :unscheduled, find_process('test_ok').status
       end
 
       def test_prepare
-        process = Job['test_ok'].process
+        process = find_process('test_ok')
         assert process.prepare
         assert_equal :pending, process.status
         refute process.prepare
       end
 
       def test_start
-        process = Job['test_ok'].process
+        process = find_process('test_ok')
 
         refute process.start, 'could not start before prepare'
         assert_equal :unscheduled, process.status
@@ -29,21 +29,20 @@ module Abid
       end
 
       def test_cancel
-        process = Job['test_ok'].process
+        process = find_process('test_ok')
 
         refute process.cancel, 'could not cancel before prepare'
         assert_equal :unscheduled, process.status
 
         assert process.prepare
         assert process.cancel
-        assert_equal :complete, process.status
-        assert process.cancelled?
+        assert_equal :cancelled, process.status
 
         refute process.prepare, 'could not prepare after cancel'
       end
 
       def test_finish
-        process = Job['test_ok'].process
+        process = find_process('test_ok')
 
         refute process.finish, 'could not finish before prepare'
         assert_equal :unscheduled, process.status
@@ -53,35 +52,42 @@ module Abid
 
         assert process.start
         assert process.finish
-        assert_equal :complete, process.status
-        assert process.successed?
+        assert_equal :successed, process.status
 
         refute process.start, 'could not start after finish'
       end
 
       def test_fail
-        process = Job['test_ok'].process
+        process = find_process('test_ok')
 
         assert process.prepare
         assert process.start
         assert process.finish(RuntimeError.new('test'))
-        assert_equal :complete, process.status
-        assert process.failed?
+        assert_equal :failed, process.status
         assert_equal 'test', process.error.message
       end
 
-      def test_acitve_processes
-        process = Job['test_ok'].process
-        process_manager = Abid.global.process_manager
-
+      def test_quit_after_finish
+        process = find_process('test_ok')
         process.prepare
-        assert process_manager.active?(process)
-
         process.start
-        assert process_manager.active?(process)
+        process.finish(RuntimeError.new('test'))
+        process.quit(RuntimeError.new('quit'))
 
-        process.finish
-        refute process_manager.active?(process)
+        assert_equal :failed, process.status
+        assert_equal 'quit', process.error.message
+      end
+
+      def test_exception
+        invoke('test_exception:p2')
+
+        assert env.engine.worker_manager.each_worker.all?(&:shutdown?)
+        %w(p1_1 p1_2 p2).each do |name|
+          process = find_process("test_exception:#{name}", {})
+          assert process.failed?
+          assert_kind_of Exception, process.error
+          assert_equal 'test', process.error.message
+        end
       end
     end
   end

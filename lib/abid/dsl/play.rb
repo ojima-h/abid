@@ -23,12 +23,11 @@ module Abid
       def initialize(params)
         @params = params
         @prerequisite_tasks = []
-        call_action(:setup)
       end
 
       # default settings
-      set :worker,    :default
-      set :volatile,  false
+      worker :default
+      volatile false
       set :concerned, true
       set :needed,    true
     end

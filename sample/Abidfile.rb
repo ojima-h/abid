@@ -3,7 +3,7 @@ require 'open-uri'
 task default: 'count'
 
 play :sample do
-  set :volatile, true
+  volatile
   param :name, type: :string
 
   def run
@@ -35,9 +35,9 @@ play :count do
 end
 
 play :console do
-  set :volatile, true
+  volatile
   def run
-require 'pry'
+    require 'pry'
     Pry.start(self)
   end
 end

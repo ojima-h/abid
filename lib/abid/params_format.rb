@@ -1,3 +1,5 @@
+require 'date'
+require 'time'
 require 'shellwords'
 
 module Abid
@@ -8,6 +10,10 @@ module Abid
         val = Shellwords.escape(format_value(value))
         "#{key}=#{val}"
       end.join(' ')
+    end
+
+    def self.format_with_name(name, params)
+      name + (params.empty? ? '' : ' ' + format(params))
     end
 
     def self.format_value(value)
@@ -55,6 +61,18 @@ module Abid
       else
         value
       end
+    end
+
+    SUPPORTED_TYPES = [
+      Numeric, TrueClass, FalseClass, Date, Time, DateTime, String
+    ].freeze
+
+    def self.validate_params!(params)
+      params.values.each do |value|
+        valid = SUPPORTED_TYPES.any? { |t| value.is_a? t }
+        raise Error, "#{value.class} class is not supported" unless valid
+      end
+      params
     end
   end
 end

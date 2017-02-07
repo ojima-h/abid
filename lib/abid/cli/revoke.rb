@@ -14,30 +14,29 @@ module Abid
 
       def run
         @job_ids.each do |job_id|
-          state = @env.db.states[job_id]
+          state = @env.state_manager.states[job_id]
           if state.nil?
             $stderr.puts "#{job_id} is not found"
             next
           end
 
-          next if !@quiet && !ask(state)
+          text = ParamsFormat.format_with_name(state.name, state.params_hash)
+          next if !@quiet && !ask(text)
 
-          revoke(state)
+          revoke(state, text)
         end
       end
 
-      def revoke(state)
-        @env.db.states.revoke(state.id, force: @force)
+      def revoke(state, text)
+        state.revoke(force: @force)
         puts "revoked #{state.id}"
       rescue AlreadyRunningError
-        params = ParamsFormat.format(YAML.load(state.params))
-        $stderr.puts "#{state.name} #{params} already running.\n" \
+        $stderr.puts "#{text} already running.\n" \
                      'Use -f option if you want to force assume.'
       end
 
-      def ask(state)
-        params = ParamsFormat.format(YAML.load(state.params))
-        print "revoke task \`#{state.name} #{params}'? "
+      def ask(text)
+        print "revoke task \`#{text}'? "
         $stdout.flush
         ret = $stdin.gets
         ret.match(/y(es)?/i)

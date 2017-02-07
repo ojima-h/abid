@@ -1,3 +1,6 @@
+define_worker :w1, 1
+define_worker :w2, 1
+
 play :test_ok do
   def run
     AbidTest.history << ['test_ok']
@@ -67,18 +70,36 @@ namespace :test_args do
   end
 end
 
-define_worker :w1, 1
-define_worker :w2, 1
+namespace :test_exception do
+  play :p1_1 do
+    worker :w1
+    action { sleep }
+  end
+
+  play :p1_2 do
+    worker :w2
+    action { raise Exception, 'test' }
+  end
+
+  play :p2 do
+    setup do
+      needs :p1_1
+      needs :p1_2
+    end
+    action { AbidTest.history << ['test_exception:p2'] }
+  end
+end
+
 namespace :test_worker do
   play :p1_1 do
-    set :worker, :w1
+    worker :w1
     def run
       AbidTest.history << ['test_worker:p1_1', thread: Thread.current.object_id]
     end
   end
 
   play :p1_2 do
-    set :worker, :w2
+    worker :w2
     def run
       AbidTest.history << ['test_worker:p1_2', thread: Thread.current.object_id]
     end
@@ -134,7 +155,7 @@ namespace :test_dsl do
         end
       end
       param :p1, default: 1 # overwrite default value
-      param :s3, default: :m2_1 # overwrite setting by param
+      param :s3, default: 'm2_1' # overwrite setting by param
       set :s1, :m2_1 # overwrite settings
       setup { AbidTest.history << ['test_dsl:ns:m2_1.setup'] }
       after { AbidTest.history << ['test_dsl:ns:m2_1.after'] }
@@ -160,6 +181,10 @@ namespace :test_dsl do
     mixin :m3_2 do
       param :p2, default: :m3_2
       set :s2, :m3_2
+    end
+
+    mixin :m5 do
+      action { AbidTest.history << ['test_dsl:ns:m5'] }
     end
   end
 
@@ -220,5 +245,34 @@ namespace :test_dsl do
     undef_param :s3
 
     include 'ns:m3_2'
+  end
+
+  play :p4 do
+    def run
+      raise 'test'
+    end
+
+    after do |error|
+      AbidTest.history << ['test_dsl:p4.after', error]
+    end
+  end
+
+  play :p5 do
+    include 'ns:m5'
+    action { AbidTest.history << ['test_dsl:p5'] }
+  end
+
+  play :test_preview do
+    safe_action { AbidTest.history << ['test_dsl:test_preview'] }
+  end
+
+  play :test_preview2 do
+    action { AbidTest.history << ['test_dsl:test_preview2'] }
+  end
+
+  play :test_preview3 do
+    def run
+      AbidTest.history << ['test_dsl:test_preview3']
+    end
   end
 end

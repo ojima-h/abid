@@ -5,10 +5,10 @@ require 'concurrent/atomic/atomic_fixnum'
 require 'concurrent/atomic/count_down_latch'
 
 module Abid
-  module Engine
+  class Engine
     class WorkerManagerTest < AbidTest
       def setup
-        @worker_manager = Abid::Environment.new.worker_manager
+        @worker_manager = Abid::Environment.new.engine.worker_manager
       end
 
       def test_shutdown
@@ -74,7 +74,7 @@ module Abid
       end
 
       def test_execute_task
-        Job['test_worker:p1'].invoke
+        invoke('test_worker:p1')
 
         t1 = []
         t2 = []

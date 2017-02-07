@@ -16,15 +16,14 @@ module Abid
       end
 
       def assume(task, params)
-        params_str = ParamsFormat.format(params)
+        state = @env.state_manager.state(task, params)
+        state.assume(force: @force)
 
-        job = @env.job_manager[task, params]
-        state = job.state.assume(force: @force)
-
-        puts "#{task} #{params_str} (id: #{state.id})" \
-             ' is assumed to be SUCCESSED.'
+        s = state.find
+        n = ParamsFormat.format_with_name(task, params)
+        puts "#{n} (id: #{s.id}) is assumed to be SUCCESSED."
       rescue AlreadyRunningError
-        $stderr.puts "#{task} #{params_str} already running.\n" \
+        $stderr.puts "#{n} already running.\n" \
                      'Use -f option if you want to force assume.'
         raise
       end

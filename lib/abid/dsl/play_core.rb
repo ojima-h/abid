@@ -49,6 +49,14 @@ module Abid
       end
       private :eval_setting
 
+      def logger
+        task.application.logger
+      end
+
+      def preview?
+        task.application.options.dryrun || task.application.options.preview
+      end
+
       # Play definition's body is extended by ClassMethods.
       #
       module ClassMethods
@@ -167,6 +175,41 @@ module Abid
           params_spec[name] = spec
         end
 
+        #
+        # Setting Helpers
+        #
+
+        # @!visibility private
+        def self.def_setting_helper(name)
+          class_eval <<-RUBY, __FILE__, __LINE__ + 1
+          def #{name}(val = nil, &block)
+            set :#{name}, val, &block
+          end
+          RUBY
+        end
+
+        # @!method worker(val = nil, &block)
+        #   Set :worker name.
+        #
+        #       play :foo do
+        #         worker :my_worker
+        #         action { ... }
+        #       end
+        #
+        #   This is short-hand style of `set :worker, :my_worker`
+        def_setting_helper :worker
+
+        # @!method volatile(val = nil, &block)
+        #   Set :volatile flag.
+        #
+        #       play :foo do
+        #         volatile
+        #         action { ... }
+        #       end
+        #
+        #   This is short-hand style of `set :volatile, true`
+        def_setting_helper :volatile
+
         # Delete the param from params_spec.
         #
         #     mixin :bar do
@@ -219,6 +262,32 @@ module Abid
         #       Running!
         define_action :setup
 
+        # @!method action(&block)
+        #   Register main action.
+        #
+        #       play :foo do
+        #         action { |args| ... }
+        #       end
+        #
+        #   `action` block is not executed in dryrun mode nor preview mode.
+        #
+        #   Main actions of mixis are inherited to play, while `run` method is
+        #   overwritten.
+        #
+        #   @yieldparam args [Rake::TaskArguments]
+        define_action :action
+
+        # @!method safe_action(&block)
+        #   Register safe action.
+        #   `safe_action` is similar to `action`, but this block is executed
+        #   in preview mode.
+        #
+        #   You should guard dangerous operations in a safe_action block.
+        #   This is useful to preview detail behavior of play.
+        #
+        #   @yieldparam args [Rake::TaskArguments]
+        define_action :safe_action
+
         # @!method after(&block)
         #   Register _after_ action.
         #
@@ -235,6 +304,8 @@ module Abid
         #           $syserr.puts "[ERROR]   #{error}"
         #         end
         #       end
+        #
+        #   `after` block is not executed in dryrun mode nor preview mode.
         #
         #   @yieldparam error [StandardError, nil] if run method failed,
         #     otherwise nil.

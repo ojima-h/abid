@@ -1,7 +1,10 @@
+require 'forwardable'
 require 'monitor'
 
 module Abid
   class Environment
+    extend Forwardable
+
     def initialize
       @mon = Monitor.new
     end
@@ -10,39 +13,21 @@ module Abid
       @application ||= Abid::Application.new(self)
     end
     attr_writer :application
-
-    def options
-      application.options
-    end
+    def_delegators :application, :options, :logger
 
     def config
-      @mon.synchronize do
-        @cofig ||= Config.new
-      end
+      return @config if @config
+      @mon.synchronize { @cofig ||= Config.new }
     end
 
-    def job_manager
-      @mon.synchronize do
-        @job_manager ||= JobManager.new(self)
-      end
+    def engine
+      return @engine if @engine
+      @mon.synchronize { @engine ||= Engine.new(self) }
     end
 
-    def process_manager
-      @mon.synchronize do
-        @process_manager ||= Engine::ProcessManager.new(self)
-      end
-    end
-
-    def worker_manager
-      @mon.synchronize do
-        @worker_manager ||= Engine::WorkerManager.new(self)
-      end
-    end
-
-    def db
-      @mon.synchronize do
-        @db ||= StateManager::Database.new(self)
-      end
+    def state_manager
+      return @state_manager if @state_manager
+      @mon.synchronize { @state_manager ||= StateManager.new(self) }
     end
   end
 end

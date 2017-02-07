@@ -1,51 +1,50 @@
+require 'concurrent/utility/monotonic_time'
+
 module Abid
-  module Engine
-    # Waits for a job to be finished which is running in external application,
-    # and completes the job in its own application.
+  class Engine
+    # Waits for a process to be finished which is running in external
+    # application, and completes the process in its own application.
     #
-    #     Waiter.new(job).wait
+    #     Waiter.new(process).wait
     #
-    # The `job` result gets :successed or :failed when external application
-    # finished the job execution.
+    # The `process` result gets :successed or :failed when external application
+    # finished the process execution.
     class Waiter
       DEFAULT_WAIT_INTERVAL = 10
       DEFAULT_WAIT_TIMEOUT = 3600
 
-      def initialize(job)
-        @job = job
-        @process = job.process
+      def initialize(process)
+        @process = process
+        @job = process.job
         @wait_limit = Concurrent.monotonic_time + wait_timeout
       end
 
       def wait
-        unless @job.env.options.wait_external_task
-          @process.finish(AlreadyRunningError.new('job already running'))
+        unless @job.options.wait_external_task
+          @process.finish(AlreadyRunningError.new('process already running'))
           return
         end
 
+        @process.logger.info('waiting')
         wait_iter
       end
 
       private
 
       def wait_interval
-        @job.env.options.wait_external_task_interval ||
-          DEFAULT_WAIT_INTERVAL
+        @job.options.wait_external_task_interval || DEFAULT_WAIT_INTERVAL
       end
 
       def wait_timeout
-        @job.env.options.wait_external_task_timeout ||
-          DEFAULT_WAIT_TIMEOUT
+        @job.options.wait_external_task_timeout || DEFAULT_WAIT_TIMEOUT
       end
 
       def wait_iter
-        @job.env.worker_manager[:timer_set].post(wait_interval) do
-          capture_exception do
-            state = @job.state.find
+        @process.engine.worker_manager[:timer_set].post(wait_interval) do
+          @process.capture_exception do
+            state = @process.state_service.find
 
-            check_finished(state) ||
-              check_timeout ||
-              wait_iter
+            check_finished(state) || check_timeout || wait_iter
           end
         end
       end
@@ -68,15 +67,6 @@ module Abid
 
         @process.finish RuntimeError.new('timeout')
         true
-      end
-
-      def capture_exception
-        yield
-      rescue StandardError, ScriptError => error
-        @process.quit(error)
-      rescue Exception => exception
-        # TODO: exit immediately when fatal error occurs.
-        @process.quit(exception)
       end
     end
   end

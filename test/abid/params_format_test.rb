@@ -17,9 +17,10 @@ module Abid
     end
 
     def test_format_error
-      assert_raises(Error, 'Object is not supported') do
+      err = assert_raises Error do
         ParamsFormat.format(a: Object.new)
       end
+      assert_match 'Object class is not supported', err.message
     end
 
     def test_parse_args
