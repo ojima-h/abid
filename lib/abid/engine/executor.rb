@@ -54,6 +54,7 @@ module Abid
       # Skip the job if it should be.
       # @return [Boolean] true if skipped
       def precheck_to_skip
+        return false if @job.options.force
         return @process.skip unless @job.concerned?
 
         return false if @job.repair? && !@prerequisites.empty?

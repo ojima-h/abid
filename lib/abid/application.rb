@@ -95,7 +95,11 @@ module Abid
            end],
           ['--[no-]logging',
            'Enable logging. (default: on)',
-           proc { |v| options.logging = v }]
+           proc { |v| options.logging = v }],
+          ['--force',
+           'Force execute the task without regard to dependencies and the' \
+           ' task state.',
+           proc { options.force = true }]
         ]
       )
     end

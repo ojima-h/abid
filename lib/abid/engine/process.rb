@@ -74,6 +74,7 @@ module Abid
       attr_reader :state_service
 
       def prerequisites
+        return [] if @job.options.force
         @job.prerequisites.map { |preq| @engine.process_manager[preq] }
       end
 

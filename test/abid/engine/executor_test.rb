@@ -99,6 +99,22 @@ module Abid
         assert process.failed?
         assert_kind_of AlreadyRunningError, process.error
       end
+
+      def test_force_mode
+        find_process('test_p3').state_service.assume
+        mock_fail_state('test_p2', i: 0)
+
+        in_options(force: true) do
+          process = invoke('test_p3')
+
+          assert process.state_service.find.successed?
+          assert process.successed?
+
+          assert_includes AbidTest.history, ['test_p3']
+          refute_includes AbidTest.history, ['test_p2', i: 0]
+          refute_includes AbidTest.history, ['test_p2', i: 1]
+        end
+      end
     end
   end
 end
