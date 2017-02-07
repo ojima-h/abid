@@ -48,6 +48,29 @@ module Abid
         raise "#{task.name}: param #{key} is not specified"
       end
       private :fetch_param
+
+      # @param job [Job] collect prerequisites of the job.
+      # @param target_job [Job] collect only prerequisites depending on
+      #   `target_job` if specified.
+      # @return [Array<Job>]
+      def collect_prerequisites(job, target_job = nil)
+        collect_prerequisites_iter(job, {}, target_job).keys
+      end
+
+      def collect_prerequisites_iter(job, checked, target_job = nil)
+        return {} if checked.include?(job)
+        checked[job] = nil
+
+        return { job => nil } if target_job == job
+
+        found = {}
+        job.prerequisites.each do |preq|
+          found.update(collect_prerequisites_iter(preq, checked, target_job))
+        end
+        found[job] = nil if target_job.nil? || !found.empty?
+        found
+      end
+      private :collect_prerequisites_iter
     end
   end
 end
