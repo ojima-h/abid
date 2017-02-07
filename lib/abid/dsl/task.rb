@@ -28,7 +28,7 @@ module Abid
       end
 
       def bind(params = {})
-        AbidTaskInstance.new(self, params)
+        AbidJob.new(self, params)
       end
 
       def params_spec

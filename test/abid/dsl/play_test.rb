@@ -4,7 +4,7 @@ module Abid
   module DSL
     class PlayTest < AbidTest
       def find_play(name, params = {})
-        env.application.abid_tasks[name, params].send(:play)
+        env.application.job_manager[name, params].send(:play)
       end
 
       def test_play_settings
@@ -56,7 +56,7 @@ module Abid
 
       def test_overwrite
         err = assert_raises RuntimeError do
-          env.application.abid_tasks['test_dsl:p2']
+          env.application.job_manager['test_dsl:p2']
         end
         assert_match(/param p2 is not specified/, err.message)
 

@@ -1,9 +1,9 @@
-require 'abid/dsl/task_instance'
+require 'abid/dsl/job'
 
 module Abid
   module DSL
     # Abid::DSL::Task wrapper
-    class AbidTaskInstance < TaskInstance
+    class AbidJob < Job
       def_delegators :play, :worker
       def_delegator :play, :concerned, :concerned?
       def_delegator :play, :needed,    :needed?
@@ -41,7 +41,7 @@ module Abid
            + play.prerequisite_tasks
 
         ps.map do |preq, params|
-          task.application.abid_tasks[preq.name, params]
+          task.application.job_manager[preq.name, params]
         end
       end
 

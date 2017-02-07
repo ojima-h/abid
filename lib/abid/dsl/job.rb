@@ -2,8 +2,8 @@ require 'forwardable'
 
 module Abid
   module DSL
-    # Common interface for RakeTaskInstance and AbidTaskInstance
-    class TaskInstance
+    # Common interface for RakeJob and AbidJob
+    class Job
       extend Forwardable
 
       def self.interface(name, args = [])

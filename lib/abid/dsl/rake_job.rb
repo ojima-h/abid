@@ -1,9 +1,9 @@
-require 'abid/dsl/task_instance'
+require 'abid/dsl/job'
 
 module Abid
   module DSL
     # Rake::Task wrapper.
-    class RakeTaskInstance < TaskInstance
+    class RakeJob < Job
       def volatile?
         true
       end
@@ -33,7 +33,7 @@ module Abid
 
       def prerequisites
         task.prerequisite_tasks.map do |preq|
-          task.application.abid_tasks.bind(preq.name, {})
+          task.application.job_manager.bind(preq.name, {})
         end
       end
     end

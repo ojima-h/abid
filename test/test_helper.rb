@@ -60,7 +60,7 @@ class AbidTest < Minitest::Test
   end
 
   def find_process(name, params = {})
-    job = env.application.abid_tasks[name, params]
+    job = env.application.job_manager[name, params]
     env.engine.process_manager[job]
   end
 

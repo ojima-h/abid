@@ -1,14 +1,14 @@
 require 'logger'
-require 'abid/dsl/abid_task_instance'
+require 'abid/dsl/abid_job'
 require 'abid/dsl/actions'
 require 'abid/dsl/mixin'
 require 'abid/dsl/params_spec'
 require 'abid/dsl/play_core'
 require 'abid/dsl/play'
-require 'abid/dsl/rake_task_instance'
+require 'abid/dsl/rake_job'
 require 'abid/dsl/syntax'
-require 'abid/dsl/task_instance'
-require 'abid/dsl/task_manager'
+require 'abid/dsl/job'
+require 'abid/dsl/job_manager'
 require 'abid/dsl/task'
 
 module Abid
@@ -19,12 +19,10 @@ module Abid
       @env = env
       @global_params = {}
       @global_mixin = DSL::Mixin.create_global_mixin
-      @abid_task_manager = DSL::TaskManager.new(self)
+      @job_manager = DSL::JobManager.new(self)
       @after_all_actions = []
     end
-    attr_reader :global_params, :global_mixin, :abid_task_manager,
-                :after_all_actions
-    alias abid_tasks abid_task_manager
+    attr_reader :global_params, :global_mixin, :job_manager, :after_all_actions
 
     def init
       super

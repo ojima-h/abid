@@ -26,7 +26,7 @@ module Abid
         end
       end
 
-      # @param job [DSL::TaskInstance]
+      # @param job [DSL::Job]
       # @param args [Array<Object>]
       # @return [Process]
       def invoke(job, args)

@@ -2,8 +2,8 @@ require 'monitor'
 
 module Abid
   module DSL
-    # TaskManager manages tasks.
-    class TaskManager
+    # JobManager manages jobs.
+    class JobManager
       def initialize(application)
         @app = application
         @tasks = Hash.new { |h, k| h[k] = {} }

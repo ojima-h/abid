@@ -26,7 +26,7 @@ module Abid
     # @param args [Array]
     # @return [(Symbol, Exception)] pair of result and error.
     def invoke(name, *args, **params)
-      task = @env.application.abid_tasks[name, params]
+      task = @env.application.job_manager[name, params]
       process_manager.invoke(task, args)
     end
 

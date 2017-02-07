@@ -12,7 +12,7 @@ end
 module Rake
   class Task
     def bind(params = {})
-      Abid::DSL::RakeTaskInstance.new(self, params)
+      Abid::DSL::RakeJob.new(self, params)
     end
 
     def params_spec

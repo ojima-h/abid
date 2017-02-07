@@ -2,7 +2,7 @@ require 'test_helper'
 
 module Abid
   module DSL
-    class TaskInstanceTest < AbidTest
+    class JobTest < AbidTest
       def test_after_hook
         invoke('test_dsl:p4')
 
