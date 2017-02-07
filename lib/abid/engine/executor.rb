@@ -11,6 +11,7 @@ module Abid
         @process = job.process
         @state = @process.state_service.find
         @prerequisites = job.prerequisites.map(&:process)
+        @worker = @process.engine.worker_manager[@job.task.worker]
       end
 
       # Check if the task should be executed.
@@ -83,7 +84,7 @@ module Abid
       # task finished otherwise.
       def execute_or_wait
         if @process.state_service.try_start
-          @job.worker.post { @process.capture_exception { execute } }
+          @worker.post { @process.capture_exception { execute } }
         else
           Waiter.new(@job).wait
         end

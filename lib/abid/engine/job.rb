@@ -19,10 +19,6 @@ module Abid
         @task.prerequisite_tasks.map { |preq| @engine.jobs[preq] }
       end
 
-      def worker
-        @engine.worker_manager[task.worker]
-      end
-
       def dryrun?
         @engine.options.dryrun || @engine.options.preview
       end
