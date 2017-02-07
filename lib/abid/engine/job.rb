@@ -6,13 +6,11 @@ module Abid
         @task = task
         @state = find_state
         @options = engine.options
-        @logger = @engine.logger.clone
-        @logger.progname += ": #{@task}"
 
         @process = Process.new(self)
         @process.on_update { @engine.job_manager.update(self) }
       end
-      attr_reader :engine, :process, :state, :task, :options, :logger
+      attr_reader :engine, :process, :state, :task, :options
 
       def find_state
         @engine.state_manager.state(task.name, task.params,

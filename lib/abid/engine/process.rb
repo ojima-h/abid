@@ -46,12 +46,20 @@ module Abid
 
       def initialize(job)
         @job = job
+        @engine = job.engine
         @status = Status.new(:unscheduled)
         @error = nil
-        @logger = @job.logger
+        initialize_logger(job)
       end
       attr_reader :error
       def_delegators :@status, :on_update, :on_complete, :wait, :complete?
+
+      def initialize_logger(job)
+        @logger = @engine.logger.clone
+        pn = @logger.progname
+        @logger.progname = pn ? "#{pn}: #{job.task}" : job.task.to_s
+      end
+      attr_reader :logger
 
       #
       # State predicates

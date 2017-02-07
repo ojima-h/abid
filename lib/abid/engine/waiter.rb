@@ -25,7 +25,7 @@ module Abid
           return
         end
 
-        @job.logger.info('waiting')
+        @process.logger.info('waiting')
         wait_iter
       end
 
