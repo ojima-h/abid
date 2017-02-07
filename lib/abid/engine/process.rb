@@ -50,8 +50,9 @@ module Abid
         @status = Status.new(:unscheduled)
         @error = nil
         initialize_logger(job)
+        initialize_state_service(job)
       end
-      attr_reader :error
+      attr_reader :error, :engine, :job
       def_delegators :@status, :on_update, :on_complete, :wait, :complete?
 
       def initialize_logger(job)
@@ -59,7 +60,19 @@ module Abid
         pn = @logger.progname
         @logger.progname = pn ? "#{pn}: #{job.task}" : job.task.to_s
       end
+      private :initialize_logger
       attr_reader :logger
+
+      def initialize_state_service(job)
+        task = job.task
+        @state_service = @engine.state_manager.state(
+          task.name, task.params,
+          dryrun: job.dryrun?,
+          volatile: task.volatile?
+        )
+      end
+      private :initialize_state_service
+      attr_reader :state_service
 
       #
       # State predicates

@@ -9,7 +9,7 @@ module Abid
         @args = args
 
         @process = job.process
-        @state = job.state.find
+        @state = @process.state_service.find
         @prerequisites = job.prerequisites.map(&:process)
       end
 
@@ -82,7 +82,7 @@ module Abid
       # Post the task if no external process executing the same task, wait the
       # task finished otherwise.
       def execute_or_wait
-        if @job.state.try_start
+        if @process.state_service.try_start
           @job.worker.post { @process.capture_exception { execute } }
         else
           Waiter.new(@job).wait
@@ -92,7 +92,7 @@ module Abid
       def execute
         _, error = safe_execute
 
-        @job.state.finish(error)
+        @process.state_service.finish(error)
         @process.finish(error)
       end
 

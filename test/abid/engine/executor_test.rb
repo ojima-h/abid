@@ -46,7 +46,7 @@ module Abid
 
       def test_skip_in_prepare
         job = find_job('test_ok')
-        job.state.assume
+        job.process.state_service.assume
         executor = Executor.new(job, empty_args)
 
         refute executor.prepare
@@ -92,7 +92,7 @@ module Abid
         job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
-        job.state.start
+        job.process.state_service.start
         executor.prepare
         executor.start
         job.process.wait

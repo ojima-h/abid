@@ -4,19 +4,12 @@ module Abid
       def initialize(engine, task)
         @engine = engine
         @task = task
-        @state = find_state
         @options = engine.options
 
         @process = Process.new(self)
         @process.on_update { @engine.job_manager.update(self) }
       end
-      attr_reader :engine, :process, :state, :task, :options
-
-      def find_state
-        @engine.state_manager.state(task.name, task.params,
-                                    dryrun: dryrun?, volatile: task.volatile?)
-      end
-      private :find_state
+      attr_reader :engine, :process, :task, :options
 
       def root?
         @engine.job_manager.root?(self)

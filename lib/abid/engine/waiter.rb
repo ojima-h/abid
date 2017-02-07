@@ -42,7 +42,7 @@ module Abid
       def wait_iter
         @job.engine.worker_manager[:timer_set].post(wait_interval) do
           @process.capture_exception do
-            state = @job.state.find
+            state = @process.state_service.find
 
             check_finished(state) || check_timeout || wait_iter
           end

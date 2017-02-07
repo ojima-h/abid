@@ -13,7 +13,7 @@ module Abid
         job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
-        job.state.start
+        job.process.state_service.start
 
         executor.prepare
         executor.start
@@ -21,7 +21,7 @@ module Abid
         job.process.wait(0.5)
         assert job.process.running?
 
-        job.state.finish
+        job.process.state_service.finish
         job.process.wait(0.5)
 
         assert job.process.successed?
@@ -31,7 +31,7 @@ module Abid
         job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
-        job.state.start
+        job.process.state_service.start
 
         executor.prepare
         executor.start
@@ -39,7 +39,7 @@ module Abid
         job.process.wait(0.5)
         assert job.process.running?
 
-        job.state.finish RuntimeError.new('test')
+        job.process.state_service.finish RuntimeError.new('test')
         job.process.wait(0.5)
 
         assert job.process.failed?
@@ -50,7 +50,7 @@ module Abid
         job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
-        job.state.start
+        job.process.state_service.start
 
         executor.prepare
         executor.start
@@ -58,7 +58,7 @@ module Abid
         job.process.wait(0.5)
         assert job.process.running?
 
-        env.state_manager.states[job.state.find.id].revoke(force: true)
+        env.state_manager.states[job.process.state_service.find.id].revoke(force: true)
         job.process.wait(0.5)
 
         assert job.process.failed?
@@ -71,7 +71,7 @@ module Abid
         job = find_job('test_ok')
         executor = Executor.new(job, empty_args)
 
-        job.state.start
+        job.process.state_service.start
 
         executor.prepare
         executor.start
