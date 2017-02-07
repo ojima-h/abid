@@ -55,6 +55,7 @@ module Abid
       def kill(error)
         return if shutdown?
         @status.set(:shutdown)
+        @errors << error
         actives.each { |process| process.quit(error) }
       end
 
