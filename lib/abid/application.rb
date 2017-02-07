@@ -15,6 +15,7 @@ module Abid
   class Application < Rake::Application
     def initialize(env)
       super()
+      @name = 'abid'
       @rakefiles = %w(abidfile Abidfile abidfile.rb Abidfile.rb)
       @env = env
       @global_params = {}
@@ -24,7 +25,7 @@ module Abid
     end
     attr_reader :global_params, :global_mixin, :job_manager, :after_all_actions
 
-    def init
+    def init(app_name = 'abid')
       super
       @env.config.load(options.config_file)
     end
@@ -32,6 +33,8 @@ module Abid
     def top_level
       if options.show_tasks || options.show_prereqs
         super
+      elsif options.show_job_preqs
+        display_job_prerequisites
       else
         run_with_engine { invoke_top_level_tasks }
       end
@@ -55,6 +58,24 @@ module Abid
       raise @env.engine.errors.first unless @env.engine.errors.empty?
     ensure
       call_after_all_actions
+    end
+
+    # Display the job prerequisites
+    def display_job_prerequisites
+      from = parse_job_string(options.show_job_preqs)
+      to = parse_job_string(options.show_job_preqs_to) \
+        if options.show_job_preqs_to
+      @job_manager.collect_prerequisites(from, to).each do |job|
+        puts "#{name} #{job}"
+      end
+    end
+
+    def parse_job_string(job_string)
+      require 'shellwords'
+      args = Shellwords.split(job_string)
+      params, tasks = ParamsFormat.collect_params(args)
+      name, = parse_task_string(tasks.first)
+      @job_manager[name, params]
     end
 
     def standard_rake_options
@@ -99,7 +120,13 @@ module Abid
           ['--force',
            'Force execute the task without regard to dependencies and the' \
            ' task state.',
-           proc { options.force = true }]
+           proc { options.force = true }],
+          ['--job-prereqs JOB', '-J',
+           'Display the job dependencies, then exit',
+           proc { |v| options.show_job_preqs = v }],
+          ['--to JOB',
+           'Show only the job dependencies which depends on this job',
+           proc { |v| options.show_job_preqs_to = v }]
         ]
       )
     end
