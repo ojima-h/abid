@@ -34,33 +34,29 @@ module Abid
     def top_level
       if options.show_tasks || options.show_prereqs
         super
-        return
+      else
+        run_with_engine { invoke_top_level_tasks }
       end
-
-      invoke_top_level_tasks
-      display_jobs_summary
-      check_errors!
     end
 
     def invoke_top_level_tasks
-      top_level_tasks.each do |task_name|
-        result, = invoke_task(task_name)
-        break if result == :failed || result == :cancelled
+      top_level_tasks.each do |task_string|
+        name, args = parse_task_string(task_string)
+        @env.engine.invoke(name, *args)
+        break unless @env.engine.errors.empty?
       end
+    end
 
+    def run_with_engine
+      yield
       @env.engine.shutdown
     rescue Exception => exception
       @env.engine.kill(exception)
-    end
-
-    def check_errors!
-      err = @env.engine.errors.first
-      raise err if err
-    end
-
-    def invoke_task(task_string) # :nodoc:
-      name, args = parse_task_string(task_string)
-      @env.engine.invoke(name, {}, args)
+      raise
+    else
+      raise @env.engine.errors.first unless @env.engine.errors.empty?
+    ensure
+      call_after_all_actions
     end
 
     def standard_rake_options
@@ -101,10 +97,7 @@ module Abid
            end],
           ['--[no-]logging',
            'Enable logging. (default: on)',
-           proc { |v| options.logging = v }],
-          ['--[no-]summary',
-           'Display jobs summary. (default: on)',
-           proc { |v| options.summary = v }]
+           proc { |v| options.logging = v }]
         ]
       )
     end
@@ -114,7 +107,6 @@ module Abid
       options.trace_output = $stderr
       options.log_level = Logger::Severity::INFO
       options.logging = true
-      options.summary = true
 
       OptionParser.new do |opts|
         opts.banner = 'See full documentation at https://github.com/ojima-h/abid.'
@@ -159,12 +151,13 @@ module Abid
     end
     attr_writer :logger
 
-    def display_jobs_summary
-      return if !options.summary || options.dryrun || options.preview
-      return if @env.engine.summary.empty?
-      puts "Summary:\n"
-      @env.engine.pretty_summary.lines.each do |line|
-        puts '  ' + line
+    def call_after_all_actions
+      @after_all_actions.each do |block|
+        block.call(
+          top_level_tasks,
+          @env.engine.summary,
+          @env.engine.errors
+        )
       end
     end
   end

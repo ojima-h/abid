@@ -61,7 +61,7 @@ module Abid
       private
 
       def attach_chain
-        @job.process.add_observer do
+        @job.process.on_complete do
           error = @job.process.error
           next if error.nil?
           next if @chain.nil?
@@ -82,7 +82,7 @@ module Abid
       def after_prerequisites(&block)
         counter = DependencyCounter.new(@job.prerequisites.size, &block)
         @job.prerequisites.each do |preq_job|
-          preq_job.process.add_observer counter
+          preq_job.process.on_complete { counter.update }
         end
       end
     end

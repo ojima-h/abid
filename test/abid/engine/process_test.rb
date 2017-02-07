@@ -36,8 +36,7 @@ module Abid
 
         assert process.prepare
         assert process.cancel
-        assert_equal :complete, process.status
-        assert process.cancelled?
+        assert_equal :cancelled, process.status
 
         refute process.prepare, 'could not prepare after cancel'
       end
@@ -53,8 +52,7 @@ module Abid
 
         assert process.start
         assert process.finish
-        assert_equal :complete, process.status
-        assert process.successed?
+        assert_equal :successed, process.status
 
         refute process.start, 'could not start after finish'
       end
@@ -65,8 +63,7 @@ module Abid
         assert process.prepare
         assert process.start
         assert process.finish(RuntimeError.new('test'))
-        assert_equal :complete, process.status
-        assert process.failed?
+        assert_equal :failed, process.status
         assert_equal 'test', process.error.message
       end
 
@@ -77,8 +74,7 @@ module Abid
         process.finish(RuntimeError.new('test'))
         process.quit(RuntimeError.new('quit'))
 
-        assert_equal :complete, process.status
-        assert process.failed?
+        assert_equal :failed, process.status
         assert_equal 'quit', process.error.message
       end
 
@@ -87,7 +83,7 @@ module Abid
 
         assert env.engine.worker_manager.each_worker.all?(&:shutdown?)
         %w(p1_1 p1_2 p2).each do |name|
-          process = env.engine.job("test_exception:#{name}", {}).process
+          process = find_job("test_exception:#{name}", {}).process
           assert process.failed?
           assert_kind_of Exception, process.error
           assert_equal 'test', process.error.message

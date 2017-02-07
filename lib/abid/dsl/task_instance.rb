@@ -37,6 +37,10 @@ module Abid
         @task.application.trace "** Invoke #{@task.name}"
       end
 
+      def to_s
+        ParamsFormat.format_with_name(name, params)
+      end
+
       private
 
       def dryrun?

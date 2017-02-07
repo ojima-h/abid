@@ -4,27 +4,22 @@ module Abid
   class Engine
     class SchedulerTest < AbidTest
       def test_invoke_ok
-        job = find_job('test_ok')
-        job.invoke
+        job = invoke('test_ok')
         assert job.state.find.successed?
         assert job.process.successed?
-        assert_equal :complete, job.process.status
         assert_includes AbidTest.history, ['test_ok']
       end
 
       def test_invoke_ng
-        job = find_job('test_ng')
-        job.invoke
+        job = invoke('test_ng')
         assert job.state.find.failed?
         assert job.process.failed?
-        assert_equal :complete, job.process.status
         assert_equal 'ng', job.process.error.message
         assert_includes AbidTest.history, ['test_ng']
       end
 
       def test_invoke
-        job = find_job('test_p3')
-        job.invoke
+        job = invoke('test_p3')
 
         assert job.state.find.successed?
         assert job.process.successed?
@@ -49,8 +44,7 @@ module Abid
         job_failed = find_job('test_p2', i: 1)
         mock_fail_state('test_p2', i: 1)
 
-        job = find_job('test_p3')
-        job.invoke
+        job = invoke('test_p3')
 
         assert job.state.find.new?
         assert job.process.cancelled?
@@ -65,9 +59,8 @@ module Abid
       end
 
       def test_invoke_already_failed_directly
-        job = find_job('test_p2', i: 1).root
         mock_fail_state('test_p2', i: 1)
-        job.invoke
+        job = invoke('test_p2', i: 1)
 
         assert job.state.find.successed?
         assert job.process.successed?
@@ -81,9 +74,7 @@ module Abid
         job_successed = find_job('test_p2', i: 1)
         job_successed.state.assume
 
-        job = find_job('test_p3')
-        job.invoke
-
+        job = invoke('test_p3')
         assert job.state.find.successed?
         assert job.process.successed?
         assert job_successed.process.skipped?
@@ -104,8 +95,7 @@ module Abid
           job_failed = find_job('test_p1', i: 1)
           mock_fail_state('test_p1', i: 1)
 
-          job = find_job('test_p3')
-          job.invoke
+          job = invoke('test_p3')
 
           assert job.state.find.successed?
           assert job.process.successed?
@@ -123,13 +113,13 @@ module Abid
 
       def test_circular_dependency
         err = assert_raises RuntimeError do
-          find_job('scheduler_test:c1').invoke
+          invoke('scheduler_test:c1')
         end
         assert_match(/Circular dependency/, err.message)
       end
 
       def test_with_args
-        find_job('test_args:t1').invoke('Tom', '24')
+        invoke('test_args:t1', 'Tom', '24')
         assert_includes AbidTest.history, ['test_args:t1', name: 'Tom', age: '24']
         assert_includes AbidTest.history, ['test_args:t2', age: '24']
       end

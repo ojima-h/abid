@@ -18,9 +18,12 @@ module Abid
       end
 
       def invoke(task, *args, **params)
-        Abid.global.engine.invoke(task, params, args)
+        Abid.global.engine.invoke(task, *args, **params)
       end
 
+      # @yieldparam top_level_tasks [Array<String>]
+      # @yieldparam summary [Hash]
+      # @yieldparam errors [Array<Exception>]
       def after_all(&block)
         Abid.application.after_all_actions << block
       end

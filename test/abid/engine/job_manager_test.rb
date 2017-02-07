@@ -20,8 +20,7 @@ module Abid
 
       def test_summary
         mock_fail_state('test_p2', i: 1)
-        job = find_job('test_p3')
-        job.invoke
+        invoke('test_p3')
 
         summary = @env.engine.summary
         assert_equal 3, summary[:successed]

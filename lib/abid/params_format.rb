@@ -13,7 +13,7 @@ module Abid
     end
 
     def self.format_with_name(name, params)
-      name + ' ' + format(params)
+      name + (params.empty? ? '' : ' ' + format(params))
     end
 
     def self.format_value(value)

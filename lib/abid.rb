@@ -9,6 +9,7 @@ require 'abid/engine'
 require 'abid/params_format'
 require 'abid/rake_extensions'
 require 'abid/state_manager'
+require 'abid/status'
 require 'abid/version'
 
 module Abid

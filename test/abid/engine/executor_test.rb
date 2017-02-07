@@ -10,7 +10,6 @@ module Abid
         assert executor.start
         job.process.wait
         assert job.process.successed?
-        assert_equal :complete, job.process.status
         assert_includes AbidTest.history, ['test_ok']
       end
 
@@ -21,7 +20,6 @@ module Abid
         assert executor.start
         job.process.wait
         assert job.process.failed?
-        assert_equal :complete, job.process.status
         assert_equal 'ng', job.process.error.message
         assert_includes AbidTest.history, ['test_ng']
       end
@@ -42,7 +40,6 @@ module Abid
 
         refute executor.prepare
         assert job.process.cancelled?
-        assert_equal :complete, job.process.status
 
         refute executor.start
       end
@@ -54,7 +51,6 @@ module Abid
 
         refute executor.prepare
         assert job.process.skipped?
-        assert_equal :complete, job.process.status
 
         refute executor.start
       end
@@ -69,7 +65,6 @@ module Abid
         assert executor.prepare
         refute executor.start
         assert job.process.cancelled?
-        assert_equal :complete, job.process.status
       end
 
       def test_prepare_after_running
@@ -102,7 +97,6 @@ module Abid
         executor.start
         job.process.wait
         assert job.process.failed?
-        assert_equal :complete, job.process.status
         assert_kind_of AlreadyRunningError, job.process.error
       end
     end

@@ -19,12 +19,11 @@ module Abid
         executor.start
 
         job.process.wait(0.5)
-        assert_equal :running, job.process.status
+        assert job.process.running?
 
         job.state.finish
         job.process.wait(0.5)
 
-        assert_equal :complete, job.process.status
         assert job.process.successed?
       end
 
@@ -38,12 +37,11 @@ module Abid
         executor.start
 
         job.process.wait(0.5)
-        assert_equal :running, job.process.status
+        assert job.process.running?
 
         job.state.finish RuntimeError.new('test')
         job.process.wait(0.5)
 
-        assert_equal :complete, job.process.status
         assert job.process.failed?
         assert_equal 'task failed while waiting', job.process.error.message
       end
@@ -58,12 +56,11 @@ module Abid
         executor.start
 
         job.process.wait(0.5)
-        assert_equal :running, job.process.status
+        assert job.process.running?
 
         env.state_manager.states[job.state.find.id].revoke(force: true)
         job.process.wait(0.5)
 
-        assert_equal :complete, job.process.status
         assert job.process.failed?
         assert_equal 'unexpected task state', job.process.error.message
       end
@@ -80,7 +77,6 @@ module Abid
         executor.start
 
         job.process.wait(60)
-        assert_equal :complete, job.process.status
         assert job.process.failed?
         assert_equal 'timeout', job.process.error.message
       end

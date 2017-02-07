@@ -1,6 +1,4 @@
-require 'concurrent/ivar'
 require 'forwardable'
-require 'monitor'
 
 module Abid
   class Engine
@@ -11,20 +9,19 @@ module Abid
     # You should retrive a process object via Job#process.
     # Do not create a process object by Process.new constructor.
     #
-    # A process object has an internal status of the task execution and
-    # the task result (Process#result).
+    # A process object has an internal status of the task execution.
     #
     # An initial status is :unscheduled.
     # When Process#prepare is called, the status gets :pending.
     # When Process#execute is called and the task is posted to a thread pool,
     # the status gets :running. When the task is finished, the status gets
-    # :complete and the result is assigned to :successed or :failed.
+    # :successed or :failed.
     #
     #     process = Job['task_name'].process
     #     process.prepare
     #     process.start
     #     process.wait
-    #     process.result #=> :successed or :failed
+    #     process.status #=> :successed or :failed
     #
     # Possible status are:
     #
@@ -35,13 +32,6 @@ module Abid
     #   <dd>The task is waiting for prerequisites complete.</dd>
     #   <dt>:running</dt>
     #   <dd>The task is running.</dd>
-    #   <dt>:complete</dt>
-    #   <dd>The task is finished.</dd>
-    # </dl>
-    #
-    # Possible results are:
-    #
-    # <dl>
     #   <dt>:successed</dt>
     #   <dd>The task is successed.</dd>
     #   <dt>:failed</dt>
@@ -54,67 +44,71 @@ module Abid
     class Process
       extend Forwardable
 
-      def_delegators :@result_ivar, :add_observer, :wait, :complete?
-
       def initialize(job)
         @job = job
-        @result_ivar = Concurrent::IVar.new
-        @status = :unscheduled
+        @status = Status.new(:unscheduled)
         @error = nil
-        @mon = Monitor.new
-
-        @result_ivar.add_observer { notify_job }
+        @logger = @job.logger
       end
-      attr_reader :status, :error
+      attr_reader :error
+      def_delegators :@status, :on_update, :on_complete, :wait, :complete?
 
-      %w(successed failed cancelled skipped).each do |meth|
+      #
+      # State predicates
+      #
+      %w(unscheduled pending running
+         successed failed cancelled skipped).each do |meth|
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
         def #{meth}?
-          result == :#{meth}
+          @status.get == :#{meth}
         end
         RUBY
       end
 
-      def result
-        @result_ivar.value if @result_ivar.complete?
+      def status
+        @status.get
       end
 
       def prepare
-        compare_and_set_status(:pending, :unscheduled)
+        @status.compare_and_set(:unscheduled, :pending)
       end
 
       def start
-        compare_and_set_status(:running, :pending)
+        return unless @status.compare_and_set(:pending, :running)
+        @logger.info('start.')
       end
 
       def finish(error = nil)
-        return unless compare_and_set_status(:complete, :running)
-        @error = error if error
-        @result_ivar.set(error.nil? ? :successed : :failed)
-        true
+        error.nil? ? successed : failed(error)
+      end
+
+      def successed
+        return unless @status.compare_and_set(:running, :successed, true)
+        @logger.info('successed.')
+      end
+
+      def failed(error)
+        log_error(error)
+        return unless @status.compare_and_set(:running, :failed, true)
+        @logger.error('failed.')
       end
 
       def cancel(error = nil)
-        return false unless compare_and_set_status(:complete, :pending)
-        @error = error if error
-        @result_ivar.set :cancelled
-        true
+        log_error(error) if error
+        return unless @status.compare_and_set(:pending, :cancelled, true)
+        @logger.info('cancelled.')
       end
 
       def skip
-        return false unless compare_and_set_status(:complete, :pending)
-        @result_ivar.set :skipped
-        true
+        return unless @status.compare_and_set(:pending, :skipped, true)
+        @logger.info('skipped')
       end
 
       # Force fail the task.
       # @return [void]
       def quit(error)
-        @status = :complete
-        @error = error
-        @result_ivar.try_set(:failed).tap do |changed|
-          notify_job unless changed
-        end
+        log_error(error)
+        @status.try_set(:failed, true)
       end
 
       def capture_exception
@@ -122,30 +116,27 @@ module Abid
       rescue StandardError, ScriptError => error
         quit(error)
       rescue Exception => exception
-        @job.engine.post_kill(exception)
+        # kill from independent thread
+        Thread.start { @job.engine.kill(exception) }
       end
 
       private
 
-      # Atomic compare and set operation.
-      # State is set to `next_state` only if
-      # `current state == expected_current`.
-      #
-      # @param [Symbol] next_state
-      # @param [Symbol] expected_current
-      #
-      # @return [Boolean] true if state is changed, false otherwise
-      def compare_and_set_status(next_state, *expected_current)
-        @mon.synchronize do
-          return unless expected_current.include? @status
-          @status = next_state
-          notify_job unless @status == :complete
-          true
-        end
+      def log_error(error)
+        @error = error
+        @logger.error(format_error_backtrace(error))
       end
 
-      def notify_job
-        @job.update_status
+      def format_error_backtrace(error)
+        if error.backtrace.nil? || error.backtrace.empty?
+          return "#{error.message} (#{error.class})"
+        end
+
+        bt = error.backtrace
+        ret = ''
+        ret << "#{bt.first}: #{error.message} (#{error.class})\n"
+        bt.each { |b| ret << "    from #{b}\n" }
+        ret
       end
     end
   end

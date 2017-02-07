@@ -23,7 +23,7 @@ class AbidTest < Minitest::Test
     load File.expand_path('../Abidfile.rb', __FILE__)
     super
   ensure
-    @env.engine.shutdown
+    @env.engine.kill(RuntimeError.new('premature end of test'))
   end
 
   def init_app
@@ -55,12 +55,13 @@ class AbidTest < Minitest::Test
     end
   end
 
-  def invoke(name, params = {}, args = [])
-    env.engine.invoke(name, params, args)
+  def invoke(*args)
+    env.engine.invoke(*args)
   end
 
   def find_job(name, params = {})
-    env.engine.job(name, params)
+    task = env.application.abid_tasks[name, params]
+    env.engine.jobs[task]
   end
 
   def in_options(opts)

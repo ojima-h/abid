@@ -1,13 +1,18 @@
+require 'concurrent/atomic/atomic_reference'
+
 module Abid
   class Engine
+    # JobManager is a jobs repositry and tracks each job progress.
     class JobManager
       def initialize(engine)
         @engine = engine
         @jobs = {}.compare_by_identity
         @actives = {}.compare_by_identity
+        @top_levels = {}.compare_by_identity
         @summary = Hash.new { |h, k| h[k] = 0 }
         @errors = []
         @mon = Monitor.new
+        @status = Concurrent::AtomicReference.new(:running)
       end
       attr_reader :summary, :errors
 
@@ -19,16 +24,36 @@ module Abid
         end
       end
 
+      # @param task [DSL::TaskInstance]
+      # @param args [Array<Object>]
+      # @return [Job]
+      def invoke(task, args)
+        raise Error, 'JobManager is not running now' unless running?
+
+        job = self[task]
+        @top_levels[job] = job
+        Scheduler.invoke(job, *args)
+        job.process.wait
+        job
+      end
+
       # Update active jobs list
       def update(job)
         update_actives(job)
         update_summary(job)
-        log(job)
+      end
+
+      def shutdown
+        return unless @status.compare_and_set(:running, :shuttingdown)
+        actives.each { |job| job.process.wait }
+        @status.set(:shutdown)
       end
 
       # Kill all active jobs
       # @param error [Exception] error reason
       def kill(error)
+        return if shutdown?
+        @status.set(:shutdown)
         actives.each { |j| j.process.quit(error) }
       end
 
@@ -40,75 +65,33 @@ module Abid
         @actives.include?(job)
       end
 
-      def pretty_summary
-        return if summary.empty?
+      def root?(job)
+        @top_levels.include?(job)
+      end
 
-        keys = [:successed, :failed, :skipped, :cancelled]
-        width = keys.map(&:length).max
-        keys.each_with_object('') do |key, ret|
-          ret << format("% #{width}s: %d\n", key, @summary[key])
+      %w(running shuttingdown shutdown).each do |meth|
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1
+        def #{meth}?
+          @status.get == :#{meth}
         end
+        RUBY
       end
 
       private
 
       def update_actives(job)
-        case job.process.status
-        when :pending, :running
-          @actives[job] = job
-        when :complete
+        if job.process.complete?
           @actives.delete(job)
+        else
+          @actives[job] = job
         end
       end
 
       def update_summary(job)
-        return unless job.process.status == :complete
-        @mon.synchronize { @summary[job.process.result] += 1 }
-        @errors << job.process.error if job.process.failed?
-      end
-
-      def log(job)
-        case job.process.status
-        when :running
-          log_start(job)
-        when :complete
-          log_finish(job)
-          log_error(job.process.error)
-        end
-      end
-
-      def log_start(job)
-        task = job.task
-        sig = ParamsFormat.format_with_name(task.name, task.params)
-        @engine.logger.info("#{sig} start.")
-      end
-
-      def log_finish(job)
-        task = job.task
-        sig = ParamsFormat.format_with_name(task.name, task.params)
-
-        if job.process.failed?
-          @engine.logger.error("#{sig} failed.")
-        else
-          @engine.logger.info("#{sig} #{job.process.result}.")
-        end
-      end
-
-      def log_error(error)
-        return if error.nil?
-        @engine.logger.error(format_error_backtrace(error))
-      end
-
-      def format_error_backtrace(error)
-        if error.backtrace.nil? || error.backtrace.empty?
-          return "#{error.message} (#{error.class})"
-        end
-
-        bt = error.backtrace
-        ret = ''
-        ret << "#{bt.first}: #{error.message} (#{error.class})\n"
-        bt.each { |b| ret << "    from #{b}\n" }
-        ret
+        return unless job.process.complete?
+        return if job.dryrun?
+        @mon.synchronize { @summary[job.process.status] += 1 }
+        @errors << job.process.error if job.process.error
       end
     end
   end

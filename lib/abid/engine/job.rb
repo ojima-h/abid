@@ -4,13 +4,15 @@ module Abid
       def initialize(engine, task)
         @engine = engine
         @task = task
-
-        @process = Process.new(self)
         @state = find_state
         @options = engine.options
-        @root = false
+        @logger = @engine.logger.clone
+        @logger.progname += ": #{@task}"
+
+        @process = Process.new(self)
+        @process.on_update { @engine.job_manager.update(self) }
       end
-      attr_reader :engine, :process, :state, :task, :options
+      attr_reader :engine, :process, :state, :task, :options, :logger
 
       def find_state
         @engine.state_manager.state(task.name, task.params,
@@ -18,18 +20,8 @@ module Abid
       end
       private :find_state
 
-      def invoke(*args)
-        Scheduler.invoke(self, *args)
-        @process.wait
-      end
-
       def root?
-        @root
-      end
-
-      def root
-        @root = true
-        self
+        @engine.job_manager.root?(self)
       end
 
       def prerequisites
@@ -46,11 +38,6 @@ module Abid
 
       def repair?
         @engine.options.repair
-      end
-
-      # notified when process status is updated.
-      def update_status
-        @engine.job_manager.update(self)
       end
     end
   end
