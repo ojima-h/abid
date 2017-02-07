@@ -19,10 +19,14 @@ module Abid
         )
         table = command.build_table
 
-        assert_equal <<-TEXT, table
-#{states[4].id}  2000-01-01 04:00:00  SUCCESSED  01:00:00  job0:foo4 i=4
-#{states[6].id}  2000-01-01 06:00:00  SUCCESSED  01:00:00  job0:foo6 i=6
-        TEXT
+        expected = TableFormatter.new(
+          [
+            [states[4].id, '2000-01-01 04:00:00', 'SUCCESSED', '01:00:00', 'job0:foo4 i=4'],
+            [states[6].id, '2000-01-01 06:00:00', 'SUCCESSED', '01:00:00', 'job0:foo6 i=6']
+          ]
+        ).format
+
+        assert_equal expected, table
       end
     end
   end
