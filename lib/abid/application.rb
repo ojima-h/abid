@@ -78,6 +78,10 @@ module Abid
     def abid_options # :nodoc:
       sort_options(
         [
+          ['--retry-failed-job',
+           'Retry failed job.',
+           proc { options.retry_failed_job = true }
+          ],
           ['--repair',
            'Run the task in repair mode.',
            proc { options.repair = true }

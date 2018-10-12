@@ -107,7 +107,7 @@ module Abid
     def concerned?
       state.reload
 
-      if !application.options.repair && state.failed? && !top_level?
+      if !application.options.retry_failed_job && !application.options.repair && state.failed? && !top_level?
         fail "#{name} -- task has been failed"
       end
 
